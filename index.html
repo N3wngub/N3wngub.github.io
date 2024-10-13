@@ -21,6 +21,105 @@
 
 <link rel="stylesheet" href="css/bootstrap.min.css"
 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Great Work! - แหล่งท่องเที่ยวใกล้ฉัน</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQL5ih5AtlUELIG7Filv3EgVWXRGWkR4g"></script>
+<script>
+    let map;
+    let service;
+    let infowindow;
+
+    function initMap(lat, lon) {
+        const location = new google.maps.LatLng(lat, lon);
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: location,
+            zoom: 15,
+        });
+
+        const request = {
+            location: location,
+            radius: '5000', // กำหนดระยะค้นหาเป็น 5 กิโลเมตร
+            type: ['tourist_attraction'] // ประเภทสถานที่: สถานที่ท่องเที่ยว
+        };
+
+        service = new google.maps.places.PlacesService(map);
+        service.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                for (let i = 0; i < results.length; i++) {
+                    createMarker(results[i]);
+                }
+            }
+        });
+    }
+
+    function createMarker(place) {
+        if (!place.geometry || !place.geometry.location) return;
+
+        const marker = new google.maps.Marker({
+            map,
+            position: place.geometry.location,
+        });
+
+        google.maps.event.addListener(marker, "click", () => {
+            infowindow.setContent(place.name || "");
+            infowindow.open(map, marker);
+        });
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            document.getElementById("location").innerHTML = "เบราว์เซอร์ของคุณไม่รองรับการใช้งานตำแหน่ง";
+        }
+    }
+
+    function showPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        document.getElementById("location").innerHTML = "ละติจูด: " + lat + " ลองจิจูด: " + lon;
+        initMap(lat, lon); // เรียกใช้งานแผนที่และดึงข้อมูลแหล่งท่องเที่ยว
+    }
+
+    function showError(error) {
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                document.getElementById("location").innerHTML = "ผู้ใช้ปฏิเสธการใช้งานตำแหน่ง";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                document.getElementById("location").innerHTML = "ข้อมูลตำแหน่งไม่พร้อมใช้งาน";
+                break;
+            case error.TIMEOUT:
+                document.getElementById("location").innerHTML = "หมดเวลารอข้อมูลตำแหน่ง";
+                break;
+            case error.UNKNOWN_ERROR:
+                document.getElementById("location").innerHTML = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+                break;
+        }
+    }
+</script>
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </head>
 
 <body>
@@ -53,7 +152,11 @@
       </div>
         
    
-
+      <h1>Great Work! - แหล่งท่องเที่ยวใกล้ฉัน</h1>
+      <button onclick="getLocation()">แสดงตำแหน่งของฉัน</button>
+      <p id="location">กดปุ่มเพื่อดูตำแหน่งของคุณ</p>
+      <div id="map"></div>
+  
 </body>
  
 
