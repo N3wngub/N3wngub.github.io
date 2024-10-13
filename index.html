@@ -1,166 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 
 <head>
-    
-  
-  <title>Manutsawin Project</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แหล่งท่องเที่ยวใกล้ฉัน</title>
+
   <link rel="icon" href="https://i.imgur.com/mfMYYCm.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    
-    
-    <style>
-    h1{
-        color: chartreuse;
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQL5ih5AtlUELIG7Filv3EgVWXRGWkR4g" async defer></script>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
     }
-     body{
-        background-color: blueviolet;
-     }
-    </style>
 
-<link rel="stylesheet" href="css/bootstrap.min.css"
+    #map {
+      height: 500px;
+      width: 100%;
+      margin-top: 20px;
+    }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Great Work! - แหล่งท่องเที่ยวใกล้ฉัน</title>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQL5ih5AtlUELIG7Filv3EgVWXRGWkR4g"></script>
-<script>
-    let map;
-    let service;
-    let infowindow;
+    .card img {
+      height: 200px;
+      object-fit: cover;
+    }
+  </style>
+
+  <script>
+    let map, service, infowindow;
 
     function initMap(lat, lon) {
-        const location = new google.maps.LatLng(lat, lon);
+      const location = new google.maps.LatLng(lat, lon);
 
-        map = new google.maps.Map(document.getElementById("map"), {
-            center: location,
-            zoom: 15,
-        });
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: location,
+        zoom: 15,
+      });
 
-        const request = {
-            location: location,
-            radius: '5000', // กำหนดระยะค้นหาเป็น 5 กิโลเมตร
-            type: ['tourist_attraction'] // ประเภทสถานที่: สถานที่ท่องเที่ยว
-        };
+      const request = {
+        location: location,
+        radius: '5000',
+        type: ['tourist_attraction']
+      };
 
-        service = new google.maps.places.PlacesService(map);
-        service.nearbySearch(request, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                for (let i = 0; i < results.length; i++) {
-                    createMarker(results[i]);
-                }
-            }
-        });
+      service = new google.maps.places.PlacesService(map);
+      service.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          displayPlaces(results); // แสดงผลในรูปแบบการ์ด
+        } else {
+          alert("ไม่สามารถโหลดสถานที่ได้: " + status);
+        }
+      });
     }
 
-    function createMarker(place) {
-        if (!place.geometry || !place.geometry.location) return;
+    function displayPlaces(places) {
+      const container = document.getElementById("places-container");
+      container.innerHTML = ""; // ล้างข้อมูลเดิม
 
-        const marker = new google.maps.Marker({
-            map,
-            position: place.geometry.location,
-        });
+      places.forEach(place => {
+        const photoUrl = place.photos ? place.photos[0].getUrl() : "https://via.placeholder.com/400";
+        const card = `
+          <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+              <img src="${photoUrl}" class="card-img-top" alt="${place.name}">
+              <div class="card-body">
+                <h5 class="card-title">${place.name}</h5>
+                <p class="card-text">${place.vicinity || 'ไม่มีที่อยู่ระบุ'}</p>
+                <button class="btn btn-primary" onclick="openOnMap(${place.geometry.location.lat()}, ${place.geometry.location.lng()})">ดูบนแผนที่</button>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += card;
+      });
+    }
 
-        google.maps.event.addListener(marker, "click", () => {
-            infowindow.setContent(place.name || "");
-            infowindow.open(map, marker);
-        });
+    function openOnMap(lat, lon) {
+      const location = new google.maps.LatLng(lat, lon);
+      map.setCenter(location);
+      map.setZoom(18);
     }
 
     function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition, showError);
-        } else {
-            document.getElementById("location").innerHTML = "เบราว์เซอร์ของคุณไม่รองรับการใช้งานตำแหน่ง";
-        }
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+      } else {
+        document.getElementById("location").innerText = "เบราว์เซอร์ของคุณไม่รองรับการใช้งานตำแหน่ง";
+      }
     }
 
     function showPosition(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        document.getElementById("location").innerHTML = "ละติจูด: " + lat + " ลองจิจูด: " + lon;
-        initMap(lat, lon); // เรียกใช้งานแผนที่และดึงข้อมูลแหล่งท่องเที่ยว
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      document.getElementById("location").innerText = `ละติจูด: ${lat} ลองจิจูด: ${lon}`;
+      initMap(lat, lon);
     }
 
     function showError(error) {
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                document.getElementById("location").innerHTML = "ผู้ใช้ปฏิเสธการใช้งานตำแหน่ง";
-                break;
-            case error.POSITION_UNAVAILABLE:
-                document.getElementById("location").innerHTML = "ข้อมูลตำแหน่งไม่พร้อมใช้งาน";
-                break;
-            case error.TIMEOUT:
-                document.getElementById("location").innerHTML = "หมดเวลารอข้อมูลตำแหน่ง";
-                break;
-            case error.UNKNOWN_ERROR:
-                document.getElementById("location").innerHTML = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
-                break;
-        }
+      const errors = {
+        1: "ผู้ใช้ปฏิเสธการใช้งานตำแหน่ง",
+        2: "ข้อมูลตำแหน่งไม่พร้อมใช้งาน",
+        3: "หมดเวลารอข้อมูลตำแหน่ง",
+        0: "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
+      };
+      document.getElementById("location").innerText = errors[error.code] || "ข้อผิดพลาดไม่ทราบสาเหตุ";
     }
-</script>
-<style>
-    #map {
-        height: 500px;
-        width: 100%;
-    }
-</style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  </script>
 </head>
 
 <body>
-    <div class="container">
-        <header class="d-flex flex-wrap justify-content-between align-items-center py-3 mb-4 border-bottom">
-            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
-                <img src="https://i.imgur.com/mfMYYCm.png" alt="Logo" width="100" height="50">
-            </a>
-        
-            <ul class="nav nav-pills">
-                <li class="nav-item"><a href="index.html" class="nav-link active" aria-current="page">Home</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Features</a></li>
-                <li class="nav-item"><a href="#" class="nav-link">Pricing</a></li>
-                <li class="nav-item"><a href="about me.html" class="nav-link">About</a></li>
-            </ul>
-        </header>
-        
-      <div id="extwaiokist" style="display:none" v="fcoon" q="c88a1db5" c="979.7" i="987" u="0.801" s="10102403" sg="svr_10022423-ga_10102403-bai_10042407" d="1" w="false" e="" a="2" m="BMe=" vn="3gtra"><div id="extwaigglbit" style="display:none" v="fcoon" q="c88a1db5" c="979.7" i="987" u="0.801" s="10102403" sg="svr_10022423-ga_10102403-bai_10042407" d="1" w="false" e="" a="2" m="BMe="></div></div></div>
+  <div class="container">
+    <header class="d-flex flex-wrap justify-content-between align-items-center py-3 mb-4 border-bottom">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+        <img src="https://i.imgur.com/mfMYYCm.png" alt="Logo" width="100" height="50">
+      </a>
+      <ul class="nav nav-pills">
+        <li class="nav-item"><a href="#" class="nav-link active">Home</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Features</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Pricing</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">About</a></li>
+      </ul>
+    </header>
 
-      <div class="px-4 py-5 my-5 text-center">
-        <img class="d-block mx-auto mb-4" src="https://i.imgur.com/mfMYYCm.png" alt="" width="200" height="120">
-        <h1 class="display-5 fw-bold text-body-emphasis">กำลังดำเนินการ</h1>
-        <div class="col-lg-6 mx-auto">
-          <p class="lead mb-4">กำลังคิดอยู่ว่าจะทำProjectเกี่ยวกับอะไรเล็งๆน่าจะเกี่ยวกับการท่องเที่ยวน่าสนใจไหม</p>
-          <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-            <button type="button" class="btn btn-primary btn-lg px-4 gap-3">กดตรงนี้ยังไม่มีอะไร</button>
-            <button type="button" class="btn btn-outline-secondary btn-lg px-4">ตรงนี้ก็ยัง</button>
-          </div>
-        </div>
-      </div>
-        
-   
-      <h1>Great Work! - แหล่งท่องเที่ยวใกล้ฉัน</h1>
-      <button onclick="getLocation()">แสดงตำแหน่งของฉัน</button>
-      <p id="location">กดปุ่มเพื่อดูตำแหน่งของคุณ</p>
-      <div id="map"></div>
-  
+    <div class="text-center my-4">
+      <h1>แหล่งท่องเที่ยวใกล้ฉัน</h1>
+      <button onclick="getLocation()" class="btn btn-primary btn-lg">แสดงตำแหน่งของฉัน</button>
+      <p id="location" class="mt-2">กดปุ่มเพื่อดูตำแหน่งของคุณ</p>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="row mt-4" id="places-container">
+      <!-- การ์ดสถานที่จะถูกสร้างที่นี่ -->
+    </div>
+  </div>
 </body>
- 
-
-
-
 
 </html>
