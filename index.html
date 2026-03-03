@@ -2,212 +2,390 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ค้นหาสถานที่ท่องเที่ยวใกล้ฉัน</title>
-    
-    <!-- รวม Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Privacy Screen iOS Simulator</title>
+    <!-- ใช้ Tailwind CSS สำหรับ Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ใช้ Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* ปรับแต่งแบนเนอร์ */
-        .banner {
-            background-image: url('your-image-url.jpg'); /* ใส่ URL รูปภาพที่ต้องการ */
-            background-size: cover;
-            background-position: center;
-            color: #fff;
-            padding: 100px 0;
-            text-align: center;
+        /* สไตล์เฉพาะสำหรับ UI แบบ iOS */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                /* รองรับ Notch ของ iPhone */
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F2F2F7; /* สีพื้นหลังมาตรฐาน iOS (Light Mode) */
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        .ios-card {
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Toggle Switch สไตล์ iOS */
+        .ios-toggle {
+            appearance: none;
+            width: 51px;
+            height: 31px;
+            background: #E9E9EA;
+            border-radius: 31px;
             position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.3s ease;
         }
 
-        .banner h1 {
-            font-size: 48px;
-            margin: 0;
-            color: #FFDD00;
-        }
-
-        .banner h2 {
-            font-size: 36px;
-            color: red;
-        }
-
-        /* ปรับตำแหน่งแถบนำทาง */
-        .navbar {
+        .ios-toggle::after {
+            content: '';
             position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 27px;
+            height: 27px;
+            background: #FFFFFF;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .ios-toggle:checked {
+            background: #34C759; /* สีเขียว iOS */
+        }
+
+        .ios-toggle:checked::after {
+            transform: translateX(20px);
+        }
+
+        /* เลเยอร์บังหน้าจอกันแอบมอง */
+        #privacy-overlay {
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            z-index: 100;
-            background-color: rgba(0, 0, 0, 0.7); /* ทำให้พื้นหลังโปร่งใส */
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            z-index: 9999;
+            pointer-events: none; /* ให้กดทะลุได้ */
+            opacity: 0;
+            transition: opacity 0.15s ease-out; /* ทำให้การเปลี่ยนความมืดดูนุ่มนวล */
+            will-change: opacity;
         }
 
-        .navbar-nav .nav-link {
-            color: #fff;
+        /* Animation สำหรับ Modal */
+        .modal-enter {
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* ปรับขนาดแผนที่ */
-        #map {
-            width: 100%;
-            height: 500px;
-            border-radius: 10px;
-        }
-
-        /* การ์ดสถานที่ */
-        .card {
-            border: none;
-        }
-
-        .card img {
-            border-radius: 10px;
-        }
-
-        .card-title {
-            background-color: yellow;
-            padding: 10px;
-            text-align: center;
-            color: black;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .find-location {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .find-location button {
-            background-color: #FFD700;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            color: black;
-            cursor: pointer;
-            border-radius: 5px;
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
-<body>
+<body class="text-[#000000] min-h-screen pb-10">
 
-    <!-- แบนเนอร์ -->
-    <div class="banner">
-        <h1>GO เที่ยวด้วยกัน</h1>
-        <h2>TOGETHER!</h2>
-    </div>
+    <!-- ม่านสีดำ (Privacy Overlay) -->
+    <div id="privacy-overlay"></div>
 
-    <!-- เมนูนำทาง -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="#" style="color: #FFDD00;">โลโก้</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">หน้าแรก</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">โรงแรมใกล้ฉัน</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">ติดต่อผู้พัฒนา</a>
-                    </li>
-                </ul>
+    <!-- ส่วนเนื้อหาหลักจำลองแอปธนาคารสไตล์ iOS -->
+    <main class="relative z-10 px-4 pt-12">
+        
+        <!-- Header คล้าย Apple Wallet -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight mb-2">บัญชีของฉัน</h1>
+            <div class="ios-card bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 shadow-lg relative overflow-hidden h-48 flex flex-col justify-between">
+                <!-- ลายกราฟิกตกแต่งบัตร -->
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+                
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <p class="text-blue-100 text-xs font-medium uppercase tracking-wider mb-1">ยอดเงินคงเหลือ (THB)</p>
+                        <p class="text-3xl font-semibold tracking-tight">฿ 1,245,678.90</p>
+                    </div>
+                    <i data-lucide="nfc" class="w-6 h-6 text-white opacity-80"></i>
+                </div>
+                
+                <div class="z-10 flex justify-between items-end">
+                    <p class="text-sm font-medium tracking-widest opacity-90">•••• 4567</p>
+                    <p class="text-xs font-medium uppercase opacity-80">ออมทรัพย์</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- กลุ่มตั้งค่า Privacy Screen สไตล์ iOS Settings -->
+        <h2 class="text-[13px] font-semibold text-[#8E8E93] uppercase tracking-wide ml-4 mb-2">การป้องกันความปลอดภัย (S26 Ultra Simulator)</h2>
+        <div class="ios-card mb-8">
+            <!-- ปุ่มขออนุญาต (แสดงเฉพาะตอนยังไม่มีสิทธิ์) -->
+            <div id="permission-container" class="border-b border-[#C6C6C8] last:border-0">
+                <button id="btn-request-permission" class="w-full flex items-center justify-between p-4 bg-white active:bg-[#E5E5EA] transition-colors text-left">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-[#FF9500] flex items-center justify-center text-white shrink-0">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-[17px] font-normal">ขอสิทธิ์เข้าถึงเซ็นเซอร์</p>
+                            <p class="text-[13px] text-[#8E8E93] mt-0.5 leading-tight">จำเป็นสำหรับการตรวจจับองศาหน้าจอบน iOS</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-[#C6C6C8]"></i>
+                </button>
+            </div>
+
+            <!-- สวิตช์เปิด/ปิด Privacy Screen -->
+            <div class="flex items-center justify-between p-4 bg-white border-b border-[#C6C6C8] last:border-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-[#34C759] flex items-center justify-center text-white shrink-0">
+                        <i data-lucide="eye-off" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-[17px] font-normal">หน้าจอกันแอบมอง</p>
+                    </div>
+                </div>
+                <input type="checkbox" id="toggle-privacy" class="ios-toggle" disabled>
+            </div>
+            
+            <!-- การแสดงผลเซ็นเซอร์ (Debug) -->
+            <div class="p-4 bg-white text-[15px] border-b border-[#C6C6C8] last:border-0 hidden" id="sensor-data-container">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[#8E8E93]">องศาแนวตั้ง (หน้า-หลัง)</span>
+                    <span id="beta-value" class="font-mono font-medium">0°</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[#8E8E93]">องศาแนวนอน (ซ้าย-ขวา)</span>
+                    <span id="gamma-value" class="font-mono font-medium">0°</span>
+                </div>
+                <p class="text-[12px] text-[#8E8E93] mt-3 leading-tight">
+                    เมื่อเอียงจอซ้าย/ขวาเกิน 20° หรือหงาย/คว่ำจอผิดปกติ หน้าจอจะเริ่มมืดลงเพื่อป้องกันคนรอบข้างมองเห็น
+                </p>
             </div>
         </div>
-    </nav>
 
-    <!-- ปุ่มค้นหาตำแหน่ง -->
-    <div class="find-location">
-        <button class="btn btn-warning btn-lg" onclick="findNearbyPlaces()">ค้นหาตำแหน่ง</button>
-    </div>
-
-    <div class="container my-5">
-        <div class="row">
-            <!-- แผนที่ -->
-            <div class="col-lg-8 mb-4">
-                <div id="map"></div>
+        <!-- แจ้งเตือนถ้าไม่ใช่โทรศัพท์ -->
+        <div id="desktop-warning" class="hidden ios-card mb-8 p-4 bg-[#FF3B30] bg-opacity-10">
+            <div class="flex gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-[#FF3B30] shrink-0"></i>
+                <p class="text-[14px] text-[#FF3B30]">ฟีเจอร์นี้ต้องการฮาร์ดแวร์ไจโรสโคป กรุณาเปิดเว็บไซต์นี้บนโทรศัพท์มือถือเพื่อทดสอบ</p>
             </div>
-            <!-- รายการสถานที่ -->
-            <div class="col-lg-4">
-                <div class="row" id="places"></div>
+        </div>
+
+        <!-- รายการธุรกรรมจำลอง -->
+        <h2 class="text-[13px] font-semibold text-[#8E8E93] uppercase tracking-wide ml-4 mb-2">รายการล่าสุด</h2>
+        <div class="ios-card">
+            <!-- Item 1 -->
+            <div class="flex items-center justify-between p-4 border-b border-[#C6C6C8] last:border-0 ml-4 pl-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 font-semibold">
+                        A
+                    </div>
+                    <div>
+                        <p class="text-[17px] font-normal">โอนเงินให้ สมชาย</p>
+                        <p class="text-[13px] text-[#8E8E93]">วันนี้, 14:30</p>
+                    </div>
+                </div>
+                <p class="text-[17px] font-normal text-[#FF3B30]">-฿ 1,500.00</p>
+            </div>
+            <!-- Item 2 -->
+            <div class="flex items-center justify-between p-4 border-b border-[#C6C6C8] last:border-0 ml-4 pl-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold">
+                        <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-[17px] font-normal">รับเงินจาก สมศรี</p>
+                        <p class="text-[13px] text-[#8E8E93]">เมื่อวาน, 09:15</p>
+                    </div>
+                </div>
+                <p class="text-[17px] font-normal text-[#34C759]">+฿ 4,200.00</p>
+            </div>
+            <!-- Item 3 -->
+            <div class="flex items-center justify-between p-4 border-b border-[#C6C6C8] last:border-0 ml-4 pl-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-semibold">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-[17px] font-normal">ชำระค่าสินค้า Apple</p>
+                        <p class="text-[13px] text-[#8E8E93]">12 พ.ค., 18:45</p>
+                    </div>
+                </div>
+                <p class="text-[17px] font-normal">฿ 32,900.00</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal แจ้งเตือนสไตล์ iOS -->
+    <div id="ios-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm" id="modal-backdrop"></div>
+        <!-- Alert Box -->
+        <div class="bg-white/90 backdrop-blur-md w-72 rounded-[14px] overflow-hidden relative z-10 flex flex-col text-center shadow-2xl modal-enter">
+            <div class="p-5 pt-6">
+                <h3 class="font-semibold text-[17px] mb-1 leading-tight" id="modal-title">ข้อความ</h3>
+                <p class="text-[13px] font-normal leading-tight" id="modal-message">รายละเอียด</p>
+            </div>
+            <div class="border-t border-[#3c3c435c] flex">
+                <button id="modal-btn-ok" class="flex-1 py-3 text-[17px] font-semibold text-[#007AFF] active:bg-black/5 transition-colors">ตกลง</button>
             </div>
         </div>
     </div>
 
     <script>
-        let map;
-        let service;
-        let infowindow;
+        // กำหนดการทำงานของไอคอน Lucide
+        lucide.createIcons();
 
-        function initMap() {
-            const bangkok = new google.maps.LatLng(13.7563, 100.5018);
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: bangkok,
-                zoom: 14,
-            });
+        // ---------------- ตัวแปร DOM ----------------
+        const btnRequest = document.getElementById('btn-request-permission');
+        const permissionContainer = document.getElementById('permission-container');
+        const togglePrivacy = document.getElementById('toggle-privacy');
+        const overlay = document.getElementById('privacy-overlay');
+        const sensorDataContainer = document.getElementById('sensor-data-container');
+        const betaValueEl = document.getElementById('beta-value');
+        const gammaValueEl = document.getElementById('gamma-value');
+        const desktopWarning = document.getElementById('desktop-warning');
+        
+        // Modal Elements
+        const modal = document.getElementById('ios-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalBtnOk = document.getElementById('modal-btn-ok');
 
-            infowindow = new google.maps.InfoWindow();
+        // State variables
+        let hasPermission = false;
+        let isFeatureEnabled = false;
+
+        // ---------------- ฟังก์ชันแสดง iOS Modal ----------------
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
         }
 
-        function findNearbyPlaces() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    map.setCenter(userLocation);
+        modalBtnOk.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
 
-                    const request = {
-                        location: userLocation,
-                        radius: '1500',
-                        type: ['tourist_attraction']
-                    };
-
-                    service = new google.maps.places.PlacesService(map);
-                    service.nearbySearch(request, handleNearbySearchResults);
-                });
-            } else {
-                alert("เบราว์เซอร์ของคุณไม่รองรับ Geolocation");
-            }
+        // ---------------- ตรวจสอบอุปกรณ์ ----------------
+        if (!window.DeviceOrientationEvent) {
+            desktopWarning.classList.remove('hidden');
         }
 
-        function handleNearbySearchResults(results, status) {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const placesList = document.getElementById("places");
-                placesList.innerHTML = ""; // ล้างข้อมูลเก่าก่อนแสดงใหม่
+        // ตรวจสอบว่าต้องขอ Permission ไหม (ถ้าไม่ใช่ iOS 13+ จะข้ามขั้นตอนนี้)
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+            // Android หรือระบบอื่นๆ ที่ไม่ต้องขอสิทธิ์
+            hasPermission = true;
+            setupEnvironment();
+        }
 
-                for (let i = 0; i < results.length; i++) {
-                    const place = results[i];
-                    const placeCard = `
-                        <div class="col-12 mb-3">
-                            <div class="card shadow-sm">
-                                <img src="${place.photos ? place.photos[0].getUrl() : 'https://via.placeholder.com/150'}" class="card-img-top" alt="${place.name}">
-                                <div class="card-title">${place.name}</div>
-                                <div class="card-body">
-                                    <p class="card-text">${place.vicinity}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    placesList.innerHTML += placeCard;
-
-                    const marker = new google.maps.Marker({
-                        map: map,
-                        position: place.geometry.location,
-                    });
-
-                    google.maps.event.addListener(marker, 'click', function () {
-                        infowindow.setContent(place.name);
-                        infowindow.open(map, this);
-                    });
+        // ---------------- การขอสิทธิ์ (สำหรับ iOS 13+) ----------------
+        btnRequest.addEventListener('click', async () => {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState === 'granted') {
+                        hasPermission = true;
+                        setupEnvironment();
+                    } else {
+                        showModal('ไม่สามารถเข้าถึงได้', 'คุณได้ปฏิเสธการเข้าถึงเซ็นเซอร์ กรุณารีเฟรชหน้าเว็บหรือตั้งค่าใน Safari เพื่อลองใหม่');
+                    }
+                } catch (error) {
+                    showModal('เกิดข้อผิดพลาด', 'ไม่สามารถขอสิทธิ์ได้: ' + error.message);
                 }
+            } else {
+                // ถ้าเผลอกดในเครื่องที่ไม่ต้องขอสิทธิ์
+                hasPermission = true;
+                setupEnvironment();
             }
-        }
-    </script>
+        });
 
-    <!-- Google Maps API -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQL5ih5AtlUELIG7Filv3EgVWXRGWkR4g=places&callback=initMap"></script>
-    
-    <!-- Bootstrap JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        // ---------------- เตรียมสภาพแวดล้อมเมื่อได้สิทธิ์ ----------------
+        function setupEnvironment() {
+            // ซ่อนปุ่มขอสิทธิ์
+            permissionContainer.style.display = 'none';
+            // เปิดให้กดสวิตช์ได้
+            togglePrivacy.disabled = false;
+            // แสดงข้อมูลเซ็นเซอร์
+            sensorDataContainer.classList.remove('hidden');
+            
+            // เริ่มฟังก์ชันตรวจจับ
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        // ---------------- การเปิด/ปิดสวิตช์ ----------------
+        togglePrivacy.addEventListener('change', (e) => {
+            isFeatureEnabled = e.target.checked;
+            if (!isFeatureEnabled) {
+                // ถ้าปิดฟีเจอร์ ให้ลบความดำออกทันที
+                overlay.style.opacity = '0';
+                betaValueEl.classList.remove('text-[#FF3B30]');
+                gammaValueEl.classList.remove('text-[#FF3B30]');
+            }
+        });
+
+        // ---------------- ลอจิกการคำนวณหน้าจอมืด (หัวใจสำคัญ) ----------------
+        function handleOrientation(event) {
+            let { beta, gamma } = event;
+
+            // ป้องกันค่าเป็น null (กรณีเปิดในคอม)
+            if (beta === null || gamma === null) return;
+
+            beta = Math.round(beta);
+            gamma = Math.round(gamma);
+
+            // อัปเดตตัวเลขแสดงผลบนหน้าจอ
+            betaValueEl.textContent = `${beta}°`;
+            gammaValueEl.textContent = `${gamma}°`;
+
+            // ถ้าไม่ได้เปิดสวิตช์ไว้ ไม่ต้องทำอะไรต่อ
+            if (!isFeatureEnabled) return;
+
+            let opacity = 0;
+
+            // 1. คำนวณแกนซ้าย-ขวา (Gamma) -> แกนสำคัญสำหรับ Privacy Screen
+            const absGamma = Math.abs(gamma);
+            
+            if (absGamma > 20) {
+                // ถ้าเอียงเกิน 20 องศา จะเริ่มมืด (20-45 องศา จะค่อยๆ มืดขึ้นจนสุด)
+                const gammaOpacity = (absGamma - 20) / 25; 
+                opacity = Math.max(opacity, Math.min(1, gammaOpacity));
+                gammaValueEl.classList.add('text-[#FF3B30]');
+            } else {
+                gammaValueEl.classList.remove('text-[#FF3B30]');
+            }
+
+            // 2. คำนวณแกนหน้า-หลัง (Beta) -> ป้องกันการหงายจอให้คนข้างหลังดู
+            if (beta < 15) {
+                // นอนราบเกินไป (เช่น วางบนโต๊ะ คนเดินผ่านเห็น)
+                const betaOpacity = (15 - beta) / 15;
+                opacity = Math.max(opacity, Math.min(1, betaOpacity));
+                betaValueEl.classList.add('text-[#FF3B30]');
+            } else if (beta > 80) {
+                // ตั้งฉากเกินไป
+                const betaOpacity = (beta - 80) / 10;
+                opacity = Math.max(opacity, Math.min(1, betaOpacity));
+                betaValueEl.classList.add('text-[#FF3B30]');
+            } else {
+                betaValueEl.classList.remove('text-[#FF3B30]');
+            }
+
+            // 3. ปรับ Opacity ของม่านบังจอ (สูงสุด 0.95 เพื่อให้พอเดาได้ว่าจอยังเปิดอยู่)
+            const finalOpacity = Math.min(0.95, opacity);
+            overlay.style.opacity = finalOpacity.toFixed(2);
+        }
+
+    </script>
 </body>
 </html>
+
