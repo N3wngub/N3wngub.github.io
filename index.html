@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Smart Scanner Pro (iPhone 14 Pro Optimized)</title>
+    <title>Native-Grade Document Scanner</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -32,50 +32,48 @@
         
         .glass-panel {
             background: rgba(20, 20, 25, 0.85);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: var(--safe-bottom);
         }
 
         header {
             padding-top: var(--safe-top);
-            height: calc(4rem + var(--safe-top));
+            height: calc(3.5rem + var(--safe-top));
         }
 
-        /* Magnifier Glass for smart cropping */
         #magnifier {
             position: absolute;
-            width: 100px;
-            height: 100px;
+            width: 110px;
+            height: 110px;
             border-radius: 50%;
             border: 3px solid #3b82f6;
             background-color: #111;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(0,0,0,0.5);
             pointer-events: none;
             display: none;
             z-index: 50;
-            /* Crosshair */
             background-image: 
-                linear-gradient(to right, transparent 48%, rgba(59, 130, 246, 0.8) 49%, rgba(59, 130, 246, 0.8) 51%, transparent 52%),
-                linear-gradient(to bottom, transparent 48%, rgba(59, 130, 246, 0.8) 49%, rgba(59, 130, 246, 0.8) 51%, transparent 52%);
+                linear-gradient(to right, transparent 48.5%, rgba(59, 130, 246, 0.9) 49.5%, rgba(59, 130, 246, 0.9) 50.5%, transparent 51.5%),
+                linear-gradient(to bottom, transparent 48.5%, rgba(59, 130, 246, 0.9) 49.5%, rgba(59, 130, 246, 0.9) 50.5%, transparent 51.5%);
         }
 
         .loader {
+            width: 48px;
+            height: 48px;
             border: 4px solid rgba(255,255,255,0.1);
             border-left-color: #3b82f6;
             border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            animation: spin 1s linear infinite;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Filter button active state */
         .filter-btn.active .icon-box {
             background-color: #3b82f6;
             border-color: #60a5fa;
             color: white;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
         }
         .filter-btn.active span {
             color: #60a5fa;
@@ -88,638 +86,561 @@
     <!-- Header -->
     <header class="flex items-center justify-between px-5 bg-black z-20">
         <div class="flex items-center gap-2">
-            <div class="bg-blue-600 p-1.5 rounded-lg">
+            <div class="bg-blue-600 p-1 rounded-lg shadow-lg shadow-blue-600/30">
                 <i class="ph ph-scan text-white text-xl"></i>
             </div>
-            <h1 class="text-lg font-semibold tracking-wide">Smart Scanner</h1>
+            <h1 class="text-[17px] font-semibold tracking-wide">สแกนเนอร์อัจฉริยะ</h1>
         </div>
-        <button id="btnRestart" class="hidden text-gray-400 hover:text-white p-2">
-            <i class="ph ph-arrow-u-up-left text-2xl"></i>
+        <button id="btnRestart" class="hidden text-gray-300 hover:text-white p-2">
+            <span class="text-sm font-medium bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">ถ่ายใหม่</span>
         </button>
     </header>
 
     <!-- LOADING SCREEN -->
-    <div id="loadingScreen" class="hidden absolute inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center backdrop-blur-sm">
-        <div class="loader mb-4"></div>
-        <p class="text-white font-medium tracking-wider" id="loadingText">กำลังประมวลผลคุณภาพสูง...</p>
+    <div id="loadingScreen" class="hidden absolute inset-0 bg-black/80 z-[100] flex flex-col items-center justify-center backdrop-blur-md transition-opacity">
+        <div class="loader mb-5"></div>
+        <p class="text-white font-medium tracking-wide" id="loadingText">กำลังประมวลผล...</p>
     </div>
 
     <!-- MAIN APP AREA -->
-    <main class="flex-1 relative overflow-hidden flex flex-col">
+    <main class="flex-1 relative overflow-hidden flex flex-col bg-black">
         
         <!-- STEP 1: CAMERA VIEW -->
-        <div id="viewCamera" class="absolute inset-0 flex flex-col bg-black transition-opacity duration-300">
+        <div id="viewCamera" class="absolute inset-0 flex flex-col transition-opacity duration-300">
             <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
-                <!-- Video playsinline is crucial for iOS -->
                 <video id="cameraFeed" autoplay playsinline class="w-full h-full object-cover"></video>
                 
-                <!-- Guidelines -->
-                <div class="absolute inset-6 border-[1.5px] border-white/40 rounded-xl pointer-events-none flex flex-col items-center justify-between py-8">
-                    <div class="w-16 h-1 bg-white/50 rounded-full"></div>
-                    <p class="text-white/80 text-sm bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-md">
+                <div class="absolute inset-4 sm:inset-8 border-[1.5px] border-yellow-400/50 rounded-xl pointer-events-none flex flex-col items-center justify-between py-10 transition-all duration-1000" id="cameraGuide">
+                    <div class="w-20 h-1 bg-yellow-400/80 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]"></div>
+                    <p class="text-white text-sm bg-black/60 px-5 py-2 rounded-full backdrop-blur-md shadow-lg border border-white/10">
                         วางเอกสารให้ขนานและอยู่ในกรอบ
                     </p>
-                    <div class="w-16 h-1 bg-white/50 rounded-full"></div>
+                    <div class="w-20 h-1 bg-yellow-400/80 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]"></div>
                 </div>
 
-                <!-- Flash/Torch Button -->
-                <button id="btnTorch" class="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hidden active:bg-white/20">
+                <button id="btnTorch" class="absolute top-5 right-5 w-12 h-12 rounded-full bg-black/40 backdrop-blur-lg flex items-center justify-center text-white border border-white/20 hidden active:scale-90 transition-transform">
                     <i class="ph ph-flashlight text-2xl"></i>
                 </button>
             </div>
             
-            <!-- Camera Controls -->
-            <div class="h-32 glass-panel flex items-center justify-between px-8">
-                <label class="flex flex-col items-center justify-center cursor-pointer text-gray-300 active:scale-95 transition-transform">
-                    <div class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-1">
+            <div class="h-[140px] glass-panel flex items-center justify-between px-8">
+                <label class="flex flex-col items-center justify-center cursor-pointer text-gray-300 active:scale-90 transition-transform">
+                    <div class="w-12 h-12 rounded-full bg-gray-800/80 flex items-center justify-center mb-1.5 border border-white/10">
                         <i class="ph ph-image text-2xl"></i>
                     </div>
-                    <span class="text-[10px] uppercase tracking-wider">อัลบั้ม</span>
+                    <span class="text-[11px] font-medium">รูปภาพ</span>
                     <input type="file" id="fileInput" accept="image/*" class="hidden">
                 </label>
 
-                <!-- Capture Button iPhone Style -->
-                <button id="btnCapture" class="w-20 h-20 rounded-full bg-transparent border-[3px] border-white flex items-center justify-center active:opacity-70 transition-opacity">
-                    <div class="w-[68px] h-[68px] rounded-full bg-white"></div>
+                <button id="btnCapture" class="w-[84px] h-[84px] rounded-full bg-transparent border-[3.5px] border-white flex items-center justify-center active:scale-95 transition-all">
+                    <div class="w-[72px] h-[72px] rounded-full bg-white shadow-[0_0_20px_rgba(255,255,255,0.4)]"></div>
                 </button>
 
-                <div class="w-12 h-12"></div> <!-- Spacer -->
+                <div class="w-12 h-12"></div>
             </div>
         </div>
 
-        <!-- STEP 2: CROP VIEW (SMART MANUAL) -->
-        <div id="viewCrop" class="hidden absolute inset-0 flex flex-col bg-[#111] transition-opacity duration-300">
-            <div class="p-3 text-center text-sm text-gray-300 bg-black/50 border-b border-white/10 font-medium">
-                ลากจุดมุมเพื่อปรับขอบเขตเอกสาร
+        <!-- STEP 2: CROP VIEW -->
+        <div id="viewCrop" class="hidden absolute inset-0 flex flex-col bg-[#0a0a0c] transition-opacity duration-300">
+            <div class="p-3 text-center text-[13px] text-gray-300 bg-black/80 border-b border-white/5 font-medium flex items-center justify-center gap-2">
+                <i class="ph ph-corners-out text-blue-400"></i> ลากจุดเพื่อปรับขอบเขตเอกสาร
             </div>
             
-            <div id="cropContainer" class="flex-1 relative flex items-center justify-center overflow-hidden p-6">
-                <canvas id="cropCanvas" class="max-w-full max-h-full rounded-md shadow-2xl"></canvas>
-                <!-- Magnifier -->
+            <div id="cropContainer" class="flex-1 relative flex items-center justify-center overflow-hidden p-5 sm:p-8">
+                <canvas id="cropCanvas" class="max-w-full max-h-full rounded-lg shadow-2xl"></canvas>
                 <canvas id="magnifier"></canvas>
             </div>
 
-            <!-- Crop Controls -->
-            <div class="h-28 glass-panel flex items-center justify-between px-6">
-                <button id="btnRetakeCrop" class="text-gray-400 active:text-white flex flex-col items-center p-2">
-                    <i class="ph ph-x text-2xl mb-1"></i>
-                    <span class="text-[10px] uppercase">ถ่ายใหม่</span>
-                </button>
-                <button id="btnAutoCrop" class="text-blue-400 active:text-blue-300 flex flex-col items-center p-2">
-                    <i class="ph ph-bounding-box text-2xl mb-1"></i>
-                    <span class="text-[10px] uppercase">หาขอบอัตโนมัติ</span>
-                </button>
-                <button id="btnApplyCrop" class="bg-blue-600 active:bg-blue-700 text-white px-8 py-3.5 rounded-full font-semibold shadow-lg shadow-blue-600/30 flex items-center gap-2">
-                    ตัดภาพ <i class="ph ph-check-circle text-xl"></i>
+            <div class="h-28 glass-panel flex items-center justify-between px-6 gap-4">
+                <button id="btnApplyCrop" class="w-full bg-blue-600 active:bg-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 text-base transition-colors">
+                    จัดหน้าเอกสาร <i class="ph ph-arrow-right-bold"></i>
                 </button>
             </div>
         </div>
 
         <!-- STEP 3: EDIT & EXPORT VIEW -->
-        <div id="viewEdit" class="hidden absolute inset-0 flex flex-col bg-[#111] transition-opacity duration-300">
-            <div class="flex-1 relative flex flex-col p-4 gap-4 overflow-hidden pb-[120px]">
+        <div id="viewEdit" class="hidden absolute inset-0 flex flex-col bg-[#0a0a0c] transition-opacity duration-300">
+            <div class="flex-1 relative flex flex-col p-4 gap-4 overflow-hidden pb-[130px]">
                 
-                <!-- Preview Canvas -->
-                <div class="flex-1 w-full bg-black rounded-xl flex items-center justify-center p-0 shadow-inner overflow-hidden border border-white/10">
-                    <canvas id="previewCanvas" class="max-w-full max-h-full object-contain"></canvas>
+                <div class="flex-1 w-full bg-black/50 rounded-2xl flex items-center justify-center p-2 shadow-inner overflow-hidden border border-white/5 relative">
+                    <canvas id="previewCanvas" class="max-w-full max-h-full object-contain drop-shadow-2xl"></canvas>
                 </div>
                 
-                <!-- Filters Scrollable -->
-                <div class="h-24 flex items-center justify-center gap-4 overflow-x-auto pb-2 px-2">
-                    <button class="filter-btn flex flex-col items-center gap-1.5 transition-all w-16" data-filter="original">
-                        <div class="icon-box w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
+                <div class="h-24 flex items-center justify-center gap-3 sm:gap-6 overflow-x-auto pb-2 px-2">
+                    <button class="filter-btn flex flex-col items-center gap-2 transition-all w-[70px]" data-filter="original">
+                        <div class="icon-box w-[50px] h-[50px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400 shadow-md">
                             <i class="ph ph-image text-xl"></i>
                         </div>
-                        <span class="text-[10px] text-gray-400">ต้นฉบับ</span>
+                        <span class="text-[11px] text-gray-400">ต้นฉบับ</span>
                     </button>
-                    <button class="filter-btn flex flex-col items-center gap-1.5 transition-all w-16" data-filter="color">
-                        <div class="icon-box w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                            <i class="ph ph-palette text-xl"></i>
+                    <button class="filter-btn flex flex-col items-center gap-2 transition-all w-[70px]" data-filter="magic_color">
+                        <div class="icon-box w-[50px] h-[50px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400 shadow-md">
+                            <i class="ph ph-magic-wand text-xl"></i>
                         </div>
-                        <span class="text-[10px] text-gray-400">สีสว่าง</span>
+                        <span class="text-[11px] text-gray-400">สีคมชัด</span>
                     </button>
-                    <button class="filter-btn flex flex-col items-center gap-1.5 transition-all w-16" data-filter="bw_soft">
-                        <div class="icon-box w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                            <i class="ph ph-drop-half-bottom text-xl"></i>
+                    <button class="filter-btn active flex flex-col items-center gap-2 transition-all w-[70px]" data-filter="shadow_remove">
+                        <div class="icon-box w-[50px] h-[50px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400 shadow-md">
+                            <i class="ph ph-file-text text-xl"></i>
                         </div>
-                        <span class="text-[10px] text-gray-400">ขาวดำ (นุ่ม)</span>
-                    </button>
-                    <button class="filter-btn active flex flex-col items-center gap-1.5 transition-all w-16" data-filter="bw_sharp">
-                        <div class="icon-box w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                            <i class="ph ph-text-t text-xl"></i>
-                        </div>
-                        <span class="text-[10px] text-gray-400">ขาวดำ (ชัด)</span>
+                        <span class="text-[11px] text-gray-400">ลบเงา (แนะนำ)</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Export Controls -->
             <div class="absolute bottom-0 left-0 right-0 glass-panel flex items-center justify-between px-5 pt-4 pb-8 z-10 gap-3">
-                <button id="btnSaveImg" class="flex-1 bg-gray-800 active:bg-gray-700 text-white py-4 rounded-2xl font-semibold flex justify-center items-center gap-2 transition-colors border border-gray-700">
-                    <i class="ph ph-image-square text-xl text-blue-400"></i> บันทึกรูปภาพ
+                <button id="btnSaveImg" class="flex-1 bg-gray-800/80 active:bg-gray-700 text-white py-4 rounded-2xl font-semibold flex justify-center items-center gap-2 transition-colors border border-gray-600">
+                    <i class="ph ph-download-simple text-xl"></i> เซฟรูป
                 </button>
                 <button id="btnSavePdf" class="flex-1 bg-blue-600 active:bg-blue-700 text-white py-4 rounded-2xl font-semibold flex justify-center items-center gap-2 transition-colors shadow-lg shadow-blue-600/20">
-                    <i class="ph ph-file-pdf text-xl"></i> สร้าง PDF
+                    <i class="ph ph-file-pdf text-xl"></i> แชร์ PDF
                 </button>
             </div>
         </div>
 
     </main>
 
-    <!-- Application Logic -->
     <script>
-        // --- System & State ---
-        let currentStream = null;
-        let videoTrack = null;
-        let isTorchOn = false;
-        
-        // Use higher resolution for iPhone 14 Pro
-        const MAX_IMAGE_SIZE = 2400; 
+        // --- Core Variables ---
+        let currentStream = null, videoTrack = null, isTorchOn = false;
+        const MAX_IMAGE_SIZE = 2400; // Optimal for iPhone 14 Pro
 
-        // Canvas Buffers
         const sourceImageCanvas = document.createElement('canvas'); 
         const croppedImageCanvas = document.createElement('canvas'); 
         const processedImageCanvas = document.createElement('canvas'); 
         
         let cropCorners = [];
         let draggingCornerIndex = -1;
-        let currentFilter = 'bw_sharp'; 
+        let currentFilter = 'shadow_remove'; 
 
-        // DOM Elements
-        const viewCamera = document.getElementById('viewCamera');
-        const viewCrop = document.getElementById('viewCrop');
-        const viewEdit = document.getElementById('viewEdit');
+        // --- DOM Elements ---
+        const views = {
+            camera: document.getElementById('viewCamera'),
+            crop: document.getElementById('viewCrop'),
+            edit: document.getElementById('viewEdit')
+        };
         const loadingScreen = document.getElementById('loadingScreen');
         const loadingText = document.getElementById('loadingText');
-        const btnRestart = document.getElementById('btnRestart');
         
         const cameraFeed = document.getElementById('cameraFeed');
-        const btnCapture = document.getElementById('btnCapture');
-        const fileInput = document.getElementById('fileInput');
-        const btnTorch = document.getElementById('btnTorch');
-        
         const cropCanvas = document.getElementById('cropCanvas');
-        const cropContainer = document.getElementById('cropContainer');
         const magnifier = document.getElementById('magnifier');
-        const btnRetakeCrop = document.getElementById('btnRetakeCrop');
-        const btnAutoCrop = document.getElementById('btnAutoCrop');
-        const btnApplyCrop = document.getElementById('btnApplyCrop');
-        
         const previewCanvas = document.getElementById('previewCanvas');
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const btnSaveImg = document.getElementById('btnSaveImg');
-        const btnSavePdf = document.getElementById('btnSavePdf');
 
-        // --- View Manager ---
-        function showView(view) {
-            [viewCamera, viewCrop, viewEdit].forEach(v => v.classList.add('hidden'));
-            btnRestart.classList.remove('hidden');
+        // --- View Controller ---
+        function showView(viewName) {
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            document.getElementById('btnRestart').classList.remove('hidden');
 
-            if (view === 'camera') {
-                viewCamera.classList.remove('hidden');
-                btnRestart.classList.add('hidden');
+            if (viewName === 'camera') {
+                views.camera.classList.remove('hidden');
+                document.getElementById('btnRestart').classList.add('hidden');
                 startCamera();
-            } else if (view === 'crop') {
-                viewCrop.classList.remove('hidden');
+            } else if (viewName === 'crop') {
+                views.crop.classList.remove('hidden');
                 stopCamera();
                 setupCropView();
-            } else if (view === 'edit') {
-                viewEdit.classList.remove('hidden');
+            } else if (viewName === 'edit') {
+                views.edit.classList.remove('hidden');
                 applyCurrentFilter();
             }
         }
 
         function showLoading(show, text = "กำลังประมวลผล...") {
             loadingText.innerText = text;
-            if(show) loadingScreen.classList.remove('hidden');
-            else loadingScreen.classList.add('hidden');
+            loadingScreen.classList.toggle('hidden', !show);
+            // Force reflow
+            void loadingScreen.offsetWidth;
         }
 
-        // --- Camera & Torch ---
+        // --- Camera & Capture ---
         async function startCamera() {
             try {
                 if (currentStream) stopCamera();
-                // Request high resolution for Pro models
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        facingMode: 'environment', 
-                        width: { ideal: 4032 }, // iPhone 14 Pro max width
-                        height: { ideal: 3024 } 
-                    },
+                    video: { facingMode: 'environment', width: { ideal: 4032 }, height: { ideal: 3024 } },
                     audio: false
                 });
                 cameraFeed.srcObject = stream;
                 currentStream = stream;
                 videoTrack = stream.getVideoTracks()[0];
 
-                // Check Torch Capabilities
                 setTimeout(() => {
                     const capabilities = videoTrack.getCapabilities();
-                    if (capabilities.torch) {
-                        btnTorch.classList.remove('hidden');
-                    } else {
-                        btnTorch.classList.add('hidden');
-                    }
+                    document.getElementById('btnTorch').classList.toggle('hidden', !capabilities.torch);
                 }, 500);
-
             } catch (err) {
-                console.error("Camera error:", err);
-                alert("กรุณาอนุญาตการเข้าถึงกล้อง หรือเลือกรูปภาพจากอัลบั้มแทน");
+                console.warn("Camera fallback:", err);
             }
         }
 
         function stopCamera() {
             if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-                currentStream = null;
-                videoTrack = null;
-                isTorchOn = false;
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null; videoTrack = null; isTorchOn = false;
+                const btnTorch = document.getElementById('btnTorch');
                 btnTorch.innerHTML = '<i class="ph ph-flashlight text-2xl"></i>';
                 btnTorch.classList.remove('bg-white', 'text-black');
             }
         }
 
-        btnTorch.addEventListener('click', async () => {
+        document.getElementById('btnTorch').addEventListener('click', async () => {
             if (!videoTrack) return;
-            try {
-                isTorchOn = !isTorchOn;
-                await videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] });
-                if (isTorchOn) {
-                    btnTorch.classList.add('bg-white', 'text-black');
-                    btnTorch.classList.remove('text-white');
-                } else {
-                    btnTorch.classList.remove('bg-white', 'text-black');
-                    btnTorch.classList.add('text-white');
-                }
-            } catch (err) {
-                console.error("Torch error:", err);
-            }
+            isTorchOn = !isTorchOn;
+            await videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] });
+            const btnTorch = document.getElementById('btnTorch');
+            btnTorch.classList.toggle('bg-white', isTorchOn);
+            btnTorch.classList.toggle('text-black', isTorchOn);
+            btnTorch.classList.toggle('text-white', !isTorchOn);
         });
 
-        // --- Image Capture & Load ---
-        function processImageSource(imageSource, width, height) {
-            const scale = Math.min(1, MAX_IMAGE_SIZE / Math.max(width, height));
-            sourceImageCanvas.width = width * scale;
-            sourceImageCanvas.height = height * scale;
-            const ctx = sourceImageCanvas.getContext('2d');
-            ctx.drawImage(imageSource, 0, 0, sourceImageCanvas.width, sourceImageCanvas.height);
-            
-            showView('crop');
-            showLoading(false);
-        }
-
-        btnCapture.addEventListener('click', () => {
+        document.getElementById('btnCapture').addEventListener('click', () => {
             if (!currentStream) return;
-            showLoading(true, "กำลังจับภาพความละเอียดสูง...");
-            // Slight delay to simulate shutter and allow UI to render loader
+            // Visual feedback
+            const btn = document.getElementById('btnCapture').children[0];
+            btn.style.transform = 'scale(0.8)';
+            setTimeout(() => btn.style.transform = 'scale(1)', 150);
+            
+            showLoading(true, "กำลังวิเคราะห์โครงสร้างภาพ...");
             setTimeout(() => {
-                processImageSource(cameraFeed, cameraFeed.videoWidth, cameraFeed.videoHeight);
+                const w = cameraFeed.videoWidth, h = cameraFeed.videoHeight;
+                const scale = Math.min(1, MAX_IMAGE_SIZE / Math.max(w, h));
+                sourceImageCanvas.width = w * scale; sourceImageCanvas.height = h * scale;
+                sourceImageCanvas.getContext('2d').drawImage(cameraFeed, 0, 0, sourceImageCanvas.width, sourceImageCanvas.height);
+                showView('crop');
             }, 100);
         });
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            if (!e.target.files[0]) return;
             showLoading(true, "กำลังโหลดภาพ...");
             const img = new Image();
-            img.onload = () => processImageSource(img, img.width, img.height);
-            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const scale = Math.min(1, MAX_IMAGE_SIZE / Math.max(img.width, img.height));
+                sourceImageCanvas.width = img.width * scale; sourceImageCanvas.height = img.height * scale;
+                sourceImageCanvas.getContext('2d').drawImage(img, 0, 0, sourceImageCanvas.width, sourceImageCanvas.height);
+                showView('crop');
+            };
+            img.src = URL.createObjectURL(e.target.files[0]);
         });
 
-        btnRestart.addEventListener('click', () => {
-            if (confirm('ทิ้งภาพนี้และกลับไปหน้าถ่ายภาพ?')) showView('camera');
-        });
-        btnRetakeCrop.addEventListener('click', () => showView('camera'));
+        document.getElementById('btnRestart').addEventListener('click', () => showView('camera'));
 
-        // --- Smart Crop & Auto Detect ---
-        function setupCropView() {
-            const cw = cropContainer.clientWidth - 48; 
-            const ch = cropContainer.clientHeight - 48;
-            const imgW = sourceImageCanvas.width;
-            const imgH = sourceImageCanvas.height;
-            const imgRatio = imgW / imgH;
-            const containerRatio = cw / ch;
-
-            let drawW, drawH;
-            if (imgRatio > containerRatio) {
-                drawW = cw; drawH = cw / imgRatio;
-            } else {
-                drawH = ch; drawW = ch * imgRatio;
+        // --- COMPUTER VISION: Smart Edge Detection (Auto-Crop) ---
+        function detectDocumentCorners(source) {
+            // 1. Create a miniaturized version for fast Sobel analysis
+            const THUMB_SIZE = 150;
+            const thumb = document.createElement('canvas');
+            thumb.width = THUMB_SIZE;
+            thumb.height = THUMB_SIZE;
+            const ctx = thumb.getContext('2d', {willReadFrequently: true});
+            ctx.drawImage(source, 0, 0, THUMB_SIZE, THUMB_SIZE);
+            const imgData = ctx.getImageData(0, 0, THUMB_SIZE, THUMB_SIZE);
+            const data = imgData.data;
+            
+            // Grayscale
+            const gray = new Uint8Array(THUMB_SIZE * THUMB_SIZE);
+            for (let i = 0; i < data.length; i += 4) {
+                gray[i/4] = data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114;
             }
 
-            cropCanvas.style.width = drawW + 'px';
-            cropCanvas.style.height = drawH + 'px';
-            cropCanvas.width = imgW; 
-            cropCanvas.height = imgH;
+            // Simple Edge Magnitude detection (Scanning rows and cols)
+            let minX = THUMB_SIZE, maxX = 0, minY = THUMB_SIZE, maxY = 0;
+            const threshold = 30; // Contrast threshold for edge
 
-            // Perform basic Auto-Crop heuristic
-            autoDetectBounds();
-            drawCropInterface();
-        }
+            for (let y = 1; y < THUMB_SIZE - 1; y++) {
+                for (let x = 1; x < THUMB_SIZE - 1; x++) {
+                    const idx = y * THUMB_SIZE + x;
+                    // Fast gradient calculation (Horizontal & Vertical)
+                    const gx = Math.abs(gray[idx + 1] - gray[idx - 1]);
+                    const gy = Math.abs(gray[idx + THUMB_SIZE] - gray[idx - THUMB_SIZE]);
+                    
+                    if (gx + gy > threshold) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
 
-        // Lightweight bounding box detection
-        function autoDetectBounds() {
-            const w = sourceImageCanvas.width;
-            const h = sourceImageCanvas.height;
-            // Default 10% padding if detection fails
-            const padX = w * 0.1;
-            const padY = h * 0.1;
-
-            // Simplified edge detection (scanning for dark/light boundaries)
-            // To keep pure JS fast, we just look for significant variance from edges
-            const ctx = sourceImageCanvas.getContext('2d', {willReadFrequently: true});
-            // Check a smaller center strip to find background color rough estimate
-            // For a robust app without OpenCV, we use a smart default padding 
-            // but shrink it slightly to mimic detection.
+            // Map back to original resolution with slight padding to ensure we don't cut text
+            const scaleX = source.width / THUMB_SIZE;
+            const scaleY = source.height / THUMB_SIZE;
             
-            // Set initial smart corners
-            cropCorners = [
-                { x: padX, y: padY }, 
-                { x: w - padX, y: padY }, 
-                { x: w - padX, y: h - padY }, 
-                { x: padX, y: h - padY }
+            // If detection fails (e.g. blank paper on white desk), fallback to 10% margin
+            if (maxX - minX < 20 || maxY - minY < 20) {
+                const padX = source.width * 0.1, padY = source.height * 0.1;
+                return [
+                    {x: padX, y: padY}, {x: source.width-padX, y: padY},
+                    {x: source.width-padX, y: source.height-padY}, {x: padX, y: source.height-padY}
+                ];
+            }
+
+            // Apply discovered bounding box
+            const pad = 10; // Safety margin
+            minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+            maxX = Math.min(THUMB_SIZE, maxX + pad); maxY = Math.min(THUMB_SIZE, maxY + pad);
+
+            return [
+                {x: minX * scaleX, y: minY * scaleY},
+                {x: maxX * scaleX, y: minY * scaleY},
+                {x: maxX * scaleX, y: maxY * scaleY},
+                {x: minX * scaleX, y: maxY * scaleY}
             ];
         }
 
-        btnAutoCrop.addEventListener('click', () => {
-            // Re-apply default smart padding with a small animation effect
-            autoDetectBounds();
-            drawCropInterface();
-        });
+        function setupCropView() {
+            const container = document.getElementById('cropContainer');
+            const cw = container.clientWidth - 32, ch = container.clientHeight - 32;
+            const imgRatio = sourceImageCanvas.width / sourceImageCanvas.height;
+            const contRatio = cw / ch;
 
+            let drawW = imgRatio > contRatio ? cw : ch * imgRatio;
+            let drawH = imgRatio > contRatio ? cw / imgRatio : ch;
+
+            cropCanvas.style.width = drawW + 'px';
+            cropCanvas.style.height = drawH + 'px';
+            cropCanvas.width = sourceImageCanvas.width; 
+            cropCanvas.height = sourceImageCanvas.height;
+
+            // Execute Auto-Crop Algorithm
+            cropCorners = detectDocumentCorners(sourceImageCanvas);
+            
+            drawCropInterface();
+            showLoading(false);
+        }
+
+        // --- Crop UI & Magnifier ---
         function drawCropInterface() {
             const ctx = cropCanvas.getContext('2d');
-            const w = cropCanvas.width;
-            const h = cropCanvas.height;
+            const w = cropCanvas.width, h = cropCanvas.height;
 
             ctx.clearRect(0, 0, w, h);
             ctx.drawImage(sourceImageCanvas, 0, 0);
 
-            // Overlay
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-            ctx.beginPath();
-            ctx.rect(0, 0, w, h);
-            ctx.closePath();
+            // Darken outside
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.closePath();
             
-            // Cutout
             ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
+            for (let i=1; i<4; i++) ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
             ctx.lineTo(cropCorners[0].x, cropCorners[0].y);
             ctx.fill('evenodd');
 
-            // Lines
+            // Draw Document Area Grid (Like iOS Notes)
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
+            for (let i=1; i<4; i++) ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
+            ctx.closePath();
+            ctx.clip();
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = w * 0.002;
+            // Draw simple internal grid for alignment visual
+            const steps = 3;
+            for(let i=1; i<steps; i++) {
+                // Horizontal-ish
+                const lx = cropCorners[0].x + (cropCorners[3].x - cropCorners[0].x)*(i/steps);
+                const ly = cropCorners[0].y + (cropCorners[3].y - cropCorners[0].y)*(i/steps);
+                const rx = cropCorners[1].x + (cropCorners[2].x - cropCorners[1].x)*(i/steps);
+                const ry = cropCorners[1].y + (cropCorners[2].y - cropCorners[1].y)*(i/steps);
+                ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(rx, ry); ctx.stroke();
+                // Vertical-ish
+                const tx = cropCorners[0].x + (cropCorners[1].x - cropCorners[0].x)*(i/steps);
+                const ty = cropCorners[0].y + (cropCorners[1].y - cropCorners[0].y)*(i/steps);
+                const bx = cropCorners[3].x + (cropCorners[2].x - cropCorners[3].x)*(i/steps);
+                const by = cropCorners[3].y + (cropCorners[2].y - cropCorners[3].y)*(i/steps);
+                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(bx, by); ctx.stroke();
+            }
+            ctx.restore();
+
+            // Border & Handles
             ctx.strokeStyle = '#3b82f6'; 
-            ctx.lineWidth = w * 0.008; 
+            ctx.lineWidth = w * 0.01; 
             ctx.lineJoin = 'round';
             ctx.beginPath();
             ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-            for (let i = 1; i < 4; i++) ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
-            ctx.closePath();
-            ctx.stroke();
+            for (let i=1; i<4; i++) ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
+            ctx.closePath(); ctx.stroke();
 
-            // Handles
-            const handleRadius = w * 0.035; // Larger handle for Pro
-            cropCorners.forEach(point => {
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, handleRadius, 0, Math.PI * 2);
-                ctx.fillStyle = 'white';
-                ctx.fill();
-                ctx.lineWidth = w * 0.01;
-                ctx.strokeStyle = '#3b82f6';
-                ctx.stroke();
+            const radius = w * 0.04;
+            cropCorners.forEach(p => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+                ctx.lineWidth = w * 0.012; ctx.stroke();
             });
         }
 
-        // --- Touch Interactions & Magnifier ---
-        function getEventCoordinate(e) {
+        function getEventPos(e) {
             const rect = cropCanvas.getBoundingClientRect();
-            const scaleX = cropCanvas.width / rect.width;
-            const scaleY = cropCanvas.height / rect.height;
-            let clientX = e.clientX;
-            let clientY = e.clientY;
-            
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY,
-                clientX: clientX,
-                clientY: clientY
-            };
+            const sx = cropCanvas.width / rect.width, sy = cropCanvas.height / rect.height;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: (cx - rect.left)*sx, y: (cy - rect.top)*sy, cx, cy };
         }
 
         function updateMagnifier(pos) {
             if (draggingCornerIndex === -1) return;
-            
             magnifier.style.display = 'block';
-            // Position magnifier above the finger
-            magnifier.style.left = (pos.clientX - 50) + 'px';
-            magnifier.style.top = (pos.clientY - 130) + 'px'; // Offset upwards
+            magnifier.style.left = (pos.cx - 55) + 'px';
+            magnifier.style.top = (pos.cy - 140) + 'px'; // Offset well above finger
 
             const magCtx = magnifier.getContext('2d');
-            magnifier.width = 150;
-            magnifier.height = 150;
+            magnifier.width = 160; magnifier.height = 160;
             
-            // Source coordinates (zoom in 2x)
-            const zoom = 2;
-            const sWidth = magnifier.width / zoom;
-            const sHeight = magnifier.height / zoom;
-            const sx = pos.x - (sWidth / 2);
-            const sy = pos.y - (sHeight / 2);
+            const zoom = 2.5;
+            const sW = magnifier.width / zoom, sH = magnifier.height / zoom;
+            const sx = pos.x - sW/2, sy = pos.y - sH/2;
 
-            magCtx.clearRect(0, 0, magnifier.width, magnifier.height);
-            magCtx.drawImage(sourceImageCanvas, sx, sy, sWidth, sHeight, 0, 0, magnifier.width, magnifier.height);
+            magCtx.clearRect(0,0, magnifier.width, magnifier.height);
+            magCtx.drawImage(sourceImageCanvas, sx, sy, sW, sH, 0, 0, magnifier.width, magnifier.height);
         }
 
-        function handleDragStart(e) {
+        function startDrag(e) {
             e.preventDefault();
-            const pos = getEventCoordinate(e);
-            // Generous touch target
-            const handleRadiusSq = Math.pow(cropCanvas.width * 0.1, 2); 
+            const pos = getEventPos(e);
+            const rSq = Math.pow(cropCanvas.width * 0.12, 2); // Big touch target
             
-            let minDist = Infinity;
-            draggingCornerIndex = -1;
-            
-            cropCorners.forEach((corner, i) => {
-                const distSq = Math.pow(corner.x - pos.x, 2) + Math.pow(corner.y - pos.y, 2);
-                if (distSq < minDist && distSq < handleRadiusSq) {
-                    minDist = distSq;
-                    draggingCornerIndex = i;
-                }
+            let minD = Infinity; draggingCornerIndex = -1;
+            cropCorners.forEach((c, i) => {
+                const d = Math.pow(c.x - pos.x, 2) + Math.pow(c.y - pos.y, 2);
+                if (d < minD && d < rSq) { minD = d; draggingCornerIndex = i; }
             });
-
-            if (draggingCornerIndex !== -1) {
-                updateMagnifier(pos);
-            }
+            if (draggingCornerIndex !== -1) updateMagnifier(pos);
         }
 
-        function handleDragMove(e) {
+        function moveDrag(e) {
             if (draggingCornerIndex === -1) return;
             e.preventDefault();
-            const pos = getEventCoordinate(e);
-            
+            const pos = getEventPos(e);
             pos.x = Math.max(0, Math.min(cropCanvas.width, pos.x));
             pos.y = Math.max(0, Math.min(cropCanvas.height, pos.y));
-            
-            cropCorners[draggingCornerIndex] = { x: pos.x, y: pos.y };
+            cropCorners[draggingCornerIndex] = {x: pos.x, y: pos.y};
             requestAnimationFrame(drawCropInterface);
             updateMagnifier(pos);
         }
 
-        function handleDragEnd() {
-            draggingCornerIndex = -1;
-            magnifier.style.display = 'none';
-        }
+        function endDrag() { draggingCornerIndex = -1; magnifier.style.display = 'none'; }
 
-        cropCanvas.addEventListener('mousedown', handleDragStart);
-        cropCanvas.addEventListener('mousemove', handleDragMove);
-        window.addEventListener('mouseup', handleDragEnd);
-
-        cropCanvas.addEventListener('touchstart', handleDragStart, {passive: false});
-        cropCanvas.addEventListener('touchmove', handleDragMove, {passive: false});
-        window.addEventListener('touchend', handleDragEnd);
+        cropCanvas.addEventListener('mousedown', startDrag);
+        cropCanvas.addEventListener('mousemove', moveDrag);
+        window.addEventListener('mouseup', endDrag);
+        cropCanvas.addEventListener('touchstart', startDrag, {passive: false});
+        cropCanvas.addEventListener('touchmove', moveDrag, {passive: false});
+        window.addEventListener('touchend', endDrag);
 
         // --- Perspective Warp ---
-        btnApplyCrop.addEventListener('click', () => {
-            showLoading(true, "กำลังประมวลผลการจัดทรง...");
-            setTimeout(() => {
-                warpPerspective();
-                showView('edit');
-                showLoading(false);
-            }, 50);
+        document.getElementById('btnApplyCrop').addEventListener('click', () => {
+            showLoading(true, "กำลังดัดหน้ากระดาษ...");
+            setTimeout(() => { warpPerspective(); showView('edit'); }, 50);
         });
 
         function warpPerspective() {
             const [tl, tr, br, bl] = cropCorners;
-            
-            const widthTop = Math.hypot(tr.x - tl.x, tr.y - tl.y);
-            const widthBottom = Math.hypot(br.x - bl.x, br.y - bl.y);
-            const outW = Math.round(Math.max(widthTop, widthBottom));
+            const outW = Math.round(Math.max(Math.hypot(tr.x-tl.x, tr.y-tl.y), Math.hypot(br.x-bl.x, br.y-bl.y)));
+            const outH = Math.round(Math.max(Math.hypot(tl.x-bl.x, tl.y-bl.y), Math.hypot(tr.x-br.x, tr.y-br.y)));
 
-            const heightLeft = Math.hypot(tl.x - bl.x, tl.y - bl.y);
-            const heightRight = Math.hypot(tr.x - br.x, tr.y - br.y);
-            const outH = Math.round(Math.max(heightLeft, heightRight));
-
-            croppedImageCanvas.width = outW;
-            croppedImageCanvas.height = outH;
-            const ctx = croppedImageCanvas.getContext('2d', { willReadFrequently: true });
-            
+            croppedImageCanvas.width = outW; croppedImageCanvas.height = outH;
+            const ctx = croppedImageCanvas.getContext('2d', {willReadFrequently: true});
             const dstData = ctx.createImageData(outW, outH);
             const dstBuf = new Uint32Array(dstData.data.buffer);
             
-            const srcCtx = sourceImageCanvas.getContext('2d', { willReadFrequently: true });
-            const srcW = sourceImageCanvas.width;
-            const srcH = sourceImageCanvas.height;
-            const srcData = srcCtx.getImageData(0, 0, srcW, srcH);
+            const srcCtx = sourceImageCanvas.getContext('2d', {willReadFrequently: true});
+            const srcData = srcCtx.getImageData(0, 0, sourceImageCanvas.width, sourceImageCanvas.height);
             const srcBuf = new Uint32Array(srcData.data.buffer);
+            const srcW = sourceImageCanvas.width;
 
-            // High-quality perspective mapping
             for (let y = 0; y < outH; y++) {
                 const v = y / outH;
-                const leftX = tl.x + (bl.x - tl.x) * v;
-                const leftY = tl.y + (bl.y - tl.y) * v;
-                const rightX = tr.x + (br.x - tr.x) * v;
-                const rightY = tr.y + (br.y - tr.y) * v;
-
+                const lx = tl.x + (bl.x - tl.x)*v, ly = tl.y + (bl.y - tl.y)*v;
+                const rx = tr.x + (br.x - tr.x)*v, ry = tr.y + (br.y - tr.y)*v;
                 for (let x = 0; x < outW; x++) {
                     const u = x / outW;
-                    const srcX = leftX + (rightX - leftX) * u;
-                    const srcY = leftY + (rightY - leftY) * u;
-
-                    const sx = Math.floor(srcX);
-                    const sy = Math.floor(srcY);
-
-                    if (sx >= 0 && sx < srcW && sy >= 0 && sy < srcH) {
-                        dstBuf[y * outW + x] = srcBuf[sy * srcW + sx];
+                    const sx = Math.floor(lx + (rx - lx)*u), sy = Math.floor(ly + (ry - ly)*u);
+                    if (sx >= 0 && sx < srcW && sy >= 0 && sy < sourceImageCanvas.height) {
+                        dstBuf[y*outW + x] = srcBuf[sy*srcW + sx];
                     }
                 }
             }
             ctx.putImageData(dstData, 0, 0);
         }
 
-        // --- Smart Image Filters (Fixing "Too Bright" Issue) ---
-        filterBtns.forEach(btn => {
+        // --- COMPUTER VISION: Illumination Correction (Shadow Removal) ---
+        document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                const currentBtn = e.currentTarget;
-                currentBtn.classList.add('active');
-                
-                currentFilter = currentBtn.dataset.filter;
-                showLoading(true, "กำลังปรับแต่งสี...");
-                setTimeout(() => {
-                    applyCurrentFilter();
-                    showLoading(false);
-                }, 10);
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                const t = e.currentTarget; t.classList.add('active');
+                currentFilter = t.dataset.filter;
+                showLoading(true, "กำลังวิเคราะห์สภาพแสงและลบเงา...");
+                setTimeout(() => { applyCurrentFilter(); showLoading(false); }, 50);
             });
         });
 
         function applyCurrentFilter() {
-            const w = croppedImageCanvas.width;
-            const h = croppedImageCanvas.height;
-            
-            processedImageCanvas.width = w;
-            processedImageCanvas.height = h;
-            const ctx = processedImageCanvas.getContext('2d', { willReadFrequently: true });
+            const w = croppedImageCanvas.width, h = croppedImageCanvas.height;
+            processedImageCanvas.width = w; processedImageCanvas.height = h;
+            const ctx = processedImageCanvas.getContext('2d', {willReadFrequently: true});
             ctx.drawImage(croppedImageCanvas, 0, 0);
             
-            if (currentFilter === 'original') {
-                updatePreview();
-                return;
-            }
+            if (currentFilter === 'original') return updatePreview();
 
             const imgData = ctx.getImageData(0, 0, w, h);
             const data = imgData.data;
 
-            // Pass 1: Find min/max luminance for Adaptive Normalization
-            let minL = 255, maxL = 0;
-            if (currentFilter.startsWith('bw_')) {
+            if (currentFilter === 'shadow_remove') {
+                // THE NATIVE MAGIC: Local Adaptive Normalization (Illumination Correction)
+                
+                // 1. Create a highly blurred "Lighting Map" using Canvas native fast scaling
+                const mapCanvas = document.createElement('canvas');
+                // Scale down massively (acting as a massive box blur)
+                mapCanvas.width = Math.max(10, Math.floor(w / 30)); 
+                mapCanvas.height = Math.max(10, Math.floor(h / 30));
+                const mCtx = mapCanvas.getContext('2d');
+                mCtx.drawImage(croppedImageCanvas, 0, 0, mapCanvas.width, mapCanvas.height);
+                
+                // 2. Scale back up to full size with smoothing (The Lighting/Shadow map)
+                const blurCanvas = document.createElement('canvas');
+                blurCanvas.width = w; blurCanvas.height = h;
+                const bCtx = blurCanvas.getContext('2d', {willReadFrequently: true});
+                bCtx.imageSmoothingEnabled = true;
+                bCtx.imageSmoothingQuality = 'high';
+                bCtx.drawImage(mapCanvas, 0, 0, w, h);
+                const bgData = bCtx.getImageData(0, 0, w, h).data;
+
+                // 3. Divide Original by Lighting Map
                 for (let i = 0; i < data.length; i += 4) {
-                    let luma = data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114;
-                    if (luma < minL) minL = luma;
-                    if (luma > maxL) maxL = luma;
+                    // Original Luma
+                    const luma = data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114;
+                    // Background Luma (Shadow depth)
+                    let bgLuma = bgData[i]*0.299 + bgData[i+1]*0.587 + bgData[i+2]*0.114;
+                    if (bgLuma < 1) bgLuma = 1;
+
+                    // Correction Equation: Removes shadow perfectly
+                    let corrected = (luma / bgLuma) * 255;
+                    
+                    // Contrast Thresholding to make paper pure white, text pure black
+                    if (corrected > 210) corrected = 255; // Pure White Paper
+                    else corrected = Math.max(0, (corrected - 120) * 1.8); // Deep Black Text
+
+                    data[i] = data[i+1] = data[i+2] = corrected;
                 }
-                // Avoid division by zero if image is solid color
-                if (maxL - minL < 10) { minL = 0; maxL = 255; }
+            } 
+            else if (currentFilter === 'magic_color') {
+                // Color scan with slight contrast bump
+                for (let i = 0; i < data.length; i += 4) {
+                    const luma = data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114;
+                    const boost = 1.3;
+                    data[i]   = Math.min(255, Math.max(0, (data[i] - 128)*boost + 128 + 20));
+                    data[i+1] = Math.min(255, Math.max(0, (data[i+1] - 128)*boost + 128 + 20));
+                    data[i+2] = Math.min(255, Math.max(0, (data[i+2] - 128)*boost + 128 + 20));
+                    
+                    // Whiten near-white pixels
+                    if(luma > 180) { data[i]=255; data[i+1]=255; data[i+2]=255; }
+                }
             }
 
-            // Pass 2: Apply Filters
-            for (let i = 0; i < data.length; i += 4) {
-                let r = data[i], g = data[i+1], b = data[i+2];
-
-                if (currentFilter === 'color') {
-                    // Mild contrast & saturation boost (Safe for color docs)
-                    let luma = r*0.299 + g*0.587 + b*0.114;
-                    let cFactor = 1.2;
-                    data[i] = Math.min(255, Math.max(0, (r - 128) * cFactor + 128));
-                    data[i+1] = Math.min(255, Math.max(0, (g - 128) * cFactor + 128));
-                    data[i+2] = Math.min(255, Math.max(0, (b - 128) * cFactor + 128));
-                } 
-                else if (currentFilter === 'bw_soft') {
-                    // Standard Grayscale with Normalization (Very safe, reads everything clearly)
-                    let luma = r*0.299 + g*0.587 + b*0.114;
-                    // Normalize to full 0-255 range based on image content
-                    let normLuma = ((luma - minL) / (maxL - minL)) * 255;
-                    data[i] = data[i+1] = data[i+2] = normLuma;
-                }
-                else if (currentFilter === 'bw_sharp') {
-                    // Sharp B&W for Text (Adaptive, prevents blowing out)
-                    let luma = r*0.299 + g*0.587 + b*0.114;
-                    let normLuma = ((luma - minL) / (maxL - minL)) * 255;
-                    
-                    // Apply S-Curve Contrast (Makes darks darker, lights lighter smoothly)
-                    let contrast = 1.5;
-                    let finalLuma = (normLuma - 128) * contrast + 128;
-                    
-                    // Soft clipping
-                    if (finalLuma > 210) finalLuma = 255; // Whiten paper slightly
-                    else if (finalLuma < 80) finalLuma = Math.max(0, finalLuma - 20); // Darken text
-                    
-                    data[i] = data[i+1] = data[i+2] = finalLuma;
-                }
-            }
-            
             ctx.putImageData(imgData, 0, 0);
             updatePreview();
         }
@@ -727,54 +648,35 @@
         function updatePreview() {
             previewCanvas.width = processedImageCanvas.width;
             previewCanvas.height = processedImageCanvas.height;
-            const ctx = previewCanvas.getContext('2d');
-            ctx.drawImage(processedImageCanvas, 0, 0);
+            previewCanvas.getContext('2d').drawImage(processedImageCanvas, 0, 0);
         }
 
-        // --- Export & Save ---
-        btnSaveImg.addEventListener('click', () => {
-            const dataURL = processedImageCanvas.toDataURL('image/jpeg', 0.95); // High quality
+        // --- Export ---
+        document.getElementById('btnSaveImg').addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = `Scan_${new Date().getTime()}.jpg`;
-            link.href = dataURL;
+            link.download = `Document_${Date.now()}.jpg`;
+            link.href = processedImageCanvas.toDataURL('image/jpeg', 0.95);
             link.click();
         });
 
-        btnSavePdf.addEventListener('click', () => {
-            showLoading(true, "กำลังสร้างไฟล์ PDF A4...");
+        document.getElementById('btnSavePdf').addEventListener('click', () => {
+            showLoading(true, "กำลังบีบอัดและสร้าง PDF...");
             setTimeout(() => {
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                    
-                    const imgData = processedImageCanvas.toDataURL('image/jpeg', 0.9);
-                    const pdfW = pdf.internal.pageSize.getWidth();
-                    const pdfH = pdf.internal.pageSize.getHeight();
-                    const imgRatio = processedImageCanvas.width / processedImageCanvas.height;
-                    
-                    let drawW = pdfW;
-                    let drawH = pdfW / imgRatio;
-                    
-                    if (drawH > pdfH) {
-                        drawH = pdfH; drawW = pdfH * imgRatio;
-                    }
-                    
-                    const x = (pdfW - drawW) / 2;
-                    const y = (pdfH - drawH) / 2;
-
-                    pdf.addImage(imgData, 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
-                    pdf.save(`Scan_Document_${new Date().getTime()}.pdf`);
-                } catch (e) {
-                    console.error(e);
-                    alert("เกิดข้อผิดพลาดในการสร้าง PDF");
-                }
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+                const ratio = processedImageCanvas.width / processedImageCanvas.height;
+                
+                let w = pw, h = pw / ratio;
+                if (h > ph) { h = ph; w = ph * ratio; }
+                
+                pdf.addImage(processedImageCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', (pw-w)/2, (ph-h)/2, w, h, undefined, 'FAST');
+                pdf.save(`Scan_${Date.now()}.pdf`);
                 showLoading(false);
             }, 100);
         });
 
-        // Start
         showView('camera');
-
     </script>
 </body>
 </html>
