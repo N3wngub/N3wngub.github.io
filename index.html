@@ -2,1246 +2,960 @@
 
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>สแกนเนอร์อัจฉริยะ</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        :root {
-            --safe-top: env(safe-area-inset-top, 0px);
-            --safe-bottom: env(safe-area-inset-bottom, 0px);
-            --blue: #3b82f6;
-            --blue-glow: rgba(59,130,246,0.35);
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-            background: #000;
-            color: #fff;
-            overflow: hidden;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-            height: 100dvh;
-        }
-        .glass {
-            background: rgba(18,18,22,0.88);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-top: 1px solid rgba(255,255,255,0.08);
-        }
-        header {
-            padding-top: var(--safe-top);
-            height: calc(3.5rem + var(--safe-top));
-        }
-        .bottom-bar {
-            padding-bottom: max(var(--safe-bottom), 16px);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>สแกนเนอร์อัจฉริยะ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<style>
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: #000; color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+  touch-action: none;
+}
+#app {
+  display: flex; flex-direction: column;
+  width: 100%; height: 100dvh;
+}
+#header {
+  flex-shrink: 0;
+  padding-top: var(--safe-top);
+  background: #000;
+  display: flex; align-items: flex-end;
+  justify-content: space-between;
+  padding-left: 16px; padding-right: 16px;
+  padding-bottom: 10px;
+  height: calc(52px + var(--safe-top));
+  z-index: 20;
+}
+#main { flex: 1; position: relative; overflow: hidden; }
+.view {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+}
+.view.hidden { display: none !important; }
+.glass-bar {
+  flex-shrink: 0;
+  background: rgba(14,14,18,0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: max(var(--safe-bottom), 10px);
+}
+/* Loading */
+#loading {
+  position: absolute; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+}
+#loading.hidden { display: none; }
+.spinner {
+  width: 38px; height: 38px;
+  border: 3px solid rgba(255,255,255,0.08);
+  border-left-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Toast */
+#toast {
+  position: fixed;
+  top: calc(var(--safe-top) + 58px); left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  background: rgba(20,20,26,0.96);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px; padding: 9px 18px;
+  font-size: 13px; white-space: nowrap;
+  z-index: 999; opacity: 0;
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.ok  { border-color: rgba(34,197,94,.4); color: #86efac; }
+#toast.err { border-color: rgba(239,68,68,.4); color: #fca5a5; }
 
-```
-    /* Loading */
-    .loader {
-        width: 44px; height: 44px;
-        border: 3.5px solid rgba(255,255,255,0.08);
-        border-left-color: var(--blue);
-        border-radius: 50%;
-        animation: spin 0.9s cubic-bezier(0.4,0,0.2,1) infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #loadingScreen { transition: opacity 0.2s; }
-    #loadingScreen.fade-out { opacity: 0; pointer-events: none; }
+/* ── CAMERA ── */
+#video { width: 100%; height: 100%; object-fit: cover; display: block; }
+#camGuide {
+position: absolute; inset: 18px;
+border: 1.5px solid rgba(250,204,21,.55);
+border-radius: 14px; pointer-events: none;
+animation: gPulse 2s ease-in-out infinite;
+}
+@keyframes gPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+#torchBtn {
+position: absolute; top: 14px; right: 14px;
+width: 44px; height: 44px; border-radius: 50%;
+background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.2);
+color: #fff; font-size: 20px;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+}
+#torchBtn.on { background:#fff; color:#000; }
+#noCamMsg {
+position: absolute; inset: 0;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+gap: 12px; text-align: center; padding: 40px;
+}
+#camBar {
+display: flex; align-items: center;
+justify-content: space-between;
+padding: 18px 32px;
+}
+#captureBtn {
+width: 76px; height: 76px; border-radius: 50%;
+border: 3px solid #fff; background: transparent;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+box-shadow: 0 0 22px rgba(255,255,255,.12);
+}
+#captureBtn:active { transform: scale(.91); }
+#captureBtn .inner { width: 64px; height: 64px; border-radius: 50%; background: #fff; }
+.side-btn {
+display: flex; flex-direction: column;
+align-items: center; gap: 6px; cursor: pointer; color: #ccc;
+}
+.side-btn:active { transform: scale(.88); }
+.side-btn .ico {
+width: 48px; height: 48px; border-radius: 50%;
+background: rgba(255,255,255,.08);
+border: 1px solid rgba(255,255,255,.12);
+display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.side-btn span { font-size: 11px; }
 
-    /* Camera Guide Pulse */
-    @keyframes pulse-border {
-        0%,100% { opacity: 0.5; }
-        50% { opacity: 1; }
-    }
-    #cameraGuide { animation: pulse-border 2s ease-in-out infinite; }
+/* ── CROP ── */
+#cropArea {
+flex: 1; position: relative; overflow: hidden;
+display: flex; align-items: center; justify-content: center;
+padding: 14px; min-height: 0; background: #0a0a0c;
+}
+#cropWrap { position: relative; display: inline-block; line-height: 0; }
+#cropCanvas { display: block; border-radius: 8px; max-width: 100%; }
+/* SVG overlay — same CSS size as canvas via width/height 100% */
+#handleSvg {
+position: absolute; top: 0; left: 0;
+width: 100%; height: 100%;
+overflow: visible; pointer-events: none;
+}
+.hc { cursor: grab; pointer-events: all; }
+.hc:active { cursor: grabbing; }
+/* Magnifier */
+#mag {
+position: absolute;
+width: 110px; height: 110px; border-radius: 50%;
+border: 2.5px solid #3b82f6;
+box-shadow: 0 8px 24px rgba(0,0,0,.9);
+overflow: hidden; pointer-events: none;
+display: none; z-index: 30;
+}
+#magCanvas { width: 110px; height: 110px; display: block; }
+#magCross {
+position: absolute; inset: 0; pointer-events: none;
+background:
+linear-gradient(90deg,transparent 48.5%,rgba(59,130,246,.8) 49%,rgba(59,130,246,.8) 51%,transparent 51.5%),
+linear-gradient(0deg, transparent 48.5%,rgba(59,130,246,.8) 49%,rgba(59,130,246,.8) 51%,transparent 51.5%);
+}
+#cropBar {
+display: flex; align-items: center;
+padding: 12px 14px; gap: 10px;
+}
+.icon-btn {
+flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
+background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+color: #ccc; font-size: 20px;
+display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.icon-btn:active { transform: scale(.88); }
+#applyBtn {
+flex: 1; background: #3b82f6; border-radius: 16px; padding: 14px;
+font-size: 15px; font-weight: 600; color: #fff; border: none; cursor: pointer;
+display: flex; align-items: center; justify-content: center; gap: 8px;
+box-shadow: 0 4px 16px rgba(59,130,246,.3);
+}
+#applyBtn:active { background: #2563eb; }
 
-    /* Filter Buttons */
-    .filter-btn .icon-box { transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
-    .filter-btn.active .icon-box {
-        background: var(--blue);
-        border-color: rgba(96,165,250,0.6);
-        color: #fff;
-        transform: scale(1.12);
-        box-shadow: 0 0 18px var(--blue-glow);
-    }
-    .filter-btn.active span { color: #60a5fa; font-weight: 600; }
-    .filter-btn:active .icon-box { transform: scale(0.92); }
-
-    /* Magnifier */
-    #magnifier {
-        position: absolute;
-        width: 120px; height: 120px;
-        border-radius: 50%;
-        border: 3px solid var(--blue);
-        box-shadow: 0 12px 32px rgba(0,0,0,0.95), 0 0 0 1px rgba(59,130,246,0.3);
-        pointer-events: none;
-        display: none;
-        z-index: 50;
-        overflow: hidden;
-    }
-    #magnifier canvas {
-        width: 100%; height: 100%;
-        display: block;
-        border-radius: 50%;
-    }
-    /* Crosshair overlay on magnifier */
-    #magnifier::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background:
-            linear-gradient(to right, transparent 49%, rgba(59,130,246,0.8) 49%, rgba(59,130,246,0.8) 51%, transparent 51%),
-            linear-gradient(to bottom, transparent 49%, rgba(59,130,246,0.8) 49%, rgba(59,130,246,0.8) 51%, transparent 51%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    /* Toast */
-    #toast {
-        position: fixed; top: calc(var(--safe-top) + 60px); left: 50%; transform: translateX(-50%) translateY(-20px);
-        background: rgba(30,30,36,0.95); border: 1px solid rgba(255,255,255,0.1);
-        backdrop-filter: blur(16px); border-radius: 99px;
-        padding: 10px 20px; white-space: nowrap;
-        font-size: 13px; font-weight: 500; color: #e2e8f0;
-        z-index: 9999; opacity: 0; pointer-events: none;
-        transition: opacity 0.25s, transform 0.25s;
-    }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    #toast.error { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
-    #toast.success { border-color: rgba(34,197,94,0.4); color: #86efac; }
-
-    /* Thumbnail strip */
-    .thumb-item { flex-shrink: 0; position: relative; }
-    .thumb-item .del-btn {
-        position: absolute; top: -6px; right: -6px;
-        width: 20px; height: 20px; border-radius: 50%;
-        background: #ef4444; border: 2px solid #000;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 10px; cursor: pointer; z-index: 5;
-        transition: transform 0.15s;
-    }
-    .thumb-item .del-btn:active { transform: scale(0.85); }
-
-    /* Capture button */
-    #captureRing {
-        transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s;
-    }
-    #captureRing:active { transform: scale(0.93); }
-
-    /* Smooth view transitions */
-    .view { transition: opacity 0.25s, transform 0.25s; }
-    .view.entering { animation: viewIn 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
-    @keyframes viewIn { from { opacity:0; transform: scale(0.98); } to { opacity:1; transform: scale(1); } }
-
-    /* Progress bar for PDF */
-    #pdfProgress { transition: width 0.3s ease; }
-
-    /* Rotation buttons */
-    .rotate-btn { transition: transform 0.15s; }
-    .rotate-btn:active { transform: scale(0.88); }
-
-    canvas { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }
+/* ── EDIT ── */
+#editInner {
+flex: 1; display: flex; flex-direction: column;
+padding: 12px; gap: 10px; min-height: 0;
+padding-bottom: 128px;
+}
+#prevWrap {
+flex: 1; min-height: 0;
+background: rgba(0,0,0,.4); border-radius: 16px;
+border: 1px solid rgba(255,255,255,.06);
+display: flex; align-items: center; justify-content: center;
+overflow: hidden; position: relative;
+}
+#previewCanvas { max-width: 100%; max-height: 100%; display: block; border-radius: 6px; }
+#pgBadge {
+position: absolute; top: 10px; right: 10px;
+background: rgba(0,0,0,.6); backdrop-filter: blur(6px);
+color: #aaa; font-size: 11px;
+padding: 4px 10px; border-radius: 99px;
+border: 1px solid rgba(255,255,255,.1);
+}
+#thumbStrip {
+flex-shrink: 0; height: 66px;
+display: none; align-items: center; gap: 8px;
+overflow-x: auto; padding: 0 2px;
+scrollbar-width: none;
+}
+#thumbStrip::-webkit-scrollbar { display: none; }
+.twrap { position: relative; display: inline-block; flex-shrink: 0; }
+.tdel {
+position: absolute; top: -6px; right: -6px;
+width: 18px; height: 18px; border-radius: 50%;
+background: #ef4444; border: 1.5px solid #000;
+color: #fff; font-size: 9px; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+}
+#filterRow {
+flex-shrink: 0; height: 82px;
+display: flex; align-items: center; justify-content: center;
+gap: 10px; overflow-x: auto; padding: 0 6px;
+scrollbar-width: none;
+}
+#filterRow::-webkit-scrollbar { display: none; }
+.fbtn {
+flex-shrink: 0; display: flex; flex-direction: column;
+align-items: center; gap: 5px; cursor: pointer;
+}
+.fbtn .fi {
+width: 48px; height: 48px; border-radius: 50%;
+background: rgba(255,255,255,.07); border: 2px solid transparent;
+display: flex; align-items: center; justify-content: center;
+font-size: 20px; color: #999;
+transition: all .18s;
+}
+.fbtn.active .fi {
+background: #3b82f6; border-color: #60a5fa; color: #fff;
+box-shadow: 0 0 14px rgba(59,130,246,.5); transform: scale(1.1);
+}
+.fbtn span { font-size: 10px; color: #777; white-space: nowrap; }
+.fbtn.active span { color: #60a5fa; font-weight: 600; }
+#editBar {
+position: absolute; bottom: 0; left: 0; right: 0;
+display: flex; align-items: center;
+padding: 10px 12px; gap: 9px;
+}
+.ebtn {
+flex: 1; border-radius: 14px; padding: 13px 8px;
+font-size: 14px; font-weight: 600; color: #fff; border: none; cursor: pointer;
+display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.ebtn:active { opacity: .72; }
+#addPgBtn {
+flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px;
+background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+color: #ccc; font-size: 22px;
+display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+#addPgBtn:active { transform: scale(.88); }
 </style>
-```
 
 </head>
-<body class="w-screen flex flex-col relative" style="height:100dvh">
-
-<!-- Toast -->
-
-<div id="toast"></div>
-
-<!-- Header -->
-
-<header class="flex items-end justify-between px-5 pb-3 bg-black z-20 shrink-0">
-    <div class="flex items-center gap-2.5">
-        <div class="bg-blue-600 p-1.5 rounded-xl shadow-lg shadow-blue-600/30">
-            <i class="ph ph-scan text-white text-lg"></i>
-        </div>
-        <h1 class="text-[16px] font-semibold tracking-wide">สแกนเนอร์อัจฉริยะ</h1>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div id="header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="background:#3b82f6;padding:6px;border-radius:10px;line-height:0">
+        <i class="ph-bold ph-scan" style="font-size:18px;color:#fff"></i>
+      </div>
+      <span style="font-size:16px;font-weight:600">สแกนเนอร์อัจฉริยะ</span>
     </div>
-    <div class="flex items-center gap-2">
-        <span id="pageCounter" class="hidden text-xs text-gray-400 bg-white/8 px-2.5 py-1 rounded-full border border-white/10"></span>
-        <button id="btnRestart" class="hidden text-gray-300 hover:text-white">
-            <span class="text-sm font-medium bg-white/10 px-3 py-1.5 rounded-full">ถ่ายใหม่</span>
-        </button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="pgCount" style="display:none;font-size:12px;color:#888;background:rgba(255,255,255,.07);padding:4px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1)"></span>
+      <button id="restartBtn" onclick="doRestart()" style="display:none;font-size:13px;color:#ccc;background:rgba(255,255,255,.08);border:none;padding:6px 14px;border-radius:99px;cursor:pointer">ถ่ายใหม่</button>
     </div>
-</header>
-
-<!-- Loading -->
-
-<div id="loadingScreen" class="hidden absolute inset-0 bg-black/75 z-[100] flex flex-col items-center justify-center backdrop-blur-sm">
-    <div class="loader mb-4"></div>
-    <p class="text-white font-medium text-sm tracking-wide" id="loadingText">กำลังประมวลผล...</p>
-    <div id="pdfProgressBar" class="hidden mt-4 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-        <div id="pdfProgress" class="h-full bg-blue-500 rounded-full w-0"></div>
+  </div>
+  <!-- Main -->
+  <div id="main">
+    <!-- Loading -->
+    <div id="loading" class="hidden">
+      <div class="spinner"></div>
+      <span id="ldTxt" style="font-size:14px;color:#ddd">กำลังประมวลผล...</span>
     </div>
-</div>
-
-<!-- Main -->
-
-<main class="flex-1 relative overflow-hidden flex flex-col bg-black min-h-0">
+    <div id="toast"></div>
 
 ```
-<!-- ── STEP 1: CAMERA ── -->
-<div id="viewCamera" class="view absolute inset-0 flex flex-col">
-    <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
-        <video id="cameraFeed" autoplay playsinline muted class="w-full h-full object-cover"></video>
-
-        <!-- Guide frame -->
-        <div id="cameraGuide" class="absolute inset-5 sm:inset-10 border-[1.5px] border-yellow-400/60 rounded-2xl pointer-events-none flex flex-col items-center justify-between py-8">
-            <div class="flex gap-2">
-                <div class="w-6 h-0.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-                <div class="w-16 h-0.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-                <div class="w-6 h-0.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-            </div>
-            <p class="text-white text-[13px] bg-black/55 px-4 py-2 rounded-full border border-white/10 shadow-lg">
-                วางเอกสารให้ขนานในกรอบ
-            </p>
-            <div class="flex gap-2">
-                <div class="w-6 h-0.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-                <div class="w-16 h-0.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-                <div class="w-6 h-0.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
-            </div>
-        </div>
-
-        <!-- Torch -->
-        <button id="btnTorch" class="hidden absolute top-4 right-4 w-11 h-11 rounded-full bg-black/45 backdrop-blur-lg flex items-center justify-center text-white border border-white/20 active:scale-90 transition-transform">
-            <i class="ph ph-flashlight text-xl"></i>
-        </button>
-
-        <!-- No camera fallback -->
-        <div id="noCameraMsg" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-8">
-            <i class="ph ph-camera-slash text-5xl text-gray-500"></i>
-            <p class="text-gray-300 text-sm leading-relaxed">ไม่พบกล้อง หรือถูกปฏิเสธการเข้าถึง<br><span class="text-gray-500 text-xs">กรุณาอนุญาตการเข้าถึงกล้องในการตั้งค่าเบราว์เซอร์</span></p>
-            <button id="btnRetryCamera" class="mt-2 text-blue-400 text-sm bg-blue-500/10 border border-blue-500/30 px-5 py-2 rounded-full">ลองใหม่</button>
-        </div>
+<!-- VIEW: CAMERA -->
+<div id="viewCamera" class="view">
+  <div style="flex:1;position:relative;overflow:hidden">
+    <video id="video" autoplay playsinline muted></video>
+    <div id="camGuide"></div>
+    <button id="torchBtn" class="hidden" onclick="toggleTorch()">
+      <i class="ph-bold ph-flashlight"></i>
+    </button>
+    <div id="noCamMsg" style="display:none">
+      <i class="ph-bold ph-camera-slash" style="font-size:48px;color:#555"></i>
+      <p style="font-size:14px;color:#aaa;line-height:1.6">ไม่พบกล้อง หรือถูกปฏิเสธ<br><span style="font-size:12px;color:#666">กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์</span></p>
+      <button onclick="retryCamera()" style="margin-top:6px;color:#60a5fa;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);padding:8px 20px;border-radius:99px;font-size:13px;cursor:pointer">ลองใหม่</button>
     </div>
-
-    <!-- Bottom Bar -->
-    <div class="glass bottom-bar flex items-center justify-between px-8 pt-5 pb-2 shrink-0">
-        <!-- Gallery -->
-        <label class="flex flex-col items-center justify-center cursor-pointer text-gray-300 active:scale-90 transition-transform">
-            <div class="w-12 h-12 rounded-full bg-gray-800/80 flex items-center justify-center mb-1.5 border border-white/10">
-                <i class="ph ph-image text-2xl"></i>
-            </div>
-            <span class="text-[11px] font-medium">รูปภาพ</span>
-            <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
-        </label>
-
-        <!-- Capture -->
-        <button id="captureRing" class="w-[80px] h-[80px] rounded-full border-[3px] border-white flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] active:shadow-none">
-            <div class="w-[68px] h-[68px] rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.3)]"></div>
-        </button>
-
-        <!-- Spacer -->
-        <div class="w-12 h-12"></div>
+  </div>
+  <div class="glass-bar">
+    <div id="camBar">
+      <label class="side-btn" style="cursor:pointer">
+        <div class="ico"><i class="ph-bold ph-image"></i></div>
+        <span>รูปภาพ</span>
+        <input id="fileInput" type="file" accept="image/*" multiple style="display:none" onchange="onFile(event)">
+      </label>
+      <button id="captureBtn" onclick="doCapture()"><div class="inner"></div></button>
+      <div style="width:48px"></div>
     </div>
+  </div>
 </div>
 
-<!-- ── STEP 2: CROP ── -->
-<div id="viewCrop" class="view hidden absolute inset-0 flex flex-col bg-[#09090b]">
-    <div class="px-4 py-2.5 text-center text-[13px] text-gray-400 bg-black/70 border-b border-white/5 flex items-center justify-center gap-2 shrink-0">
-        <i class="ph ph-corners-out text-blue-400 text-base"></i>
-        ลากจุดสีขาวเพื่อปรับขอบเขตเอกสาร
+<!-- VIEW: CROP -->
+<div id="viewCrop" class="view hidden">
+  <div style="padding:10px 16px;text-align:center;font-size:13px;color:#888;background:rgba(0,0,0,.55);border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:6px">
+    <i class="ph-bold ph-corners-out" style="color:#3b82f6"></i>
+    ลากจุดมุมเพื่อปรับขอบเขตเอกสาร
+  </div>
+  <div id="cropArea">
+    <div id="cropWrap">
+      <canvas id="cropCanvas"></canvas>
+      <svg id="handleSvg" xmlns="http://www.w3.org/2000/svg">
+        <polygon id="selPoly" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>
+        <circle id="h0" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
+        <circle id="h1" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
+        <circle id="h2" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
+        <circle id="h3" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
+      </svg>
+      <div id="mag">
+        <canvas id="magCanvas" width="110" height="110"></canvas>
+        <div id="magCross"></div>
+      </div>
     </div>
-
-    <div id="cropContainer" class="flex-1 relative flex items-center justify-center overflow-hidden p-4 min-h-0">
-        <div id="cropWrapper" class="relative inline-block">
-            <canvas id="cropCanvas" class="block rounded-xl shadow-2xl cursor-crosshair"></canvas>
-            <div id="magnifier"><canvas id="magCanvas" width="120" height="120"></canvas></div>
-        </div>
+  </div>
+  <div class="glass-bar">
+    <div id="cropBar">
+      <button class="icon-btn" onclick="rotateSrc(-90)"><i class="ph-bold ph-arrow-counter-clockwise"></i></button>
+      <button id="applyBtn" onclick="doApply()">จัดหน้าเอกสาร <i class="ph-bold ph-arrow-right"></i></button>
+      <button class="icon-btn" onclick="rotateSrc(90)"><i class="ph-bold ph-arrow-clockwise"></i></button>
     </div>
-
-    <div class="glass bottom-bar shrink-0 flex items-center px-5 pt-4 pb-2 gap-3">
-        <!-- Rotate Left -->
-        <button id="btnRotateCCW" class="rotate-btn w-12 h-12 rounded-full bg-gray-800/70 border border-white/10 flex items-center justify-center text-gray-300 shrink-0">
-            <i class="ph ph-arrow-counter-clockwise text-xl"></i>
-        </button>
-        <button id="btnApplyCrop" class="flex-1 bg-blue-600 active:bg-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-colors">
-            จัดหน้าเอกสาร <i class="ph ph-arrow-right-bold"></i>
-        </button>
-        <!-- Rotate Right -->
-        <button id="btnRotateCW" class="rotate-btn w-12 h-12 rounded-full bg-gray-800/70 border border-white/10 flex items-center justify-center text-gray-300 shrink-0">
-            <i class="ph ph-arrow-clockwise text-xl"></i>
-        </button>
-    </div>
+  </div>
 </div>
 
-<!-- ── STEP 3: EDIT & EXPORT ── -->
-<div id="viewEdit" class="view hidden absolute inset-0 flex flex-col bg-[#09090b]">
-    <div class="flex-1 flex flex-col p-3 gap-3 overflow-hidden min-h-0" style="padding-bottom: 140px">
-        <!-- Preview -->
-        <div class="flex-1 min-h-0 bg-black/40 rounded-2xl flex items-center justify-center p-2 border border-white/5 overflow-hidden relative">
-            <canvas id="previewCanvas" class="max-w-full max-h-full object-contain drop-shadow-2xl rounded-lg"></canvas>
-            <!-- Badge: page index -->
-            <div id="editPageBadge" class="hidden absolute top-3 right-3 bg-black/60 backdrop-blur text-xs text-gray-300 px-2.5 py-1 rounded-full border border-white/10"></div>
-        </div>
-
-        <!-- Page thumbnails (multi-page) -->
-        <div id="thumbStrip" class="hidden h-[72px] flex items-center gap-2 overflow-x-auto px-1 shrink-0">
-            <!-- filled by JS -->
-        </div>
-
-        <!-- Filters -->
-        <div class="h-[88px] flex items-center justify-center gap-3 sm:gap-5 overflow-x-auto px-2 shrink-0">
-            <button class="filter-btn flex flex-col items-center gap-1.5" data-filter="original">
-                <div class="icon-box w-[48px] h-[48px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                    <i class="ph ph-image text-xl"></i>
-                </div>
-                <span class="text-[10px] text-gray-400 whitespace-nowrap">ต้นฉบับ</span>
-            </button>
-            <button class="filter-btn flex flex-col items-center gap-1.5" data-filter="magic_color">
-                <div class="icon-box w-[48px] h-[48px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                    <i class="ph ph-magic-wand text-xl"></i>
-                </div>
-                <span class="text-[10px] text-gray-400 whitespace-nowrap">สีคมชัด</span>
-            </button>
-            <button class="filter-btn active flex flex-col items-center gap-1.5" data-filter="shadow_remove">
-                <div class="icon-box w-[48px] h-[48px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                    <i class="ph ph-file-text text-xl"></i>
-                </div>
-                <span class="text-[10px] text-gray-400 whitespace-nowrap">ลบเงา</span>
-            </button>
-            <button class="filter-btn flex flex-col items-center gap-1.5" data-filter="bw">
-                <div class="icon-box w-[48px] h-[48px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                    <i class="ph ph-circle-half text-xl"></i>
-                </div>
-                <span class="text-[10px] text-gray-400 whitespace-nowrap">ขาวดำ</span>
-            </button>
-            <button class="filter-btn flex flex-col items-center gap-1.5" data-filter="enhance">
-                <div class="icon-box w-[48px] h-[48px] rounded-full bg-gray-800 flex items-center justify-center border-2 border-transparent text-gray-400">
-                    <i class="ph ph-sparkle text-xl"></i>
-                </div>
-                <span class="text-[10px] text-gray-400 whitespace-nowrap">เพิ่มความชัด</span>
-            </button>
-        </div>
+<!-- VIEW: EDIT -->
+<div id="viewEdit" class="view hidden">
+  <div id="editInner">
+    <div id="prevWrap">
+      <canvas id="previewCanvas"></canvas>
+      <div id="pgBadge" style="display:none"></div>
     </div>
-
-    <!-- Bottom actions -->
-    <div class="absolute bottom-0 left-0 right-0 glass bottom-bar flex items-center px-4 pt-3 pb-1 z-10 gap-2.5">
-        <button id="btnAddPage" class="w-12 h-12 rounded-xl bg-gray-800/70 border border-white/10 flex items-center justify-center text-gray-300 shrink-0 active:scale-90 transition-transform" title="เพิ่มหน้า">
-            <i class="ph ph-plus text-xl"></i>
-        </button>
-        <button id="btnSaveImg" class="flex-1 bg-gray-800/80 active:bg-gray-700 text-white py-3.5 rounded-2xl font-semibold flex justify-center items-center gap-2 transition-colors border border-gray-600/50 text-sm">
-            <i class="ph ph-download-simple text-lg"></i> เซฟรูป
-        </button>
-        <button id="btnSavePdf" class="flex-1 bg-blue-600 active:bg-blue-700 text-white py-3.5 rounded-2xl font-semibold flex justify-center items-center gap-2 transition-colors shadow-lg shadow-blue-600/20 text-sm">
-            <i class="ph ph-file-pdf text-lg"></i> บันทึก PDF
-        </button>
+    <div id="thumbStrip"></div>
+    <div id="filterRow">
+      <div class="fbtn" data-f="original" onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-image"></i></div><span>ต้นฉบับ</span></div>
+      <div class="fbtn" data-f="color"    onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-magic-wand"></i></div><span>สีคมชัด</span></div>
+      <div class="fbtn active" data-f="shadow" onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-file-text"></i></div><span>ลบเงา</span></div>
+      <div class="fbtn" data-f="bw"       onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-circle-half"></i></div><span>ขาวดำ</span></div>
+      <div class="fbtn" data-f="enhance"  onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-sparkle"></i></div><span>เพิ่มความชัด</span></div>
     </div>
+  </div>
+  <div class="glass-bar" id="editBar">
+    <button id="addPgBtn" onclick="showView('camera')"><i class="ph-bold ph-plus"></i></button>
+    <button class="ebtn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)" onclick="saveImg()"><i class="ph-bold ph-download-simple"></i> เซฟรูป</button>
+    <button class="ebtn" style="background:#3b82f6;box-shadow:0 4px 14px rgba(59,130,246,.3)" onclick="savePdf()"><i class="ph-bold ph-file-pdf"></i> บันทึก PDF</button>
+  </div>
 </div>
 ```
 
-</main>
+  </div>
+</div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  CONSTANTS & STATE
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
 const MAX_DIM = 2400;
-
-// Per-page data
-let pages = [];         // { sourceCanvas, croppedCanvas, processedCanvas, filter, rotation }
-let activePage = 0;     // index into pages[]
-let editingPageForCrop = -1; // which page we're cropping (-1 = new page)
-
-// Crop state
-let cropCorners = [];
-let draggingIdx = -1;
-
+let pages = [];       // { src, cropped, processed, filter }
+let activePg = 0;
+// corners: 4 points in SOURCE canvas pixels [TL, TR, BR, BL]
+let corners = [];
 // Camera
-let currentStream = null, videoTrack = null, isTorchOn = false;
-let cameraActive = false;
+let camStream = null, vTrack = null, torchOn = false;
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  UTILS
-// ═══════════════════════════════════════════════════
-function makeCanvas(w, h) {
-    const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    return c;
+// ═══════════════════════════════════════
+const mkC = (w,h) => { const c=document.createElement('canvas'); c.width=w; c.height=h; return c; };
+const ctx  = c => c.getContext('2d', {willReadFrequently:true});
+const freeC= c => { if(c){c.width=0;c.height=0;} };
+const lerp = (a,b,t) => a+(b-a)*t;
+const clamp= v => Math.max(0,Math.min(255,Math.round(v)));
+
+let _tt;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show'+(type?' '+type:'');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.className='',2800);
+}
+function setLoad(show, txt='กำลังประมวลผล...'){
+  document.getElementById('ldTxt').textContent=txt;
+  document.getElementById('loading').classList.toggle('hidden',!show);
 }
 
-function freeCanvas(c) {
-    if (!c) return;
-    c.width = 0; c.height = 0;
-}
-
-function getCtx(c, opts = {}) {
-    return c.getContext('2d', { willReadFrequently: true, ...opts });
-}
-
-let toastTimer = null;
-function showToast(msg, type = '') {
-    const el = document.getElementById('toast');
-    el.className = 'show' + (type ? ' ' + type : '');
-    el.textContent = msg;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.className = ''; }, 2800);
-}
-
-function showLoading(show, text = 'กำลังประมวลผล...', progress = -1) {
-    const el = document.getElementById('loadingScreen');
-    const bar = document.getElementById('pdfProgressBar');
-    document.getElementById('loadingText').textContent = text;
-    if (show) {
-        el.classList.remove('hidden', 'fade-out');
-        if (progress >= 0) {
-            bar.classList.remove('hidden');
-            document.getElementById('pdfProgress').style.width = progress + '%';
-        } else {
-            bar.classList.add('hidden');
-        }
-    } else {
-        el.classList.add('fade-out');
-        setTimeout(() => el.classList.add('hidden'), 220);
-    }
-}
-
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  VIEW CONTROLLER
-// ═══════════════════════════════════════════════════
-const viewIds = ['viewCamera', 'viewCrop', 'viewEdit'];
-function showView(name) {
-    viewIds.forEach(id => {
-        const el = document.getElementById(id);
-        el.classList.add('hidden');
-        el.classList.remove('entering');
-    });
-    const target = document.getElementById('view' + name.charAt(0).toUpperCase() + name.slice(1));
-    target.classList.remove('hidden');
-    requestAnimationFrame(() => target.classList.add('entering'));
-
-    const btnRestart = document.getElementById('btnRestart');
-    btnRestart.classList.toggle('hidden', name === 'camera');
-
-    if (name === 'camera') {
-        startCamera();
-        updatePageCounter();
-    } else if (name === 'crop') {
-        stopCamera();
-        setupCropView();
-    } else if (name === 'edit') {
-        renderEditView();
-    }
+// ═══════════════════════════════════════
+function showView(name){
+  ['Camera','Crop','Edit'].forEach(n=>
+    document.getElementById('view'+n).classList.toggle('hidden', n.toLowerCase()!==name)
+  );
+  document.getElementById('restartBtn').style.display = name==='camera'?'none':'';
+  updatePgCount();
+  if(name==='camera') startCam();
+  else                stopCam();
+  if(name==='crop')   setupCrop();
+  if(name==='edit')   renderEdit();
+}
+function doRestart(){
+  pages.forEach(p=>{freeC(p.src);freeC(p.cropped);freeC(p.processed);});
+  pages=[]; activePg=0; showView('camera');
+}
+function updatePgCount(){
+  const el=document.getElementById('pgCount');
+  if(pages.length>1){el.textContent=pages.length+' หน้า';el.style.display='';}
+  else el.style.display='none';
 }
 
-function updatePageCounter() {
-    const el = document.getElementById('pageCounter');
-    if (pages.length > 0) {
-        el.textContent = `${pages.length} หน้า`;
-        el.classList.remove('hidden');
-    } else {
-        el.classList.add('hidden');
-    }
-}
-
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  CAMERA
-// ═══════════════════════════════════════════════════
-async function startCamera() {
-    if (cameraActive) return;
-    const feed = document.getElementById('cameraFeed');
-    const noMsg = document.getElementById('noCameraMsg');
-
-    const constraints = [
-        { video: { facingMode: 'environment', width: { ideal: 4032 }, height: { ideal: 3024 } }, audio: false },
-        { video: { facingMode: 'environment' }, audio: false },
-        { video: true, audio: false }
-    ];
-
-    for (const c of constraints) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(c);
-            feed.srcObject = stream;
-            currentStream = stream;
-            videoTrack = stream.getVideoTracks()[0];
-            cameraActive = true;
-            noMsg.classList.add('hidden');
-            feed.classList.remove('hidden');
-
-            setTimeout(() => {
-                try {
-                    const caps = videoTrack.getCapabilities?.() || {};
-                    document.getElementById('btnTorch').classList.toggle('hidden', !caps.torch);
-                } catch (_) {}
-            }, 600);
-            return;
-        } catch (err) {
-            console.warn('Camera attempt failed:', err);
-        }
-    }
-
-    // All attempts failed
-    noMsg.classList.remove('hidden');
-    feed.classList.add('hidden');
-    showToast('ไม่สามารถเข้าถึงกล้องได้', 'error');
+// ═══════════════════════════════════════
+async function startCam(){
+  if(camStream) return;
+  const vid=document.getElementById('video');
+  const noCam=document.getElementById('noCamMsg');
+  const tries=[
+    {video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}}},
+    {video:{facingMode:'environment'}},
+    {video:true}
+  ];
+  for(const c of tries){
+    try{
+      camStream=await navigator.mediaDevices.getUserMedia(c);
+      vid.srcObject=camStream;
+      vTrack=camStream.getVideoTracks()[0];
+      noCam.style.display='none'; vid.style.display='block';
+      setTimeout(()=>{
+        try{ const caps=vTrack.getCapabilities?.()??{};
+          document.getElementById('torchBtn').classList.toggle('hidden',!caps.torch);
+        }catch(_){}
+      },500);
+      return;
+    }catch(_){}
+  }
+  noCam.style.display='flex'; vid.style.display='none';
+}
+function stopCam(){
+  if(!camStream)return;
+  camStream.getTracks().forEach(t=>t.stop());
+  camStream=null; vTrack=null; torchOn=false;
+  document.getElementById('torchBtn').className='hidden';
+}
+function retryCamera(){ document.getElementById('noCamMsg').style.display='none'; startCam(); }
+async function toggleTorch(){
+  if(!vTrack)return;
+  torchOn=!torchOn;
+  try{ await vTrack.applyConstraints({advanced:[{torch:torchOn}]});
+    document.getElementById('torchBtn').classList.toggle('on',torchOn);
+  }catch(_){toast('กล้องนี้ไม่รองรับไฟฉาย','err');torchOn=false;}
 }
 
-function stopCamera() {
-    if (currentStream) {
-        currentStream.getTracks().forEach(t => t.stop());
-        currentStream = null; videoTrack = null; isTorchOn = false; cameraActive = false;
-        const btn = document.getElementById('btnTorch');
-        btn.innerHTML = '<i class="ph ph-flashlight text-xl"></i>';
-        btn.classList.remove('bg-white', 'text-black');
-        btn.classList.add('text-white');
-    }
-}
-
-document.getElementById('btnRetryCamera').addEventListener('click', () => {
-    document.getElementById('noCameraMsg').classList.add('hidden');
-    startCamera();
-});
-
-document.getElementById('btnTorch').addEventListener('click', async () => {
-    if (!videoTrack) return;
-    isTorchOn = !isTorchOn;
-    try {
-        await videoTrack.applyConstraints({ advanced: [{ torch: isTorchOn }] });
-        const btn = document.getElementById('btnTorch');
-        btn.classList.toggle('bg-white', isTorchOn);
-        btn.classList.toggle('text-black', isTorchOn);
-        btn.classList.toggle('text-white', !isTorchOn);
-    } catch (_) {
-        showToast('กล้องนี้ไม่รองรับไฟฉาย', 'error');
-        isTorchOn = false;
-    }
-});
-
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  CAPTURE
-// ═══════════════════════════════════════════════════
-function captureFromVideo() {
-    if (!currentStream) { showToast('กล้องยังไม่พร้อม', 'error'); return; }
-    const feed = document.getElementById('cameraFeed');
-    const vw = feed.videoWidth, vh = feed.videoHeight;
-    if (!vw || !vh) { showToast('กล้องยังไม่พร้อม', 'error'); return; }
-
-    const scale = Math.min(1, MAX_DIM / Math.max(vw, vh));
-    const src = makeCanvas(Math.round(vw * scale), Math.round(vh * scale));
-    getCtx(src).drawImage(feed, 0, 0, src.width, src.height);
-    return src;
+// ═══════════════════════════════════════
+function doCapture(){
+  if(!camStream){toast('กล้องยังไม่พร้อม','err');return;}
+  const vid=document.getElementById('video');
+  const vw=vid.videoWidth, vh=vid.videoHeight;
+  if(!vw||!vh){toast('กล้องยังไม่พร้อม','err');return;}
+  // Flash
+  const fl=document.createElement('div');
+  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.5;z-index:999;pointer-events:none;transition:opacity .3s';
+  document.body.appendChild(fl);
+  requestAnimationFrame(()=>{ setTimeout(()=>fl.style.opacity='0',30); setTimeout(()=>fl.remove(),360); });
+  // Capture frame
+  const sc=Math.min(1,MAX_DIM/Math.max(vw,vh));
+  const src=mkC(Math.round(vw*sc),Math.round(vh*sc));
+  ctx(src).drawImage(vid,0,0,src.width,src.height);
+  pages.push({src,cropped:null,processed:null,filter:'shadow'});
+  activePg=pages.length-1;
+  showView('crop');
+}
+function onFile(e){
+  const files=[...e.target.files]; if(!files.length)return;
+  setLoad(true,'กำลังโหลดภาพ...');
+  let done=0;
+  files.forEach(f=>{
+    const img=new Image();
+    img.onload=()=>{
+      const sc=Math.min(1,MAX_DIM/Math.max(img.width,img.height));
+      const src=mkC(Math.round(img.width*sc),Math.round(img.height*sc));
+      ctx(src).drawImage(img,0,0,src.width,src.height);
+      pages.push({src,cropped:null,processed:null,filter:'shadow'});
+      URL.revokeObjectURL(img.src);
+      if(++done===files.length){activePg=pages.length-1;setLoad(false);showView('crop');}
+    };
+    img.onerror=()=>{toast('โหลดไม่สำเร็จ','err');if(++done===files.length)setLoad(false);};
+    img.src=URL.createObjectURL(f);
+  });
+  e.target.value='';
 }
 
-document.getElementById('captureRing').addEventListener('click', () => {
-    const src = captureFromVideo();
-    if (!src) return;
+// ═══════════════════════════════════════
+//  AUTO-DETECT CORNERS  (Projection Profile)
+//  หาขอบเอกสารโดย:
+//  1) คำนวณ Sobel edge magnitude
+//  2) รวม edge แต่ละแถว/คอลัมน์ (projection)
+//  3) Smooth
+//  4) สแกนจากขอบนอกเข้ามาหาจุดที่ projection พุ่งสูง = ขอบกระดาษ
+// ═══════════════════════════════════════
+function autoCorners(srcCanvas){
+  // ① Downsample ให้ aspect ratio ถูกต้อง
+  const LONG = 320;
+  const ar = srcCanvas.width / srcCanvas.height;
+  const W = ar>=1 ? LONG : Math.round(LONG*ar);
+  const H = ar>=1 ? Math.round(LONG/ar) : LONG;
 
-    // Visual shutter flash
-    const flash = document.createElement('div');
-    flash.style.cssText = 'position:fixed;inset:0;background:#fff;opacity:0.6;z-index:200;pointer-events:none;transition:opacity 0.3s';
-    document.body.appendChild(flash);
-    setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 320); }, 50);
+  const sc = mkC(W, H);
+  ctx(sc).drawImage(srcCanvas, 0, 0, W, H);
+  const raw = ctx(sc).getImageData(0, 0, W, H).data;
+  freeC(sc);
 
-    showLoading(true, 'กำลังวิเคราะห์โครงสร้างภาพ...');
-    editingPageForCrop = -1; // new page
-    setTimeout(() => {
-        pages.push({ sourceCanvas: src, croppedCanvas: null, processedCanvas: null, filter: 'shadow_remove', rotation: 0 });
-        activePage = pages.length - 1;
-        showView('crop');
-        showLoading(false);
-    }, 80);
-});
+  // ② Grayscale
+  const g = new Float32Array(W*H);
+  for(let i=0,p=0;i<raw.length;i+=4,p++)
+    g[p]=raw[i]*.299+raw[i+1]*.587+raw[i+2]*.114;
 
-document.getElementById('fileInput').addEventListener('change', async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    showLoading(true, 'กำลังโหลดภาพ...');
+  // ③ Sobel magnitude
+  const mag = new Float32Array(W*H);
+  for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
+    const gx= -g[(y-1)*W+x-1]+g[(y-1)*W+x+1] - 2*g[y*W+x-1]+2*g[y*W+x+1] - g[(y+1)*W+x-1]+g[(y+1)*W+x+1];
+    const gy= -g[(y-1)*W+x-1]-2*g[(y-1)*W+x]-g[(y-1)*W+x+1] + g[(y+1)*W+x-1]+2*g[(y+1)*W+x]+g[(y+1)*W+x+1];
+    mag[y*W+x]=Math.sqrt(gx*gx+gy*gy);
+  }
 
-    for (const file of files) {
-        await new Promise(resolve => {
-            const img = new Image();
-            img.onload = () => {
-                const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
-                const src = makeCanvas(Math.round(img.width * scale), Math.round(img.height * scale));
-                getCtx(src).drawImage(img, 0, 0, src.width, src.height);
-                pages.push({ sourceCanvas: src, croppedCanvas: null, processedCanvas: null, filter: 'shadow_remove', rotation: 0 });
-                URL.revokeObjectURL(img.src);
-                resolve();
-            };
-            img.onerror = () => { showToast('โหลดภาพไม่สำเร็จ', 'error'); resolve(); };
-            img.src = URL.createObjectURL(file);
-        });
+  // ④ Projection profiles
+  const rP=new Float32Array(H), cP=new Float32Array(W);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ rP[y]+=mag[y*W+x]; cP[x]+=mag[y*W+x]; }
+
+  // ⑤ Smooth (moving avg r=5)
+  const smth=(a,r=5)=>{
+    const o=new Float32Array(a.length);
+    for(let i=0;i<a.length;i++){let s=0,n=0; for(let d=-r;d<=r;d++){const j=i+d;if(j>=0&&j<a.length){s+=a[j];n++;}} o[i]=s/n;}
+    return o;
+  };
+  const sR=smth(rP), sC=smth(cP);
+
+  // ⑥ Adaptive threshold = mean + 0.6*std  of INNER 60% of array
+  const thr=(arr)=>{
+    const lo=Math.floor(arr.length*.2),hi=Math.floor(arr.length*.8);
+    const sl=arr.slice(lo,hi);
+    const mean=sl.reduce((a,b)=>a+b,0)/sl.length;
+    const std=Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/sl.length);
+    return mean+std*0.6;
+  };
+  const tR=thr(sR), tC=thr(sC);
+
+  // ⑦ Scan inward from each side — skip 4px from edge to avoid frame artifacts
+  const scan=(arr,thresh,from,to)=>{
+    const step=from<to?1:-1, skip=4;
+    for(let i=from;i!==to;i+=step){
+      if(Math.abs(i-from)<skip) continue;
+      if(arr[i]>thresh) return i;
     }
+    // fallback: 7% inset
+    return from<to ? Math.floor(arr.length*.07) : Math.floor(arr.length*.93);
+  };
 
-    editingPageForCrop = -1;
-    activePage = pages.length - 1;
-    showView('crop');
-    showLoading(false);
-    e.target.value = '';
-});
+  const top    = scan(sR, tR, 0, H);
+  const bottom = scan(sR, tR, H-1, -1);
+  const left   = scan(sC, tC, 0, W);
+  const right  = scan(sC, tC, W-1, -1);
 
-document.getElementById('btnRestart').addEventListener('click', () => {
-    // Cleanup all pages
-    pages.forEach(p => { freeCanvas(p.sourceCanvas); freeCanvas(p.croppedCanvas); freeCanvas(p.processedCanvas); });
-    pages = []; activePage = 0;
-    showView('camera');
-});
+  // ⑧ Validate
+  const sx=srcCanvas.width/W, sy=srcCanvas.height/H;
+  if((right-left)<W*.12||(bottom-top)<H*.12){
+    const px=srcCanvas.width*.07, py=srcCanvas.height*.07;
+    return [{x:px,y:py},{x:srcCanvas.width-px,y:py},
+            {x:srcCanvas.width-px,y:srcCanvas.height-py},{x:px,y:srcCanvas.height-py}];
+  }
 
-document.getElementById('btnAddPage').addEventListener('click', () => {
-    showView('camera');
-});
-
-// ═══════════════════════════════════════════════════
-//  EDGE DETECTION  — Projection Profile method
-//  หลักการ: วิเคราะห์ความแตกต่างของสี (contrast) รายแถว/คอลัมน์
-//  แล้วหาตำแหน่งที่ contrast พุ่งสูงขึ้นอย่างมีนัยสำคัญ
-//  ซึ่งคือขอบของเอกสาร ไม่ใช่แค่ bounding box ของ noise
-// ═══════════════════════════════════════════════════
-function detectDocumentCorners(sourceCanvas) {
-    // ── 1. Downsample to 320×320 for speed, preserving aspect ratio ──
-    const MAXD = 320;
-    const ar = sourceCanvas.width / sourceCanvas.height;
-    const W = ar >= 1 ? MAXD : Math.round(MAXD * ar);
-    const H = ar >= 1 ? Math.round(MAXD / ar) : MAXD;
-
-    const thumb = makeCanvas(W, H);
-    const tCtx = getCtx(thumb);
-    tCtx.drawImage(sourceCanvas, 0, 0, W, H);
-    const { data } = tCtx.getImageData(0, 0, W, H);
-    freeCanvas(thumb);
-
-    // ── 2. Grayscale ──
-    const gray = new Float32Array(W * H);
-    for (let i = 0, p = 0; i < data.length; i += 4, p++) {
-        gray[p] = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-    }
-
-    // ── 3. Sobel magnitude ──
-    const mag = new Float32Array(W * H);
-    for (let y = 1; y < H - 1; y++) {
-        for (let x = 1; x < W - 1; x++) {
-            const gx = (
-                -gray[(y-1)*W+(x-1)] + gray[(y-1)*W+(x+1)]
-                -2*gray[y*W+(x-1)]   + 2*gray[y*W+(x+1)]
-                -gray[(y+1)*W+(x-1)] + gray[(y+1)*W+(x+1)]
-            );
-            const gy = (
-                -gray[(y-1)*W+(x-1)] - 2*gray[(y-1)*W+x] - gray[(y-1)*W+(x+1)]
-                +gray[(y+1)*W+(x-1)] + 2*gray[(y+1)*W+x] + gray[(y+1)*W+(x+1)]
-            );
-            mag[y*W+x] = Math.sqrt(gx*gx + gy*gy);
-        }
-    }
-
-    // ── 4. Build projection profiles ──
-    //    rowProj[y]  = ค่า edge รวมตามแนวนอน (เพื่อหาขอบบน/ล่าง)
-    //    colProj[x]  = ค่า edge รวมตามแนวตั้ง (เพื่อหาขอบซ้าย/ขวา)
-    const rowProj = new Float32Array(H);
-    const colProj = new Float32Array(W);
-    for (let y = 0; y < H; y++)
-        for (let x = 0; x < W; x++) {
-            rowProj[y] += mag[y*W+x];
-            colProj[x] += mag[y*W+x];
-        }
-
-    // ── 5. Normalize projections ──
-    const maxRow = Math.max(...rowProj) || 1;
-    const maxCol = Math.max(...colProj) || 1;
-    for (let i = 0; i < H; i++) rowProj[i] /= maxRow;
-    for (let i = 0; i < W; i++) colProj[i] /= maxCol;
-
-    // ── 6. Smooth projections (moving average 5px) to remove spikes ──
-    function smooth(arr, r = 5) {
-        const out = new Float32Array(arr.length);
-        for (let i = 0; i < arr.length; i++) {
-            let s = 0, cnt = 0;
-            for (let d = -r; d <= r; d++) {
-                const j = i + d;
-                if (j >= 0 && j < arr.length) { s += arr[j]; cnt++; }
-            }
-            out[i] = s / cnt;
-        }
-        return out;
-    }
-    const sRow = smooth(rowProj);
-    const sCol = smooth(colProj);
-
-    // ── 7. Find edges by scanning from outside inward ──
-    //    threshold: ต้องเกิน 15% ของค่า peak ถึงถือว่าเป็นขอบเอกสาร
-    //    และต้องอยู่ในช่วง 5%–95% ของภาพ (ป้องกัน edge ชิดขอบ)
-    const THRESH = 0.15;
-    const MARGIN_LO = 0.05;
-    const MARGIN_HI = 0.95;
-
-    function findEdge(arr, from, to) {
-        const step = from < to ? 1 : -1;
-        const lo = Math.floor(arr.length * MARGIN_LO);
-        const hi = Math.floor(arr.length * MARGIN_HI);
-        for (let i = from; i !== to; i += step) {
-            if (i < lo || i > hi) continue;
-            if (arr[i] > THRESH) return i;
-        }
-        return from < to ? lo : hi; // fallback
-    }
-
-    const top    = findEdge(sRow, 0, H);
-    const bottom = findEdge(sRow, H - 1, -1);
-    const left   = findEdge(sCol, 0, W);
-    const right  = findEdge(sCol, W - 1, -1);
-
-    // ── 8. Sanity check: detected region must be at least 20% of image ──
-    const rW = right - left, rH = bottom - top;
-    const scaleX = sourceCanvas.width / W;
-    const scaleY = sourceCanvas.height / H;
-
-    if (rW < W * 0.20 || rH < H * 0.20) {
-        // Fallback to 6% inset
-        const px = sourceCanvas.width  * 0.06;
-        const py = sourceCanvas.height * 0.06;
-        return [
-            {x: px, y: py},
-            {x: sourceCanvas.width - px, y: py},
-            {x: sourceCanvas.width - px, y: sourceCanvas.height - py},
-            {x: px, y: sourceCanvas.height - py}
-        ];
-    }
-
-    // ── 9. Add small padding so border isn't clipped ──
-    const padPx = 4;
-    const x0 = Math.max(0, (left  - padPx) * scaleX);
-    const y0 = Math.max(0, (top   - padPx) * scaleY);
-    const x1 = Math.min(sourceCanvas.width,  (right  + padPx) * scaleX);
-    const y1 = Math.min(sourceCanvas.height, (bottom + padPx) * scaleY);
-
-    return [
-        {x: x0, y: y0}, {x: x1, y: y0},
-        {x: x1, y: y1}, {x: x0, y: y1}
-    ];
+  // Small padding (4px in thumb coords)
+  const pad=4;
+  return [
+    {x:Math.max(0,(left-pad)*sx),          y:Math.max(0,(top-pad)*sy)},
+    {x:Math.min(srcCanvas.width,(right+pad)*sx),  y:Math.max(0,(top-pad)*sy)},
+    {x:Math.min(srcCanvas.width,(right+pad)*sx),  y:Math.min(srcCanvas.height,(bottom+pad)*sy)},
+    {x:Math.max(0,(left-pad)*sx),          y:Math.min(srcCanvas.height,(bottom+pad)*sy)},
+  ];
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  CROP VIEW
-// ═══════════════════════════════════════════════════
-function setupCropView() {
-    const page = pages[activePage];
-    const source = page.sourceCanvas;
+// ═══════════════════════════════════════
+function setupCrop(){
+  const page=pages[activePg]; if(!page)return;
+  const src=page.src;
 
-    const container = document.getElementById('cropContainer');
-    const cw = container.clientWidth - 24;
-    const ch = container.clientHeight - 24;
-    const ratio = source.width / source.height;
-    const contRatio = cw / ch;
+  // ① Fit canvas display size to container
+  const area=document.getElementById('cropArea');
+  const aW=area.clientWidth-28, aH=area.clientHeight-28;
+  const ar=src.width/src.height;
+  let dW,dH;
+  if(ar>aW/aH){dW=aW;dH=Math.round(aW/ar);}
+  else{dH=aH;dW=Math.round(aH*ar);}
 
-    let drawW = ratio > contRatio ? cw : ch * ratio;
-    let drawH = ratio > contRatio ? cw / ratio : ch;
-    drawW = Math.floor(drawW);
-    drawH = Math.floor(drawH);
+  const cc=document.getElementById('cropCanvas');
+  // Internal resolution = source image (so corners are in source px)
+  cc.width=src.width; cc.height=src.height;
+  // Display size via CSS
+  cc.style.width=dW+'px'; cc.style.height=dH+'px';
 
-    const canvas = document.getElementById('cropCanvas');
-    canvas.style.width = drawW + 'px';
-    canvas.style.height = drawH + 'px';
-    canvas.width = source.width;
-    canvas.height = source.height;
+  // ② Draw image
+  ctx(cc).drawImage(src,0,0);
 
-    cropCorners = detectDocumentCorners(source);
-    drawCropUI();
+  // ③ Auto-detect corners
+  corners=autoCorners(src);
+
+  // ④ Draw overlay on canvas
+  drawOverlay();
+
+  // ⑤ Position SVG handles (in display coords)
+  syncHandles();
+
+  // ⑥ Bind drag to handles
+  bindDrag();
 }
 
-function drawCropUI() {
-    const canvas = document.getElementById('cropCanvas');
-    const ctx = getCtx(canvas);
-    const w = canvas.width, h = canvas.height;
-    const page = pages[activePage];
+function drawOverlay(){
+  const cc=document.getElementById('cropCanvas');
+  const c=ctx(cc);
+  const w=cc.width, h=cc.height;
+  const page=pages[activePg];
 
-    ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(page.sourceCanvas, 0, 0);
+  c.clearRect(0,0,w,h);
+  c.drawImage(page.src,0,0);
 
-    // Darken outside selection
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.62)';
-    ctx.beginPath();
-    ctx.rect(0, 0, w, h);
-    ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-    cropCorners.forEach((p, i) => { if (i > 0) ctx.lineTo(p.x, p.y); });
-    ctx.closePath();
-    ctx.fill('evenodd');
-    ctx.restore();
+  // Dark mask outside quad
+  c.save();
+  c.fillStyle='rgba(0,0,0,0.58)';
+  c.beginPath();
+  c.rect(0,0,w,h);
+  c.moveTo(corners[0].x,corners[0].y);
+  corners.forEach((p,i)=>{ if(i>0)c.lineTo(p.x,p.y); });
+  c.closePath();
+  c.fill('evenodd');
+  c.restore();
 
-    // Grid inside selection
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-    cropCorners.forEach((p, i) => { if (i > 0) ctx.lineTo(p.x, p.y); });
-    ctx.closePath();
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth = w * 0.0015;
-    for (let i = 1; i < 3; i++) {
-        // horizontal-ish
-        const lx = lerp(cropCorners[0].x, cropCorners[3].x, i/3);
-        const ly = lerp(cropCorners[0].y, cropCorners[3].y, i/3);
-        const rx = lerp(cropCorners[1].x, cropCorners[2].x, i/3);
-        const ry = lerp(cropCorners[1].y, cropCorners[2].y, i/3);
-        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(rx, ry); ctx.stroke();
-        // vertical-ish
-        const tx = lerp(cropCorners[0].x, cropCorners[1].x, i/3);
-        const ty = lerp(cropCorners[0].y, cropCorners[1].y, i/3);
-        const bx = lerp(cropCorners[3].x, cropCorners[2].x, i/3);
-        const by = lerp(cropCorners[3].y, cropCorners[2].y, i/3);
-        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(bx, by); ctx.stroke();
+  // Grid
+  c.save();
+  c.beginPath();
+  c.moveTo(corners[0].x,corners[0].y);
+  corners.forEach((p,i)=>{ if(i>0)c.lineTo(p.x,p.y); });
+  c.closePath(); c.clip();
+  c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=Math.max(1,w*.0012);
+  for(let t=1;t<3;t++){
+    c.beginPath(); c.moveTo(lerp(corners[0].x,corners[3].x,t/3),lerp(corners[0].y,corners[3].y,t/3));
+    c.lineTo(lerp(corners[1].x,corners[2].x,t/3),lerp(corners[1].y,corners[2].y,t/3)); c.stroke();
+    c.beginPath(); c.moveTo(lerp(corners[0].x,corners[1].x,t/3),lerp(corners[0].y,corners[1].y,t/3));
+    c.lineTo(lerp(corners[3].x,corners[2].x,t/3),lerp(corners[3].y,corners[2].y,t/3)); c.stroke();
+  }
+  c.restore();
+}
+
+// Sync SVG handles to current corners (converts source→display coords)
+function syncHandles(){
+  const cc=document.getElementById('cropCanvas');
+  // Scale factor: display px per source px
+  const sx=cc.clientWidth /cc.width;
+  const sy=cc.clientHeight/cc.height;
+
+  document.getElementById('selPoly').setAttribute('points',
+    corners.map(p=>`${p.x*sx},${p.y*sy}`).join(' '));
+  corners.forEach((p,i)=>{
+    const el=document.getElementById('h'+i);
+    el.setAttribute('cx', p.x*sx);
+    el.setAttribute('cy', p.y*sy);
+  });
+}
+
+// ═══════════════════════════════════════
+//  DRAG HANDLES
+// ═══════════════════════════════════════
+function bindDrag(){
+  for(let i=0;i<4;i++){
+    const old=document.getElementById('h'+i);
+    const fresh=old.cloneNode(true);
+    old.replaceWith(fresh);
+    const idx=i;
+    fresh.addEventListener('mousedown', e=>startDrag(e,idx));
+    fresh.addEventListener('touchstart', e=>startDrag(e,idx),{passive:false});
+  }
+}
+
+// Convert a client-space point → source canvas coords
+function clientToSource(clientX, clientY){
+  const cc=document.getElementById('cropCanvas');
+  const rect=cc.getBoundingClientRect();
+  const sx=cc.width /rect.width;
+  const sy=cc.height/rect.height;
+  return {
+    x: Math.max(0,Math.min(cc.width,  (clientX-rect.left)*sx)),
+    y: Math.max(0,Math.min(cc.height, (clientY-rect.top )*sy))
+  };
+}
+
+function startDrag(e, idx){
+  e.preventDefault();
+
+  function getClient(ev){ const pt=ev.touches?ev.touches[0]:ev; return{x:pt.clientX,y:pt.clientY}; }
+
+  const onMove=ev=>{
+    ev.preventDefault();
+    const {x,y}=getClient(ev);
+    corners[idx]=clientToSource(x,y);
+    drawOverlay();
+    syncHandles();
+    // Magnifier
+    const wrap=document.getElementById('cropWrap');
+    const wr=wrap.getBoundingClientRect();
+    showMag(x,y, x-wr.left, y-wr.top);
+  };
+  const onEnd=()=>{
+    document.getElementById('mag').style.display='none';
+    window.removeEventListener('mousemove',onMove);
+    window.removeEventListener('mouseup',onEnd);
+    window.removeEventListener('touchmove',onMove);
+    window.removeEventListener('touchend',onEnd);
+  };
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onEnd);
+  window.addEventListener('touchmove',onMove,{passive:false});
+  window.addEventListener('touchend',onEnd);
+
+  // Show initial magnifier
+  const {x,y}=getClient(e);
+  const wr=document.getElementById('cropWrap').getBoundingClientRect();
+  showMag(x,y, x-wr.left, y-wr.top);
+}
+
+function showMag(clientX, clientY, localX, localY){
+  const mag=document.getElementById('mag');
+  const wrap=document.getElementById('cropWrap');
+  const wr=wrap.getBoundingClientRect();
+  // Position above finger
+  const mx=Math.max(0,Math.min(wr.width-110, localX-55));
+  const my=Math.max(0, localY-148);
+  mag.style.left=mx+'px'; mag.style.top=my+'px'; mag.style.display='block';
+  // Draw zoom
+  const sp=clientToSource(clientX, clientY);
+  const zoom=3.2, sw=110/zoom, sh=110/zoom;
+  const mc=document.getElementById('magCanvas').getContext('2d');
+  mc.clearRect(0,0,110,110);
+  mc.drawImage(pages[activePg].src, sp.x-sw/2, sp.y-sh/2, sw, sh, 0, 0, 110, 110);
+}
+
+// ═══════════════════════════════════════
+//  ROTATE SOURCE
+// ═══════════════════════════════════════
+function rotateSrc(deg){
+  const page=pages[activePg];
+  const src=page.src;
+  const rad=deg*Math.PI/180;
+  const nW=Math.abs(Math.round(src.width*Math.cos(rad)))+Math.abs(Math.round(src.height*Math.sin(rad)));
+  const nH=Math.abs(Math.round(src.width*Math.sin(rad)))+Math.abs(Math.round(src.height*Math.cos(rad)));
+  const rot=mkC(nW,nH);
+  const c=ctx(rot);
+  c.translate(nW/2,nH/2); c.rotate(rad); c.drawImage(src,-src.width/2,-src.height/2);
+  freeC(page.src); page.src=rot;
+  setupCrop();
+}
+
+// ═══════════════════════════════════════
+//  APPLY CROP (Perspective Warp — Bilinear)
+// ═══════════════════════════════════════
+function doApply(){
+  setLoad(true,'กำลังดัดมุมมองเอกสาร...');
+  setTimeout(()=>{
+    const page=pages[activePg];
+    const [tl,tr,br,bl]=corners;
+    const outW=Math.round(Math.max(Math.hypot(tr.x-tl.x,tr.y-tl.y),Math.hypot(br.x-bl.x,br.y-bl.y)));
+    const outH=Math.round(Math.max(Math.hypot(tl.x-bl.x,tl.y-bl.y),Math.hypot(tr.x-br.x,tr.y-br.y)));
+    if(outW<4||outH<4){setLoad(false);toast('พื้นที่ crop เล็กเกินไป','err');return;}
+
+    freeC(page.cropped);
+    const dst=mkC(outW,outH);
+    const dc=ctx(dst);
+    const di=dc.createImageData(outW,outH);
+    const db=di.data;
+
+    const sc=ctx(page.src);
+    const si=sc.getImageData(0,0,page.src.width,page.src.height);
+    const sb=si.data;
+    const sW=page.src.width, sH=page.src.height;
+
+    for(let y=0;y<outH;y++){
+      const v=outH>1?y/(outH-1):0;
+      const lx=lerp(tl.x,bl.x,v), ly=lerp(tl.y,bl.y,v);
+      const rx=lerp(tr.x,br.x,v), ry=lerp(tr.y,br.y,v);
+      for(let x=0;x<outW;x++){
+        const u=outW>1?x/(outW-1):0;
+        const spx=lerp(lx,rx,u), spy=lerp(ly,ry,u);
+        const x0=Math.floor(spx),y0=Math.floor(spy);
+        const x1=Math.min(x0+1,sW-1),y1=Math.min(y0+1,sH-1);
+        if(x0<0||y0<0||x0>=sW||y0>=sH){continue;}
+        const fx=spx-x0,fy=spy-y0;
+        const i00=(y0*sW+x0)*4,i10=(y0*sW+x1)*4,i01=(y1*sW+x0)*4,i11=(y1*sW+x1)*4,di2=(y*outW+x)*4;
+        for(let c=0;c<3;c++) db[di2+c]=Math.round(sb[i00+c]*(1-fx)*(1-fy)+sb[i10+c]*fx*(1-fy)+sb[i01+c]*(1-fx)*fy+sb[i11+c]*fx*fy);
+        db[di2+3]=255;
+      }
     }
-    ctx.restore();
-
-    // Border
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = Math.max(3, w * 0.008);
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-    cropCorners.forEach((p, i) => { if (i > 0) ctx.lineTo(p.x, p.y); });
-    ctx.closePath();
-    ctx.stroke();
-
-    // Handles
-    const R = Math.max(18, w * 0.038);
-    cropCorners.forEach((p, i) => {
-        ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, Math.PI*2);
-        ctx.fillStyle = i === draggingIdx ? '#3b82f6' : 'rgba(255,255,255,0.92)';
-        ctx.fill();
-        ctx.lineWidth = Math.max(3, w * 0.01);
-        ctx.strokeStyle = '#3b82f6';
-        ctx.stroke();
-
-        // Inner dot
-        ctx.beginPath(); ctx.arc(p.x, p.y, R*0.28, 0, Math.PI*2);
-        ctx.fillStyle = i === draggingIdx ? '#fff' : '#3b82f6';
-        ctx.fill();
-    });
+    dc.putImageData(di,0,0);
+    page.cropped=dst;
+    applyFilter(activePg, page.filter);
+    setLoad(false);
+    showView('edit');
+  },40);
 }
 
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-// Touch/Mouse helpers
-function getCanvasPos(e) {
-    const canvas = document.getElementById('cropCanvas');
-    const rect = canvas.getBoundingClientRect();
-    const sx = canvas.width / rect.width;
-    const sy = canvas.height / rect.height;
-    const touch = e.touches ? e.touches[0] : e;
-    return {
-        x: (touch.clientX - rect.left) * sx,
-        y: (touch.clientY - rect.top) * sy,
-        clientX: touch.clientX,
-        clientY: touch.clientY
-    };
-}
-
-function onDragStart(e) {
-    e.preventDefault();
-    const pos = getCanvasPos(e);
-    const canvas = document.getElementById('cropCanvas');
-    const hitR2 = Math.pow(canvas.width * 0.12, 2);
-
-    let minD = Infinity; draggingIdx = -1;
-    cropCorners.forEach((c, i) => {
-        const d = (c.x-pos.x)**2 + (c.y-pos.y)**2;
-        if (d < minD && d < hitR2) { minD = d; draggingIdx = i; }
-    });
-    if (draggingIdx !== -1) showMagnifier(pos);
-}
-
-function onDragMove(e) {
-    if (draggingIdx === -1) return;
-    e.preventDefault();
-    const pos = getCanvasPos(e);
-    const canvas = document.getElementById('cropCanvas');
-    cropCorners[draggingIdx] = {
-        x: Math.max(0, Math.min(canvas.width, pos.x)),
-        y: Math.max(0, Math.min(canvas.height, pos.y))
-    };
-    requestAnimationFrame(drawCropUI);
-    showMagnifier(pos);
-}
-
-function onDragEnd() {
-    draggingIdx = -1;
-    document.getElementById('magnifier').style.display = 'none';
-}
-
-function showMagnifier(pos) {
-    const mag = document.getElementById('magnifier');
-    const wrapper = document.getElementById('cropWrapper');
-    const wRect = wrapper.getBoundingClientRect();
-    const canvas = document.getElementById('cropCanvas');
-
-    mag.style.display = 'block';
-    // Position: above finger, centered
-    const mx = pos.clientX - wRect.left - 60;
-    const my = pos.clientY - wRect.top - 150;
-    mag.style.left = Math.max(0, Math.min(wRect.width - 120, mx)) + 'px';
-    mag.style.top = Math.max(0, my) + 'px';
-
-    // Draw zoomed content
-    const magCtx = document.getElementById('magCanvas').getContext('2d');
-    const zoom = 2.8;
-    const sW = 120 / zoom, sH = 120 / zoom;
-    const sx = pos.x - sW/2, sy = pos.y - sH/2;
-    magCtx.clearRect(0, 0, 120, 120);
-    magCtx.drawImage(pages[activePage].sourceCanvas, sx, sy, sW, sH, 0, 0, 120, 120);
-}
-
-const cropCanvas = document.getElementById('cropCanvas');
-cropCanvas.addEventListener('mousedown', onDragStart);
-cropCanvas.addEventListener('mousemove', onDragMove);
-window.addEventListener('mouseup', onDragEnd);
-cropCanvas.addEventListener('touchstart', onDragStart, {passive: false});
-cropCanvas.addEventListener('touchmove', onDragMove, {passive: false});
-window.addEventListener('touchend', onDragEnd);
-
-// Rotation in crop view
-document.getElementById('btnRotateCW').addEventListener('click', () => rotateSource(90));
-document.getElementById('btnRotateCCW').addEventListener('click', () => rotateSource(-90));
-
-function rotateSource(deg) {
-    const page = pages[activePage];
-    const src = page.sourceCanvas;
-    const rad = deg * Math.PI / 180;
-    const newW = Math.abs(Math.round(src.width * Math.cos(rad))) + Math.abs(Math.round(src.height * Math.sin(rad)));
-    const newH = Math.abs(Math.round(src.width * Math.sin(rad))) + Math.abs(Math.round(src.height * Math.cos(rad)));
-    const rotated = makeCanvas(newW, newH);
-    const ctx = getCtx(rotated);
-    ctx.translate(newW/2, newH/2);
-    ctx.rotate(rad);
-    ctx.drawImage(src, -src.width/2, -src.height/2);
-    freeCanvas(page.sourceCanvas);
-    page.sourceCanvas = rotated;
-    page.rotation = ((page.rotation || 0) + deg + 360) % 360;
-    setupCropView();
-}
-
-// Apply crop
-document.getElementById('btnApplyCrop').addEventListener('click', () => {
-    showLoading(true, 'กำลังดัดมุมมองเอกสาร...');
-    setTimeout(() => {
-        warpPerspective(activePage);
-        applyFilter(activePage, pages[activePage].filter);
-        showView('edit');
-        showLoading(false);
-    }, 50);
-});
-
-// ═══════════════════════════════════════════════════
-//  PERSPECTIVE WARP (Bilinear Interpolation)
-// ═══════════════════════════════════════════════════
-function warpPerspective(pageIdx) {
-    const page = pages[pageIdx];
-    const [tl, tr, br, bl] = cropCorners;
-
-    const outW = Math.round(Math.max(Math.hypot(tr.x-tl.x, tr.y-tl.y), Math.hypot(br.x-bl.x, br.y-bl.y)));
-    const outH = Math.round(Math.max(Math.hypot(tl.x-bl.x, tl.y-bl.y), Math.hypot(tr.x-br.x, tr.y-br.y)));
-
-    if (outW < 4 || outH < 4) return;
-
-    if (page.croppedCanvas) freeCanvas(page.croppedCanvas);
-    const dst = makeCanvas(outW, outH);
-    const dstCtx = getCtx(dst);
-    const dstData = dstCtx.createImageData(outW, outH);
-    const dstBuf = dstData.data;
-
-    const srcCtx = getCtx(page.sourceCanvas);
-    const srcData = srcCtx.getImageData(0, 0, page.sourceCanvas.width, page.sourceCanvas.height);
-    const srcBuf = srcData.data;
-    const srcW = page.sourceCanvas.width;
-    const srcH = page.sourceCanvas.height;
-
-    // Bilinear interpolation (anti-aliased)
-    for (let y = 0; y < outH; y++) {
-        const v = y / (outH - 1);
-        const lx = tl.x + (bl.x - tl.x) * v, ly = tl.y + (bl.y - tl.y) * v;
-        const rx = tr.x + (br.x - tr.x) * v, ry = tr.y + (br.y - tr.y) * v;
-        for (let x = 0; x < outW; x++) {
-            const u = x / (outW - 1);
-            const sx = lx + (rx - lx) * u;
-            const sy = ly + (ry - ly) * u;
-
-            // Bilinear sample
-            const sx0 = Math.floor(sx), sy0 = Math.floor(sy);
-            const sx1 = Math.min(sx0+1, srcW-1), sy1 = Math.min(sy0+1, srcH-1);
-            const fx = sx - sx0, fy = sy - sy0;
-
-            if (sx0 < 0 || sy0 < 0 || sx0 >= srcW || sy0 >= srcH) continue;
-
-            const i00 = (sy0*srcW + sx0)*4;
-            const i10 = (sy0*srcW + sx1)*4;
-            const i01 = (sy1*srcW + sx0)*4;
-            const i11 = (sy1*srcW + sx1)*4;
-            const di = (y*outW + x)*4;
-
-            for (let c = 0; c < 3; c++) {
-                dstBuf[di+c] = Math.round(
-                    srcBuf[i00+c]*(1-fx)*(1-fy) +
-                    srcBuf[i10+c]*fx*(1-fy) +
-                    srcBuf[i01+c]*(1-fx)*fy +
-                    srcBuf[i11+c]*fx*fy
-                );
-            }
-            dstBuf[di+3] = 255;
-        }
-    }
-
-    dstCtx.putImageData(dstData, 0, 0);
-    page.croppedCanvas = dst;
-}
-
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  FILTERS
-// ═══════════════════════════════════════════════════
-function applyFilter(pageIdx, filterName) {
-    const page = pages[pageIdx];
-    if (!page.croppedCanvas) return;
-    page.filter = filterName;
+// ═══════════════════════════════════════
+function applyFilter(pi, name){
+  const page=pages[pi]; if(!page.cropped)return;
+  page.filter=name;
+  freeC(page.processed);
+  const w=page.cropped.width,h=page.cropped.height;
+  const out=mkC(w,h); const oc=ctx(out); oc.drawImage(page.cropped,0,0);
+  if(name==='original'){page.processed=out;return;}
+  const im=oc.getImageData(0,0,w,h); const d=im.data;
 
-    if (page.processedCanvas) freeCanvas(page.processedCanvas);
-    const w = page.croppedCanvas.width, h = page.croppedCanvas.height;
-    const dst = makeCanvas(w, h);
-    const ctx = getCtx(dst);
-    ctx.drawImage(page.croppedCanvas, 0, 0);
-
-    if (filterName === 'original') {
-        page.processedCanvas = dst;
-        return;
+  if(name==='shadow'){
+    const bW=Math.max(6,w>>5),bH=Math.max(6,h>>5);
+    const sm=mkC(bW,bH); ctx(sm).drawImage(page.cropped,0,0,bW,bH);
+    const bl=mkC(w,h); const bc=ctx(bl);
+    bc.imageSmoothingEnabled=true; bc.imageSmoothingQuality='high';
+    bc.drawImage(sm,0,0,w,h); freeC(sm);
+    const bg=bc.getImageData(0,0,w,h).data; freeC(bl);
+    for(let i=0;i<d.length;i+=4){
+      const lum=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
+      let bgL=bg[i]*.299+bg[i+1]*.587+bg[i+2]*.114; if(bgL<1)bgL=1;
+      let v=(lum/bgL)*255;
+      v=v>210?255:Math.max(0,(v-118)*1.85);
+      d[i]=d[i+1]=d[i+2]=Math.min(255,v);
     }
-
-    const imgData = ctx.getImageData(0, 0, w, h);
-    const d = imgData.data;
-
-    if (filterName === 'shadow_remove') {
-        // Local Adaptive Normalization — downsample to create lighting map
-        const blurW = Math.max(8, Math.floor(w / 28));
-        const blurH = Math.max(8, Math.floor(h / 28));
-        const small = makeCanvas(blurW, blurH);
-        getCtx(small).drawImage(page.croppedCanvas, 0, 0, blurW, blurH);
-        const big = makeCanvas(w, h);
-        const bCtx = getCtx(big);
-        bCtx.imageSmoothingEnabled = true;
-        bCtx.imageSmoothingQuality = 'high';
-        bCtx.drawImage(small, 0, 0, w, h);
-        const bg = bCtx.getImageData(0, 0, w, h).data;
-        freeCanvas(small); freeCanvas(big);
-
-        for (let i = 0; i < d.length; i += 4) {
-            const luma = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
-            let bgL = bg[i]*0.299 + bg[i+1]*0.587 + bg[i+2]*0.114;
-            if (bgL < 1) bgL = 1;
-            let corrected = (luma / bgL) * 255;
-            if (corrected > 208) corrected = 255;
-            else corrected = Math.max(0, (corrected - 115) * 1.85);
-            d[i] = d[i+1] = d[i+2] = Math.min(255, corrected);
-        }
+  } else if(name==='color'){
+    for(let i=0;i<d.length;i+=4){
+      const lum=d[i]*.299+d[i+1]*.587+d[i+2]*.114; const B=1.35;
+      d[i]=clamp((d[i]-128)*B+148); d[i+1]=clamp((d[i+1]-128)*B+148); d[i+2]=clamp((d[i+2]-128)*B+148);
+      if(lum>188){d[i]=255;d[i+1]=255;d[i+2]=255;}
     }
-    else if (filterName === 'magic_color') {
-        for (let i = 0; i < d.length; i += 4) {
-            const luma = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
-            const boost = 1.35;
-            d[i]   = clamp((d[i]   - 128)*boost + 148);
-            d[i+1] = clamp((d[i+1] - 128)*boost + 148);
-            d[i+2] = clamp((d[i+2] - 128)*boost + 148);
-            if (luma > 185) { d[i]=255; d[i+1]=255; d[i+2]=255; }
-        }
-    }
-    else if (filterName === 'bw') {
-        for (let i = 0; i < d.length; i += 4) {
-            let v = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
-            // Otsu-like threshold: strong binarize
-            v = v > 140 ? 255 : 0;
-            d[i] = d[i+1] = d[i+2] = v;
-        }
-    }
-    else if (filterName === 'enhance') {
-        // Unsharp mask approximation via downscale diff
-        const blurW = Math.max(8, Math.floor(w / 20));
-        const blurH = Math.max(8, Math.floor(h / 20));
-        const small = makeCanvas(blurW, blurH);
-        getCtx(small).drawImage(page.croppedCanvas, 0, 0, blurW, blurH);
-        const big = makeCanvas(w, h);
-        const bCtx = getCtx(big);
-        bCtx.imageSmoothingEnabled = true;
-        bCtx.imageSmoothingQuality = 'high';
-        bCtx.drawImage(small, 0, 0, w, h);
-        const blur = bCtx.getImageData(0, 0, w, h).data;
-        freeCanvas(small); freeCanvas(big);
-
-        const strength = 1.8;
-        for (let i = 0; i < d.length; i += 4) {
-            for (let c = 0; c < 3; c++) {
-                d[i+c] = clamp(d[i+c] + (d[i+c] - blur[i+c]) * strength);
-            }
-        }
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-    page.processedCanvas = dst;
+  } else if(name==='bw'){
+    for(let i=0;i<d.length;i+=4){const v=d[i]*.299+d[i+1]*.587+d[i+2]*.114>130?255:0;d[i]=d[i+1]=d[i+2]=v;}
+  } else if(name==='enhance'){
+    const bW=Math.max(6,w>>4),bH=Math.max(6,h>>4);
+    const sm=mkC(bW,bH); ctx(sm).drawImage(page.cropped,0,0,bW,bH);
+    const bl=mkC(w,h); const bc=ctx(bl);
+    bc.imageSmoothingEnabled=true; bc.imageSmoothingQuality='high';
+    bc.drawImage(sm,0,0,w,h); freeC(sm);
+    const blur=bc.getImageData(0,0,w,h).data; freeC(bl);
+    for(let i=0;i<d.length;i+=4) for(let c=0;c<3;c++) d[i+c]=clamp(d[i+c]+(d[i+c]-blur[i+c])*1.7);
+  }
+  oc.putImageData(im,0,0); page.processed=out;
+}
+function pickFilter(btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  setLoad(true,'กำลังประมวลผล...');
+  setTimeout(()=>{ applyFilter(activePg,btn.dataset.f); renderEdit(); setLoad(false); },30);
 }
 
-function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
-
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  EDIT VIEW
-// ═══════════════════════════════════════════════════
-let currentFilter = 'shadow_remove';
-
-function renderEditView() {
-    const page = pages[activePage];
-    if (!page || !page.processedCanvas) return;
-
-    currentFilter = page.filter;
-
-    // Sync active filter button
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === currentFilter);
-    });
-
-    // Preview
-    const prev = document.getElementById('previewCanvas');
-    prev.width = page.processedCanvas.width;
-    prev.height = page.processedCanvas.height;
-    getCtx(prev).drawImage(page.processedCanvas, 0, 0);
-
-    // Badge
-    const badge = document.getElementById('editPageBadge');
-    if (pages.length > 1) {
-        badge.textContent = `หน้า ${activePage+1} / ${pages.length}`;
-        badge.classList.remove('hidden');
-    } else {
-        badge.classList.add('hidden');
-    }
-
-    // Thumbnails
-    renderThumbs();
-    updatePageCounter();
+// ═══════════════════════════════════════
+function renderEdit(){
+  const page=pages[activePg]; if(!page?.processed)return;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('active',b.dataset.f===page.filter));
+  const pv=document.getElementById('previewCanvas');
+  pv.width=page.processed.width; pv.height=page.processed.height;
+  ctx(pv).drawImage(page.processed,0,0);
+  const badge=document.getElementById('pgBadge');
+  if(pages.length>1){badge.textContent=`หน้า ${activePg+1}/${pages.length}`;badge.style.display='';}
+  else badge.style.display='none';
+  renderThumbs(); updatePgCount();
+}
+function renderThumbs(){
+  const strip=document.getElementById('thumbStrip');
+  if(pages.length<=1){strip.style.display='none';return;}
+  strip.style.display='flex'; strip.innerHTML='';
+  pages.forEach((p,i)=>{
+    if(!p.processed)return;
+    const wrap=document.createElement('div'); wrap.className='twrap';
+    const c=document.createElement('canvas');
+    const sc=56/p.processed.height; c.width=Math.round(p.processed.width*sc); c.height=56;
+    c.style.cssText=`display:block;border-radius:6px;cursor:pointer;border:2px solid ${i===activePg?'#3b82f6':'rgba(255,255,255,.15)'}`;
+    ctx(c).drawImage(p.processed,0,0,c.width,56);
+    c.onclick=()=>{activePg=i;renderEdit();};
+    const del=document.createElement('div'); del.className='tdel'; del.textContent='✕';
+    del.onclick=ev=>{ev.stopPropagation();freeC(pages[i].src);freeC(pages[i].cropped);freeC(pages[i].processed);pages.splice(i,1);if(!pages.length){showView('camera');return;}activePg=Math.min(activePg,pages.length-1);renderEdit();};
+    wrap.append(c,del); strip.appendChild(wrap);
+  });
+  const add=document.createElement('button');
+  add.style.cssText='flex-shrink:0;width:44px;height:56px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#888;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center';
+  add.innerHTML='<i class="ph-bold ph-plus"></i>'; add.onclick=()=>showView('camera');
+  strip.appendChild(add);
 }
 
-function renderThumbs() {
-    const strip = document.getElementById('thumbStrip');
-    if (pages.length <= 1) { strip.classList.add('hidden'); return; }
-    strip.classList.remove('hidden');
-    strip.innerHTML = '';
-
-    pages.forEach((p, i) => {
-        if (!p.processedCanvas) return;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'thumb-item';
-
-        const img = document.createElement('canvas');
-        const scale = 56 / p.processedCanvas.height;
-        img.width = Math.round(p.processedCanvas.width * scale);
-        img.height = 56;
-        img.style.cssText = `width:${img.width}px;height:56px;border-radius:6px;cursor:pointer;border:2px solid ${i===activePage ? '#3b82f6':'rgba(255,255,255,0.15)'}`;
-        img.getContext('2d').drawImage(p.processedCanvas, 0, 0, img.width, img.height);
-        img.addEventListener('click', () => { activePage = i; renderEditView(); });
-
-        const del = document.createElement('button');
-        del.className = 'del-btn';
-        del.innerHTML = '<i class="ph ph-x" style="font-size:10px;color:#fff"></i>';
-        del.addEventListener('click', (e) => {
-            e.stopPropagation();
-            freeCanvas(pages[i].sourceCanvas);
-            freeCanvas(pages[i].croppedCanvas);
-            freeCanvas(pages[i].processedCanvas);
-            pages.splice(i, 1);
-            if (pages.length === 0) { showView('camera'); return; }
-            activePage = Math.min(activePage, pages.length - 1);
-            renderEditView();
-        });
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(del);
-        strip.appendChild(wrapper);
-    });
-
-    // Add page button in thumb strip
-    const addBtn = document.createElement('button');
-    addBtn.className = 'w-[44px] h-[56px] rounded-lg bg-gray-800/60 border border-white/10 flex items-center justify-center text-gray-400 shrink-0';
-    addBtn.innerHTML = '<i class="ph ph-plus text-lg"></i>';
-    addBtn.addEventListener('click', () => showView('camera'));
-    strip.appendChild(addBtn);
-}
-
-// Filter buttons
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const filter = btn.dataset.filter;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        showLoading(true, 'กำลังประมวลผลฟิลเตอร์...');
-        setTimeout(() => {
-            applyFilter(activePage, filter);
-            renderEditView();
-            showLoading(false);
-        }, 30);
-    });
-});
-
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════
 //  EXPORT
-// ═══════════════════════════════════════════════════
-document.getElementById('btnSaveImg').addEventListener('click', () => {
-    const page = pages[activePage];
-    if (!page?.processedCanvas) { showToast('ไม่มีภาพสำหรับบันทึก', 'error'); return; }
-    try {
-        const link = document.createElement('a');
-        link.download = `scan_${Date.now()}.jpg`;
-        link.href = page.processedCanvas.toDataURL('image/jpeg', 0.95);
-        link.click();
-        showToast('บันทึกรูปภาพสำเร็จ ✓', 'success');
-    } catch(e) {
-        showToast('บันทึกไม่สำเร็จ: ' + e.message, 'error');
+// ═══════════════════════════════════════
+function saveImg(){
+  const p=pages[activePg];
+  if(!p?.processed){toast('ไม่มีภาพ','err');return;}
+  try{const a=document.createElement('a');a.download=`scan_${Date.now()}.jpg`;a.href=p.processed.toDataURL('image/jpeg',.95);a.click();toast('บันทึกรูปภาพสำเร็จ ✓','ok');}
+  catch(e){toast('บันทึกไม่สำเร็จ','err');}
+}
+async function savePdf(){
+  const valid=pages.filter(p=>p.processed);
+  if(!valid.length){toast('ไม่มีเอกสาร','err');return;}
+  setLoad(true,'กำลังสร้าง PDF...');
+  await new Promise(r=>setTimeout(r,60));
+  try{
+    const{jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    for(let i=0;i<valid.length;i++){
+      const p=valid[i].processed;
+      if(i>0)pdf.addPage();
+      const rat=p.width/p.height; let iw=pw-8,ih=(pw-8)/rat;
+      if(ih>ph-8){ih=ph-8;iw=ih*rat;}
+      pdf.addImage(p.toDataURL('image/jpeg',p.width*p.height>3e6?.78:.9),'JPEG',(pw-iw)/2,(ph-ih)/2,iw,ih,undefined,'FAST');
+      setLoad(true,`หน้า ${i+1}/${valid.length}...`);
+      await new Promise(r=>setTimeout(r,8));
     }
-});
+    pdf.save(`scan_${Date.now()}.pdf`); setLoad(false);
+    toast(`PDF ${valid.length} หน้า สำเร็จ ✓`,'ok');
+  }catch(e){setLoad(false);toast('สร้าง PDF ไม่สำเร็จ','err');console.error(e);}
+}
 
-document.getElementById('btnSavePdf').addEventListener('click', async () => {
-    const validPages = pages.filter(p => p.processedCanvas);
-    if (!validPages.length) { showToast('ไม่มีเอกสารสำหรับสร้าง PDF', 'error'); return; }
-
-    showLoading(true, `กำลังสร้าง PDF (0/${validPages.length})...`, 0);
-
-    await new Promise(resolve => setTimeout(resolve, 80));
-
-    try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const pw = pdf.internal.pageSize.getWidth();
-        const ph = pdf.internal.pageSize.getHeight();
-
-        for (let i = 0; i < validPages.length; i++) {
-            const p = validPages[i].processedCanvas;
-            if (i > 0) pdf.addPage();
-
-            const ratio = p.width / p.height;
-            let iw = pw - 10, ih = (pw - 10) / ratio;
-            if (ih > ph - 10) { ih = ph - 10; iw = ih * ratio; }
-
-            // Use progressive JPEG for large images
-            const quality = p.width * p.height > 2000*2000 ? 0.78 : 0.88;
-            pdf.addImage(p.toDataURL('image/jpeg', quality), 'JPEG',
-                (pw - iw) / 2, (ph - ih) / 2, iw, ih, undefined, 'FAST');
-
-            const pct = Math.round(((i+1) / validPages.length) * 100);
-            showLoading(true, `กำลังสร้าง PDF (${i+1}/${validPages.length})...`, pct);
-            await new Promise(r => setTimeout(r, 10));
-        }
-
-        pdf.save(`scan_${Date.now()}.pdf`);
-        showLoading(false);
-        showToast(`สร้าง PDF ${validPages.length} หน้า สำเร็จ ✓`, 'success');
-    } catch(e) {
-        showLoading(false);
-        showToast('สร้าง PDF ไม่สำเร็จ: ' + e.message, 'error');
-        console.error(e);
-    }
-});
-
-// ═══════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════
+// ── INIT ──
 showView('camera');
 </script>
 
