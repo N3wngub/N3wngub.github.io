@@ -6,10 +6,6 @@
 <title>UniGrade — Grade Calculator</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 
-<!-- ═══════════════════════════════════════════════════════════
-     🔥 วาง Firebase Config ของคุณตรงนี้
-     ไปที่ console.firebase.google.com → Project Settings → Web App
-     ═══════════════════════════════════════════════════════════ -->
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyC_UFiaMTcZIIjdy1Iyy9z1Qk03Q7a4ix4",
@@ -383,13 +379,11 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 <div class="glow glow-1"></div>
 <div class="glow glow-2"></div>
 
-<!-- ── LOADING ──────────────────────────────────────────────────── -->
 <div id="loadingScreen" class="loading-screen page">
   <div class="spinner"></div>
   <div style="color:var(--muted);font-size:14px">กำลังโหลด…</div>
 </div>
 
-<!-- ── LOGIN PAGE ────────────────────────────────────────────────── -->
 <div id="loginPage" class="page" style="display:none">
   <div class="login-wrap">
     <div class="login-logo">
@@ -423,10 +417,8 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
   </div>
 </div>
 
-<!-- ── APP PAGE ──────────────────────────────────────────────────── -->
 <div id="appPage" class="page">
 
-  <!-- NAVBAR -->
   <nav>
     <div class="nav-logo">
       <div class="nav-icon">🎓</div>
@@ -450,7 +442,6 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     </div>
   </nav>
 
-  <!-- STATS -->
   <div class="stats-grid" id="statsGrid">
     <div class="card stat-card gpa-card">
       <div class="stat-label">Cumulative GPA</div>
@@ -474,17 +465,14 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     </div>
   </div>
 
-  <!-- SEMESTER TABS -->
   <div class="sem-row" id="semRow"></div>
 
-  <!-- ACTION BAR -->
   <div class="action-bar">
     <button class="btn-action btn-add" onclick="addRow()">＋ เพิ่มวิชา</button>
     <button class="btn-action btn-ai" onclick="toggleAI()">📷 สแกนจากรูป (AI)</button>
     <button class="btn-action btn-export" onclick="exportCSV()">↓ Export CSV</button>
   </div>
 
-  <!-- AI PANEL -->
   <div class="card ai-panel" id="aiPanel">
     <div class="ai-head">
       <div class="ai-title">🤖 AI Grade Scanner</div>
@@ -505,7 +493,6 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     <div class="ai-results" id="aiResults"></div>
   </div>
 
-  <!-- TABLE -->
   <div class="table-wrap">
     <div class="table-header">
       <div class="th">#</div>
@@ -536,7 +523,6 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     </div>
   </div>
 
-  <!-- GRADE SCALE -->
   <div class="card scale-card">
     <div class="scale-label">Grade Scale</div>
     <div>
@@ -557,12 +543,8 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     </div>
   </div>
 
-</div><!-- end appPage -->
+</div><div class="toast" id="toast"></div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- ── FIREBASE SDK ────────────────────────────────────────────── -->
 <script type="module">
 import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider,
@@ -573,7 +555,8 @@ import { getFirestore, doc, setDoc, collection,
          serverTimestamp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── Init Firebase ──────────────────────────────────────────────
-const app  = initializeApp(FIREBASE_CONFIG);
+// ✅ แก้ไขชื่อตัวแปรให้เป็น firebaseConfig (พิมพ์เล็ก-ใหญ่ให้ตรงกับด้านบน)
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -837,7 +820,6 @@ window.handleAIFile = async function(file) {
   if (!file) return;
   const reader=new FileReader();
   reader.onload=async e=>{
-    const b64=e.target.result.split(",")[1];
     const prev=document.getElementById("aiPreview");
     prev.src=e.target.result; prev.style.display="block";
     document.getElementById("dropContent").style.display="none";
@@ -847,38 +829,25 @@ window.handleAIFile = async function(file) {
     const status=document.getElementById("aiStatus");
     const results=document.getElementById("aiResults");
     prog.style.display="block";
-    status.style.display="block"; status.style.color="var(--muted)"; status.textContent="⚡ กำลังวิเคราะห์ด้วย AI…";
+    status.style.display="block"; status.style.color="var(--muted)"; status.textContent="⚡ กำลังวิเคราะห์รูปภาพด้วย AI (โหมดจำลอง)...";
     results.style.display="none";
 
-    try {
-      const res=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          model:"claude-sonnet-4-20250514",max_tokens:1000,
-          messages:[{role:"user",content:[
-            {type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},
-            {type:"text",text:`Extract all subjects and scores from this academic document.
-Return ONLY valid JSON (no markdown, no explanation):
-{"subjects":[{"name":"Subject Name","score":85,"credits":3}]}
-Rules: score=numeric 0-100, convert letter grades (A=93,B=83,C=73,D=63,F=50), credits default 3. If nothing: {"subjects":[],"error":"not found"}`}
-          ]}]
-        })
-      });
-      const data=await res.json();
-      const txt=data.content?.map(c=>c.text||"").join("")||"";
-      const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());
+    // ✅ จำลองการหน่วงเวลา 1.5 วินาทีแทนการยิง API จริง เพื่อให้กดเล่นทดสอบ UI ได้
+    setTimeout(() => {
       prog.style.display="none";
-      if (!parsed.subjects?.length) {
-        status.style.color="var(--amber)"; status.textContent="⚠️ ไม่พบข้อมูลเกรด ลองรูปที่ชัดกว่านี้";
-        return;
-      }
-      status.style.color="var(--green)"; status.textContent=`✅ พบ ${parsed.subjects.length} วิชา`;
-      renderAIResults(parsed.subjects);
-    } catch(e) {
-      prog.style.display="none";
-      status.style.color="var(--red)"; status.textContent="❌ "+(e.message||"เกิดข้อผิดพลาด");
-    }
+      
+      // ข้อมูลจำลอง (Mock Data) สำหรับทดสอบนำเข้า
+      const mockParsedSubjects = [
+        { name: "Software Engineering", score: 85, credits: 3 },
+        { name: "Database Systems", score: 78, credits: 3 },
+        { name: "Data Structures", score: 92, credits: 3 }
+      ];
+
+      status.style.color="var(--green)"; 
+      status.textContent=`✅ พบ ${mockParsedSubjects.length} วิชา (ข้อมูลจำลอง)`;
+      renderAIResults(mockParsedSubjects);
+
+    }, 1500);
   };
   reader.readAsDataURL(file);
 };
@@ -888,7 +857,7 @@ function renderAIResults(subjects) {
   aiSubjects=subjects;
   const box=document.getElementById("aiResults");
   const gc=gradeColor;
-  let html=`<div class="ai-results-head">✦ ผลที่ดึงได้ — เลือกวิชาที่ต้องการนำเข้า</div>`;
+  let html=`<div class="ai-results-head">✦ ผลที่ดึงได้ (ข้อมูลจำลอง) — เลือกวิชาที่ต้องการนำเข้า</div>`;
   subjects.forEach((s,i)=>{
     const g=toGrade(s.score);
     html+=`<div class="ai-row">
@@ -911,7 +880,7 @@ window.importAI=function(){
     if (document.getElementById("aic"+i)?.checked) { window.addRow(s.name,String(s.score),String(s.credits||3)); count++; }
   });
   document.getElementById("aiPanel").classList.remove("open");
-  showToast(`✅ นำเข้า ${count} วิชาแล้ว`);
+  showToast(`✅ นำเข้า ${count} วิชาเรียบร้อย`);
 };
 
 // ── Export CSV ─────────────────────────────────────────────────
