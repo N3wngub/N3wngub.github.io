@@ -1,963 +1,942 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>สแกนเนอร์อัจฉริยะ</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-<style>
-:root {
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  width: 100%; height: 100%;
-  background: #000; color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  overflow: hidden;
-  -webkit-user-select: none; user-select: none;
-  touch-action: none;
-}
-#app {
-  display: flex; flex-direction: column;
-  width: 100%; height: 100dvh;
-}
-#header {
-  flex-shrink: 0;
-  padding-top: var(--safe-top);
-  background: #000;
-  display: flex; align-items: flex-end;
-  justify-content: space-between;
-  padding-left: 16px; padding-right: 16px;
-  padding-bottom: 10px;
-  height: calc(52px + var(--safe-top));
-  z-index: 20;
-}
-#main { flex: 1; position: relative; overflow: hidden; }
-.view {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-}
-.view.hidden { display: none !important; }
-.glass-bar {
-  flex-shrink: 0;
-  background: rgba(14,14,18,0.94);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255,255,255,0.07);
-  padding-bottom: max(var(--safe-bottom), 10px);
-}
-/* Loading */
-#loading {
-  position: absolute; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.72);
-  backdrop-filter: blur(6px);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 12px;
-}
-#loading.hidden { display: none; }
-.spinner {
-  width: 38px; height: 38px;
-  border: 3px solid rgba(255,255,255,0.08);
-  border-left-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-/* Toast */
-#toast {
-  position: fixed;
-  top: calc(var(--safe-top) + 58px); left: 50%;
-  transform: translateX(-50%) translateY(-6px);
-  background: rgba(20,20,26,0.96);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 999px; padding: 9px 18px;
-  font-size: 13px; white-space: nowrap;
-  z-index: 999; opacity: 0;
-  transition: opacity .2s, transform .2s;
-  pointer-events: none;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-#toast.ok  { border-color: rgba(34,197,94,.4); color: #86efac; }
-#toast.err { border-color: rgba(239,68,68,.4); color: #fca5a5; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniGrade — Grade Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 
-/* ── CAMERA ── */
-#video { width: 100%; height: 100%; object-fit: cover; display: block; }
-#camGuide {
-position: absolute; inset: 18px;
-border: 1.5px solid rgba(250,204,21,.55);
-border-radius: 14px; pointer-events: none;
-animation: gPulse 2s ease-in-out infinite;
-}
-@keyframes gPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
-#torchBtn {
-position: absolute; top: 14px; right: 14px;
-width: 44px; height: 44px; border-radius: 50%;
-background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.2);
-color: #fff; font-size: 20px;
-display: flex; align-items: center; justify-content: center;
-cursor: pointer;
-}
-#torchBtn.on { background:#fff; color:#000; }
-#noCamMsg {
-position: absolute; inset: 0;
-display: flex; flex-direction: column;
-align-items: center; justify-content: center;
-gap: 12px; text-align: center; padding: 40px;
-}
-#camBar {
-display: flex; align-items: center;
-justify-content: space-between;
-padding: 18px 32px;
-}
-#captureBtn {
-width: 76px; height: 76px; border-radius: 50%;
-border: 3px solid #fff; background: transparent;
-display: flex; align-items: center; justify-content: center;
-cursor: pointer;
-box-shadow: 0 0 22px rgba(255,255,255,.12);
-}
-#captureBtn:active { transform: scale(.91); }
-#captureBtn .inner { width: 64px; height: 64px; border-radius: 50%; background: #fff; }
-.side-btn {
-display: flex; flex-direction: column;
-align-items: center; gap: 6px; cursor: pointer; color: #ccc;
-}
-.side-btn:active { transform: scale(.88); }
-.side-btn .ico {
-width: 48px; height: 48px; border-radius: 50%;
-background: rgba(255,255,255,.08);
-border: 1px solid rgba(255,255,255,.12);
-display: flex; align-items: center; justify-content: center; font-size: 22px;
-}
-.side-btn span { font-size: 11px; }
-
-/* ── CROP ── */
-#cropArea {
-flex: 1; position: relative; overflow: hidden;
-display: flex; align-items: center; justify-content: center;
-padding: 14px; min-height: 0; background: #0a0a0c;
-}
-#cropWrap { position: relative; display: inline-block; line-height: 0; }
-#cropCanvas { display: block; border-radius: 8px; max-width: 100%; }
-/* SVG overlay — same CSS size as canvas via width/height 100% */
-#handleSvg {
-position: absolute; top: 0; left: 0;
-width: 100%; height: 100%;
-overflow: visible; pointer-events: none;
-}
-.hc { cursor: grab; pointer-events: all; }
-.hc:active { cursor: grabbing; }
-/* Magnifier */
-#mag {
-position: absolute;
-width: 110px; height: 110px; border-radius: 50%;
-border: 2.5px solid #3b82f6;
-box-shadow: 0 8px 24px rgba(0,0,0,.9);
-overflow: hidden; pointer-events: none;
-display: none; z-index: 30;
-}
-#magCanvas { width: 110px; height: 110px; display: block; }
-#magCross {
-position: absolute; inset: 0; pointer-events: none;
-background:
-linear-gradient(90deg,transparent 48.5%,rgba(59,130,246,.8) 49%,rgba(59,130,246,.8) 51%,transparent 51.5%),
-linear-gradient(0deg, transparent 48.5%,rgba(59,130,246,.8) 49%,rgba(59,130,246,.8) 51%,transparent 51.5%);
-}
-#cropBar {
-display: flex; align-items: center;
-padding: 12px 14px; gap: 10px;
-}
-.icon-btn {
-flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
-background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
-color: #ccc; font-size: 20px;
-display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.icon-btn:active { transform: scale(.88); }
-#applyBtn {
-flex: 1; background: #3b82f6; border-radius: 16px; padding: 14px;
-font-size: 15px; font-weight: 600; color: #fff; border: none; cursor: pointer;
-display: flex; align-items: center; justify-content: center; gap: 8px;
-box-shadow: 0 4px 16px rgba(59,130,246,.3);
-}
-#applyBtn:active { background: #2563eb; }
-
-/* ── EDIT ── */
-#editInner {
-flex: 1; display: flex; flex-direction: column;
-padding: 12px; gap: 10px; min-height: 0;
-padding-bottom: 128px;
-}
-#prevWrap {
-flex: 1; min-height: 0;
-background: rgba(0,0,0,.4); border-radius: 16px;
-border: 1px solid rgba(255,255,255,.06);
-display: flex; align-items: center; justify-content: center;
-overflow: hidden; position: relative;
-}
-#previewCanvas { max-width: 100%; max-height: 100%; display: block; border-radius: 6px; }
-#pgBadge {
-position: absolute; top: 10px; right: 10px;
-background: rgba(0,0,0,.6); backdrop-filter: blur(6px);
-color: #aaa; font-size: 11px;
-padding: 4px 10px; border-radius: 99px;
-border: 1px solid rgba(255,255,255,.1);
-}
-#thumbStrip {
-flex-shrink: 0; height: 66px;
-display: none; align-items: center; gap: 8px;
-overflow-x: auto; padding: 0 2px;
-scrollbar-width: none;
-}
-#thumbStrip::-webkit-scrollbar { display: none; }
-.twrap { position: relative; display: inline-block; flex-shrink: 0; }
-.tdel {
-position: absolute; top: -6px; right: -6px;
-width: 18px; height: 18px; border-radius: 50%;
-background: #ef4444; border: 1.5px solid #000;
-color: #fff; font-size: 9px; cursor: pointer;
-display: flex; align-items: center; justify-content: center;
-}
-#filterRow {
-flex-shrink: 0; height: 82px;
-display: flex; align-items: center; justify-content: center;
-gap: 10px; overflow-x: auto; padding: 0 6px;
-scrollbar-width: none;
-}
-#filterRow::-webkit-scrollbar { display: none; }
-.fbtn {
-flex-shrink: 0; display: flex; flex-direction: column;
-align-items: center; gap: 5px; cursor: pointer;
-}
-.fbtn .fi {
-width: 48px; height: 48px; border-radius: 50%;
-background: rgba(255,255,255,.07); border: 2px solid transparent;
-display: flex; align-items: center; justify-content: center;
-font-size: 20px; color: #999;
-transition: all .18s;
-}
-.fbtn.active .fi {
-background: #3b82f6; border-color: #60a5fa; color: #fff;
-box-shadow: 0 0 14px rgba(59,130,246,.5); transform: scale(1.1);
-}
-.fbtn span { font-size: 10px; color: #777; white-space: nowrap; }
-.fbtn.active span { color: #60a5fa; font-weight: 600; }
-#editBar {
-position: absolute; bottom: 0; left: 0; right: 0;
-display: flex; align-items: center;
-padding: 10px 12px; gap: 9px;
-}
-.ebtn {
-flex: 1; border-radius: 14px; padding: 13px 8px;
-font-size: 14px; font-weight: 600; color: #fff; border: none; cursor: pointer;
-display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-.ebtn:active { opacity: .72; }
-#addPgBtn {
-flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px;
-background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
-color: #ccc; font-size: 22px;
-display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-#addPgBtn:active { transform: scale(.88); }
-</style>
-
-</head>
-<body>
-<div id="app">
-  <!-- Header -->
-  <div id="header">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="background:#3b82f6;padding:6px;border-radius:10px;line-height:0">
-        <i class="ph-bold ph-scan" style="font-size:18px;color:#fff"></i>
-      </div>
-      <span style="font-size:16px;font-weight:600">สแกนเนอร์อัจฉริยะ</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span id="pgCount" style="display:none;font-size:12px;color:#888;background:rgba(255,255,255,.07);padding:4px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1)"></span>
-      <button id="restartBtn" onclick="doRestart()" style="display:none;font-size:13px;color:#ccc;background:rgba(255,255,255,.08);border:none;padding:6px 14px;border-radius:99px;cursor:pointer">ถ่ายใหม่</button>
-    </div>
-  </div>
-  <!-- Main -->
-  <div id="main">
-    <!-- Loading -->
-    <div id="loading" class="hidden">
-      <div class="spinner"></div>
-      <span id="ldTxt" style="font-size:14px;color:#ddd">กำลังประมวลผล...</span>
-    </div>
-    <div id="toast"></div>
-
-```
-<!-- VIEW: CAMERA -->
-<div id="viewCamera" class="view">
-  <div style="flex:1;position:relative;overflow:hidden">
-    <video id="video" autoplay playsinline muted></video>
-    <div id="camGuide"></div>
-    <button id="torchBtn" class="hidden" onclick="toggleTorch()">
-      <i class="ph-bold ph-flashlight"></i>
-    </button>
-    <div id="noCamMsg" style="display:none">
-      <i class="ph-bold ph-camera-slash" style="font-size:48px;color:#555"></i>
-      <p style="font-size:14px;color:#aaa;line-height:1.6">ไม่พบกล้อง หรือถูกปฏิเสธ<br><span style="font-size:12px;color:#666">กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์</span></p>
-      <button onclick="retryCamera()" style="margin-top:6px;color:#60a5fa;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);padding:8px 20px;border-radius:99px;font-size:13px;cursor:pointer">ลองใหม่</button>
-    </div>
-  </div>
-  <div class="glass-bar">
-    <div id="camBar">
-      <label class="side-btn" style="cursor:pointer">
-        <div class="ico"><i class="ph-bold ph-image"></i></div>
-        <span>รูปภาพ</span>
-        <input id="fileInput" type="file" accept="image/*" multiple style="display:none" onchange="onFile(event)">
-      </label>
-      <button id="captureBtn" onclick="doCapture()"><div class="inner"></div></button>
-      <div style="width:48px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- VIEW: CROP -->
-<div id="viewCrop" class="view hidden">
-  <div style="padding:10px 16px;text-align:center;font-size:13px;color:#888;background:rgba(0,0,0,.55);border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:6px">
-    <i class="ph-bold ph-corners-out" style="color:#3b82f6"></i>
-    ลากจุดมุมเพื่อปรับขอบเขตเอกสาร
-  </div>
-  <div id="cropArea">
-    <div id="cropWrap">
-      <canvas id="cropCanvas"></canvas>
-      <svg id="handleSvg" xmlns="http://www.w3.org/2000/svg">
-        <polygon id="selPoly" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>
-        <circle id="h0" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
-        <circle id="h1" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
-        <circle id="h2" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
-        <circle id="h3" r="20" fill="rgba(255,255,255,.92)" stroke="#3b82f6" stroke-width="3" class="hc"/>
-      </svg>
-      <div id="mag">
-        <canvas id="magCanvas" width="110" height="110"></canvas>
-        <div id="magCross"></div>
-      </div>
-    </div>
-  </div>
-  <div class="glass-bar">
-    <div id="cropBar">
-      <button class="icon-btn" onclick="rotateSrc(-90)"><i class="ph-bold ph-arrow-counter-clockwise"></i></button>
-      <button id="applyBtn" onclick="doApply()">จัดหน้าเอกสาร <i class="ph-bold ph-arrow-right"></i></button>
-      <button class="icon-btn" onclick="rotateSrc(90)"><i class="ph-bold ph-arrow-clockwise"></i></button>
-    </div>
-  </div>
-</div>
-
-<!-- VIEW: EDIT -->
-<div id="viewEdit" class="view hidden">
-  <div id="editInner">
-    <div id="prevWrap">
-      <canvas id="previewCanvas"></canvas>
-      <div id="pgBadge" style="display:none"></div>
-    </div>
-    <div id="thumbStrip"></div>
-    <div id="filterRow">
-      <div class="fbtn" data-f="original" onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-image"></i></div><span>ต้นฉบับ</span></div>
-      <div class="fbtn" data-f="color"    onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-magic-wand"></i></div><span>สีคมชัด</span></div>
-      <div class="fbtn active" data-f="shadow" onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-file-text"></i></div><span>ลบเงา</span></div>
-      <div class="fbtn" data-f="bw"       onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-circle-half"></i></div><span>ขาวดำ</span></div>
-      <div class="fbtn" data-f="enhance"  onclick="pickFilter(this)"><div class="fi"><i class="ph-bold ph-sparkle"></i></div><span>เพิ่มความชัด</span></div>
-    </div>
-  </div>
-  <div class="glass-bar" id="editBar">
-    <button id="addPgBtn" onclick="showView('camera')"><i class="ph-bold ph-plus"></i></button>
-    <button class="ebtn" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)" onclick="saveImg()"><i class="ph-bold ph-download-simple"></i> เซฟรูป</button>
-    <button class="ebtn" style="background:#3b82f6;box-shadow:0 4px 14px rgba(59,130,246,.3)" onclick="savePdf()"><i class="ph-bold ph-file-pdf"></i> บันทึก PDF</button>
-  </div>
-</div>
-```
-
-  </div>
-</div>
-
+<!-- ═══════════════════════════════════════════════════════════
+     🔥 วาง Firebase Config ของคุณตรงนี้
+     ไปที่ console.firebase.google.com → Project Settings → Web App
+     ═══════════════════════════════════════════════════════════ -->
 <script>
-// ═══════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════
-const MAX_DIM = 2400;
-let pages = [];       // { src, cropped, processed, filter }
-let activePg = 0;
-// corners: 4 points in SOURCE canvas pixels [TL, TR, BR, BL]
-let corners = [];
-// Camera
-let camStream = null, vTrack = null, torchOn = false;
-
-// ═══════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════
-const mkC = (w,h) => { const c=document.createElement('canvas'); c.width=w; c.height=h; return c; };
-const ctx  = c => c.getContext('2d', {willReadFrequently:true});
-const freeC= c => { if(c){c.width=0;c.height=0;} };
-const lerp = (a,b,t) => a+(b-a)*t;
-const clamp= v => Math.max(0,Math.min(255,Math.round(v)));
-
-let _tt;
-function toast(msg,type=''){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className='show'+(type?' '+type:'');
-  clearTimeout(_tt); _tt=setTimeout(()=>el.className='',2800);
-}
-function setLoad(show, txt='กำลังประมวลผล...'){
-  document.getElementById('ldTxt').textContent=txt;
-  document.getElementById('loading').classList.toggle('hidden',!show);
-}
-
-// ═══════════════════════════════════════
-//  VIEW CONTROLLER
-// ═══════════════════════════════════════
-function showView(name){
-  ['Camera','Crop','Edit'].forEach(n=>
-    document.getElementById('view'+n).classList.toggle('hidden', n.toLowerCase()!==name)
-  );
-  document.getElementById('restartBtn').style.display = name==='camera'?'none':'';
-  updatePgCount();
-  if(name==='camera') startCam();
-  else                stopCam();
-  if(name==='crop')   setupCrop();
-  if(name==='edit')   renderEdit();
-}
-function doRestart(){
-  pages.forEach(p=>{freeC(p.src);freeC(p.cropped);freeC(p.processed);});
-  pages=[]; activePg=0; showView('camera');
-}
-function updatePgCount(){
-  const el=document.getElementById('pgCount');
-  if(pages.length>1){el.textContent=pages.length+' หน้า';el.style.display='';}
-  else el.style.display='none';
-}
-
-// ═══════════════════════════════════════
-//  CAMERA
-// ═══════════════════════════════════════
-async function startCam(){
-  if(camStream) return;
-  const vid=document.getElementById('video');
-  const noCam=document.getElementById('noCamMsg');
-  const tries=[
-    {video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}}},
-    {video:{facingMode:'environment'}},
-    {video:true}
-  ];
-  for(const c of tries){
-    try{
-      camStream=await navigator.mediaDevices.getUserMedia(c);
-      vid.srcObject=camStream;
-      vTrack=camStream.getVideoTracks()[0];
-      noCam.style.display='none'; vid.style.display='block';
-      setTimeout(()=>{
-        try{ const caps=vTrack.getCapabilities?.()??{};
-          document.getElementById('torchBtn').classList.toggle('hidden',!caps.torch);
-        }catch(_){}
-      },500);
-      return;
-    }catch(_){}
-  }
-  noCam.style.display='flex'; vid.style.display='none';
-}
-function stopCam(){
-  if(!camStream)return;
-  camStream.getTracks().forEach(t=>t.stop());
-  camStream=null; vTrack=null; torchOn=false;
-  document.getElementById('torchBtn').className='hidden';
-}
-function retryCamera(){ document.getElementById('noCamMsg').style.display='none'; startCam(); }
-async function toggleTorch(){
-  if(!vTrack)return;
-  torchOn=!torchOn;
-  try{ await vTrack.applyConstraints({advanced:[{torch:torchOn}]});
-    document.getElementById('torchBtn').classList.toggle('on',torchOn);
-  }catch(_){toast('กล้องนี้ไม่รองรับไฟฉาย','err');torchOn=false;}
-}
-
-// ═══════════════════════════════════════
-//  CAPTURE
-// ═══════════════════════════════════════
-function doCapture(){
-  if(!camStream){toast('กล้องยังไม่พร้อม','err');return;}
-  const vid=document.getElementById('video');
-  const vw=vid.videoWidth, vh=vid.videoHeight;
-  if(!vw||!vh){toast('กล้องยังไม่พร้อม','err');return;}
-  // Flash
-  const fl=document.createElement('div');
-  fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.5;z-index:999;pointer-events:none;transition:opacity .3s';
-  document.body.appendChild(fl);
-  requestAnimationFrame(()=>{ setTimeout(()=>fl.style.opacity='0',30); setTimeout(()=>fl.remove(),360); });
-  // Capture frame
-  const sc=Math.min(1,MAX_DIM/Math.max(vw,vh));
-  const src=mkC(Math.round(vw*sc),Math.round(vh*sc));
-  ctx(src).drawImage(vid,0,0,src.width,src.height);
-  pages.push({src,cropped:null,processed:null,filter:'shadow'});
-  activePg=pages.length-1;
-  showView('crop');
-}
-function onFile(e){
-  const files=[...e.target.files]; if(!files.length)return;
-  setLoad(true,'กำลังโหลดภาพ...');
-  let done=0;
-  files.forEach(f=>{
-    const img=new Image();
-    img.onload=()=>{
-      const sc=Math.min(1,MAX_DIM/Math.max(img.width,img.height));
-      const src=mkC(Math.round(img.width*sc),Math.round(img.height*sc));
-      ctx(src).drawImage(img,0,0,src.width,src.height);
-      pages.push({src,cropped:null,processed:null,filter:'shadow'});
-      URL.revokeObjectURL(img.src);
-      if(++done===files.length){activePg=pages.length-1;setLoad(false);showView('crop');}
-    };
-    img.onerror=()=>{toast('โหลดไม่สำเร็จ','err');if(++done===files.length)setLoad(false);};
-    img.src=URL.createObjectURL(f);
-  });
-  e.target.value='';
-}
-
-// ═══════════════════════════════════════
-//  AUTO-DETECT CORNERS  (Projection Profile)
-//  หาขอบเอกสารโดย:
-//  1) คำนวณ Sobel edge magnitude
-//  2) รวม edge แต่ละแถว/คอลัมน์ (projection)
-//  3) Smooth
-//  4) สแกนจากขอบนอกเข้ามาหาจุดที่ projection พุ่งสูง = ขอบกระดาษ
-// ═══════════════════════════════════════
-function autoCorners(srcCanvas){
-  // ① Downsample ให้ aspect ratio ถูกต้อง
-  const LONG = 320;
-  const ar = srcCanvas.width / srcCanvas.height;
-  const W = ar>=1 ? LONG : Math.round(LONG*ar);
-  const H = ar>=1 ? Math.round(LONG/ar) : LONG;
-
-  const sc = mkC(W, H);
-  ctx(sc).drawImage(srcCanvas, 0, 0, W, H);
-  const raw = ctx(sc).getImageData(0, 0, W, H).data;
-  freeC(sc);
-
-  // ② Grayscale
-  const g = new Float32Array(W*H);
-  for(let i=0,p=0;i<raw.length;i+=4,p++)
-    g[p]=raw[i]*.299+raw[i+1]*.587+raw[i+2]*.114;
-
-  // ③ Sobel magnitude
-  const mag = new Float32Array(W*H);
-  for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){
-    const gx= -g[(y-1)*W+x-1]+g[(y-1)*W+x+1] - 2*g[y*W+x-1]+2*g[y*W+x+1] - g[(y+1)*W+x-1]+g[(y+1)*W+x+1];
-    const gy= -g[(y-1)*W+x-1]-2*g[(y-1)*W+x]-g[(y-1)*W+x+1] + g[(y+1)*W+x-1]+2*g[(y+1)*W+x]+g[(y+1)*W+x+1];
-    mag[y*W+x]=Math.sqrt(gx*gx+gy*gy);
-  }
-
-  // ④ Projection profiles
-  const rP=new Float32Array(H), cP=new Float32Array(W);
-  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ rP[y]+=mag[y*W+x]; cP[x]+=mag[y*W+x]; }
-
-  // ⑤ Smooth (moving avg r=5)
-  const smth=(a,r=5)=>{
-    const o=new Float32Array(a.length);
-    for(let i=0;i<a.length;i++){let s=0,n=0; for(let d=-r;d<=r;d++){const j=i+d;if(j>=0&&j<a.length){s+=a[j];n++;}} o[i]=s/n;}
-    return o;
-  };
-  const sR=smth(rP), sC=smth(cP);
-
-  // ⑥ Adaptive threshold = mean + 0.6*std  of INNER 60% of array
-  const thr=(arr)=>{
-    const lo=Math.floor(arr.length*.2),hi=Math.floor(arr.length*.8);
-    const sl=arr.slice(lo,hi);
-    const mean=sl.reduce((a,b)=>a+b,0)/sl.length;
-    const std=Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/sl.length);
-    return mean+std*0.6;
-  };
-  const tR=thr(sR), tC=thr(sC);
-
-  // ⑦ Scan inward from each side — skip 4px from edge to avoid frame artifacts
-  const scan=(arr,thresh,from,to)=>{
-    const step=from<to?1:-1, skip=4;
-    for(let i=from;i!==to;i+=step){
-      if(Math.abs(i-from)<skip) continue;
-      if(arr[i]>thresh) return i;
-    }
-    // fallback: 7% inset
-    return from<to ? Math.floor(arr.length*.07) : Math.floor(arr.length*.93);
-  };
-
-  const top    = scan(sR, tR, 0, H);
-  const bottom = scan(sR, tR, H-1, -1);
-  const left   = scan(sC, tC, 0, W);
-  const right  = scan(sC, tC, W-1, -1);
-
-  // ⑧ Validate
-  const sx=srcCanvas.width/W, sy=srcCanvas.height/H;
-  if((right-left)<W*.12||(bottom-top)<H*.12){
-    const px=srcCanvas.width*.07, py=srcCanvas.height*.07;
-    return [{x:px,y:py},{x:srcCanvas.width-px,y:py},
-            {x:srcCanvas.width-px,y:srcCanvas.height-py},{x:px,y:srcCanvas.height-py}];
-  }
-
-  // Small padding (4px in thumb coords)
-  const pad=4;
-  return [
-    {x:Math.max(0,(left-pad)*sx),          y:Math.max(0,(top-pad)*sy)},
-    {x:Math.min(srcCanvas.width,(right+pad)*sx),  y:Math.max(0,(top-pad)*sy)},
-    {x:Math.min(srcCanvas.width,(right+pad)*sx),  y:Math.min(srcCanvas.height,(bottom+pad)*sy)},
-    {x:Math.max(0,(left-pad)*sx),          y:Math.min(srcCanvas.height,(bottom+pad)*sy)},
-  ];
-}
-
-// ═══════════════════════════════════════
-//  CROP VIEW
-// ═══════════════════════════════════════
-function setupCrop(){
-  const page=pages[activePg]; if(!page)return;
-  const src=page.src;
-
-  // ① Fit canvas display size to container
-  const area=document.getElementById('cropArea');
-  const aW=area.clientWidth-28, aH=area.clientHeight-28;
-  const ar=src.width/src.height;
-  let dW,dH;
-  if(ar>aW/aH){dW=aW;dH=Math.round(aW/ar);}
-  else{dH=aH;dW=Math.round(aH*ar);}
-
-  const cc=document.getElementById('cropCanvas');
-  // Internal resolution = source image (so corners are in source px)
-  cc.width=src.width; cc.height=src.height;
-  // Display size via CSS
-  cc.style.width=dW+'px'; cc.style.height=dH+'px';
-
-  // ② Draw image
-  ctx(cc).drawImage(src,0,0);
-
-  // ③ Auto-detect corners
-  corners=autoCorners(src);
-
-  // ④ Draw overlay on canvas
-  drawOverlay();
-
-  // ⑤ Position SVG handles (in display coords)
-  syncHandles();
-
-  // ⑥ Bind drag to handles
-  bindDrag();
-}
-
-function drawOverlay(){
-  const cc=document.getElementById('cropCanvas');
-  const c=ctx(cc);
-  const w=cc.width, h=cc.height;
-  const page=pages[activePg];
-
-  c.clearRect(0,0,w,h);
-  c.drawImage(page.src,0,0);
-
-  // Dark mask outside quad
-  c.save();
-  c.fillStyle='rgba(0,0,0,0.58)';
-  c.beginPath();
-  c.rect(0,0,w,h);
-  c.moveTo(corners[0].x,corners[0].y);
-  corners.forEach((p,i)=>{ if(i>0)c.lineTo(p.x,p.y); });
-  c.closePath();
-  c.fill('evenodd');
-  c.restore();
-
-  // Grid
-  c.save();
-  c.beginPath();
-  c.moveTo(corners[0].x,corners[0].y);
-  corners.forEach((p,i)=>{ if(i>0)c.lineTo(p.x,p.y); });
-  c.closePath(); c.clip();
-  c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=Math.max(1,w*.0012);
-  for(let t=1;t<3;t++){
-    c.beginPath(); c.moveTo(lerp(corners[0].x,corners[3].x,t/3),lerp(corners[0].y,corners[3].y,t/3));
-    c.lineTo(lerp(corners[1].x,corners[2].x,t/3),lerp(corners[1].y,corners[2].y,t/3)); c.stroke();
-    c.beginPath(); c.moveTo(lerp(corners[0].x,corners[1].x,t/3),lerp(corners[0].y,corners[1].y,t/3));
-    c.lineTo(lerp(corners[3].x,corners[2].x,t/3),lerp(corners[3].y,corners[2].y,t/3)); c.stroke();
-  }
-  c.restore();
-}
-
-// Sync SVG handles to current corners (converts source→display coords)
-function syncHandles(){
-  const cc=document.getElementById('cropCanvas');
-  // Scale factor: display px per source px
-  const sx=cc.clientWidth /cc.width;
-  const sy=cc.clientHeight/cc.height;
-
-  document.getElementById('selPoly').setAttribute('points',
-    corners.map(p=>`${p.x*sx},${p.y*sy}`).join(' '));
-  corners.forEach((p,i)=>{
-    const el=document.getElementById('h'+i);
-    el.setAttribute('cx', p.x*sx);
-    el.setAttribute('cy', p.y*sy);
-  });
-}
-
-// ═══════════════════════════════════════
-//  DRAG HANDLES
-// ═══════════════════════════════════════
-function bindDrag(){
-  for(let i=0;i<4;i++){
-    const old=document.getElementById('h'+i);
-    const fresh=old.cloneNode(true);
-    old.replaceWith(fresh);
-    const idx=i;
-    fresh.addEventListener('mousedown', e=>startDrag(e,idx));
-    fresh.addEventListener('touchstart', e=>startDrag(e,idx),{passive:false});
-  }
-}
-
-// Convert a client-space point → source canvas coords
-function clientToSource(clientX, clientY){
-  const cc=document.getElementById('cropCanvas');
-  const rect=cc.getBoundingClientRect();
-  const sx=cc.width /rect.width;
-  const sy=cc.height/rect.height;
-  return {
-    x: Math.max(0,Math.min(cc.width,  (clientX-rect.left)*sx)),
-    y: Math.max(0,Math.min(cc.height, (clientY-rect.top )*sy))
-  };
-}
-
-function startDrag(e, idx){
-  e.preventDefault();
-
-  function getClient(ev){ const pt=ev.touches?ev.touches[0]:ev; return{x:pt.clientX,y:pt.clientY}; }
-
-  const onMove=ev=>{
-    ev.preventDefault();
-    const {x,y}=getClient(ev);
-    corners[idx]=clientToSource(x,y);
-    drawOverlay();
-    syncHandles();
-    // Magnifier
-    const wrap=document.getElementById('cropWrap');
-    const wr=wrap.getBoundingClientRect();
-    showMag(x,y, x-wr.left, y-wr.top);
-  };
-  const onEnd=()=>{
-    document.getElementById('mag').style.display='none';
-    window.removeEventListener('mousemove',onMove);
-    window.removeEventListener('mouseup',onEnd);
-    window.removeEventListener('touchmove',onMove);
-    window.removeEventListener('touchend',onEnd);
-  };
-  window.addEventListener('mousemove',onMove);
-  window.addEventListener('mouseup',onEnd);
-  window.addEventListener('touchmove',onMove,{passive:false});
-  window.addEventListener('touchend',onEnd);
-
-  // Show initial magnifier
-  const {x,y}=getClient(e);
-  const wr=document.getElementById('cropWrap').getBoundingClientRect();
-  showMag(x,y, x-wr.left, y-wr.top);
-}
-
-function showMag(clientX, clientY, localX, localY){
-  const mag=document.getElementById('mag');
-  const wrap=document.getElementById('cropWrap');
-  const wr=wrap.getBoundingClientRect();
-  // Position above finger
-  const mx=Math.max(0,Math.min(wr.width-110, localX-55));
-  const my=Math.max(0, localY-148);
-  mag.style.left=mx+'px'; mag.style.top=my+'px'; mag.style.display='block';
-  // Draw zoom
-  const sp=clientToSource(clientX, clientY);
-  const zoom=3.2, sw=110/zoom, sh=110/zoom;
-  const mc=document.getElementById('magCanvas').getContext('2d');
-  mc.clearRect(0,0,110,110);
-  mc.drawImage(pages[activePg].src, sp.x-sw/2, sp.y-sh/2, sw, sh, 0, 0, 110, 110);
-}
-
-// ═══════════════════════════════════════
-//  ROTATE SOURCE
-// ═══════════════════════════════════════
-function rotateSrc(deg){
-  const page=pages[activePg];
-  const src=page.src;
-  const rad=deg*Math.PI/180;
-  const nW=Math.abs(Math.round(src.width*Math.cos(rad)))+Math.abs(Math.round(src.height*Math.sin(rad)));
-  const nH=Math.abs(Math.round(src.width*Math.sin(rad)))+Math.abs(Math.round(src.height*Math.cos(rad)));
-  const rot=mkC(nW,nH);
-  const c=ctx(rot);
-  c.translate(nW/2,nH/2); c.rotate(rad); c.drawImage(src,-src.width/2,-src.height/2);
-  freeC(page.src); page.src=rot;
-  setupCrop();
-}
-
-// ═══════════════════════════════════════
-//  APPLY CROP (Perspective Warp — Bilinear)
-// ═══════════════════════════════════════
-function doApply(){
-  setLoad(true,'กำลังดัดมุมมองเอกสาร...');
-  setTimeout(()=>{
-    const page=pages[activePg];
-    const [tl,tr,br,bl]=corners;
-    const outW=Math.round(Math.max(Math.hypot(tr.x-tl.x,tr.y-tl.y),Math.hypot(br.x-bl.x,br.y-bl.y)));
-    const outH=Math.round(Math.max(Math.hypot(tl.x-bl.x,tl.y-bl.y),Math.hypot(tr.x-br.x,tr.y-br.y)));
-    if(outW<4||outH<4){setLoad(false);toast('พื้นที่ crop เล็กเกินไป','err');return;}
-
-    freeC(page.cropped);
-    const dst=mkC(outW,outH);
-    const dc=ctx(dst);
-    const di=dc.createImageData(outW,outH);
-    const db=di.data;
-
-    const sc=ctx(page.src);
-    const si=sc.getImageData(0,0,page.src.width,page.src.height);
-    const sb=si.data;
-    const sW=page.src.width, sH=page.src.height;
-
-    for(let y=0;y<outH;y++){
-      const v=outH>1?y/(outH-1):0;
-      const lx=lerp(tl.x,bl.x,v), ly=lerp(tl.y,bl.y,v);
-      const rx=lerp(tr.x,br.x,v), ry=lerp(tr.y,br.y,v);
-      for(let x=0;x<outW;x++){
-        const u=outW>1?x/(outW-1):0;
-        const spx=lerp(lx,rx,u), spy=lerp(ly,ry,u);
-        const x0=Math.floor(spx),y0=Math.floor(spy);
-        const x1=Math.min(x0+1,sW-1),y1=Math.min(y0+1,sH-1);
-        if(x0<0||y0<0||x0>=sW||y0>=sH){continue;}
-        const fx=spx-x0,fy=spy-y0;
-        const i00=(y0*sW+x0)*4,i10=(y0*sW+x1)*4,i01=(y1*sW+x0)*4,i11=(y1*sW+x1)*4,di2=(y*outW+x)*4;
-        for(let c=0;c<3;c++) db[di2+c]=Math.round(sb[i00+c]*(1-fx)*(1-fy)+sb[i10+c]*fx*(1-fy)+sb[i01+c]*(1-fx)*fy+sb[i11+c]*fx*fy);
-        db[di2+3]=255;
-      }
-    }
-    dc.putImageData(di,0,0);
-    page.cropped=dst;
-    applyFilter(activePg, page.filter);
-    setLoad(false);
-    showView('edit');
-  },40);
-}
-
-// ═══════════════════════════════════════
-//  FILTERS
-// ═══════════════════════════════════════
-function applyFilter(pi, name){
-  const page=pages[pi]; if(!page.cropped)return;
-  page.filter=name;
-  freeC(page.processed);
-  const w=page.cropped.width,h=page.cropped.height;
-  const out=mkC(w,h); const oc=ctx(out); oc.drawImage(page.cropped,0,0);
-  if(name==='original'){page.processed=out;return;}
-  const im=oc.getImageData(0,0,w,h); const d=im.data;
-
-  if(name==='shadow'){
-    const bW=Math.max(6,w>>5),bH=Math.max(6,h>>5);
-    const sm=mkC(bW,bH); ctx(sm).drawImage(page.cropped,0,0,bW,bH);
-    const bl=mkC(w,h); const bc=ctx(bl);
-    bc.imageSmoothingEnabled=true; bc.imageSmoothingQuality='high';
-    bc.drawImage(sm,0,0,w,h); freeC(sm);
-    const bg=bc.getImageData(0,0,w,h).data; freeC(bl);
-    for(let i=0;i<d.length;i+=4){
-      const lum=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
-      let bgL=bg[i]*.299+bg[i+1]*.587+bg[i+2]*.114; if(bgL<1)bgL=1;
-      let v=(lum/bgL)*255;
-      v=v>210?255:Math.max(0,(v-118)*1.85);
-      d[i]=d[i+1]=d[i+2]=Math.min(255,v);
-    }
-  } else if(name==='color'){
-    for(let i=0;i<d.length;i+=4){
-      const lum=d[i]*.299+d[i+1]*.587+d[i+2]*.114; const B=1.35;
-      d[i]=clamp((d[i]-128)*B+148); d[i+1]=clamp((d[i+1]-128)*B+148); d[i+2]=clamp((d[i+2]-128)*B+148);
-      if(lum>188){d[i]=255;d[i+1]=255;d[i+2]=255;}
-    }
-  } else if(name==='bw'){
-    for(let i=0;i<d.length;i+=4){const v=d[i]*.299+d[i+1]*.587+d[i+2]*.114>130?255:0;d[i]=d[i+1]=d[i+2]=v;}
-  } else if(name==='enhance'){
-    const bW=Math.max(6,w>>4),bH=Math.max(6,h>>4);
-    const sm=mkC(bW,bH); ctx(sm).drawImage(page.cropped,0,0,bW,bH);
-    const bl=mkC(w,h); const bc=ctx(bl);
-    bc.imageSmoothingEnabled=true; bc.imageSmoothingQuality='high';
-    bc.drawImage(sm,0,0,w,h); freeC(sm);
-    const blur=bc.getImageData(0,0,w,h).data; freeC(bl);
-    for(let i=0;i<d.length;i+=4) for(let c=0;c<3;c++) d[i+c]=clamp(d[i+c]+(d[i+c]-blur[i+c])*1.7);
-  }
-  oc.putImageData(im,0,0); page.processed=out;
-}
-function pickFilter(btn){
-  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  setLoad(true,'กำลังประมวลผล...');
-  setTimeout(()=>{ applyFilter(activePg,btn.dataset.f); renderEdit(); setLoad(false); },30);
-}
-
-// ═══════════════════════════════════════
-//  EDIT VIEW
-// ═══════════════════════════════════════
-function renderEdit(){
-  const page=pages[activePg]; if(!page?.processed)return;
-  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('active',b.dataset.f===page.filter));
-  const pv=document.getElementById('previewCanvas');
-  pv.width=page.processed.width; pv.height=page.processed.height;
-  ctx(pv).drawImage(page.processed,0,0);
-  const badge=document.getElementById('pgBadge');
-  if(pages.length>1){badge.textContent=`หน้า ${activePg+1}/${pages.length}`;badge.style.display='';}
-  else badge.style.display='none';
-  renderThumbs(); updatePgCount();
-}
-function renderThumbs(){
-  const strip=document.getElementById('thumbStrip');
-  if(pages.length<=1){strip.style.display='none';return;}
-  strip.style.display='flex'; strip.innerHTML='';
-  pages.forEach((p,i)=>{
-    if(!p.processed)return;
-    const wrap=document.createElement('div'); wrap.className='twrap';
-    const c=document.createElement('canvas');
-    const sc=56/p.processed.height; c.width=Math.round(p.processed.width*sc); c.height=56;
-    c.style.cssText=`display:block;border-radius:6px;cursor:pointer;border:2px solid ${i===activePg?'#3b82f6':'rgba(255,255,255,.15)'}`;
-    ctx(c).drawImage(p.processed,0,0,c.width,56);
-    c.onclick=()=>{activePg=i;renderEdit();};
-    const del=document.createElement('div'); del.className='tdel'; del.textContent='✕';
-    del.onclick=ev=>{ev.stopPropagation();freeC(pages[i].src);freeC(pages[i].cropped);freeC(pages[i].processed);pages.splice(i,1);if(!pages.length){showView('camera');return;}activePg=Math.min(activePg,pages.length-1);renderEdit();};
-    wrap.append(c,del); strip.appendChild(wrap);
-  });
-  const add=document.createElement('button');
-  add.style.cssText='flex-shrink:0;width:44px;height:56px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#888;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center';
-  add.innerHTML='<i class="ph-bold ph-plus"></i>'; add.onclick=()=>showView('camera');
-  strip.appendChild(add);
-}
-
-// ═══════════════════════════════════════
-//  EXPORT
-// ═══════════════════════════════════════
-function saveImg(){
-  const p=pages[activePg];
-  if(!p?.processed){toast('ไม่มีภาพ','err');return;}
-  try{const a=document.createElement('a');a.download=`scan_${Date.now()}.jpg`;a.href=p.processed.toDataURL('image/jpeg',.95);a.click();toast('บันทึกรูปภาพสำเร็จ ✓','ok');}
-  catch(e){toast('บันทึกไม่สำเร็จ','err');}
-}
-async function savePdf(){
-  const valid=pages.filter(p=>p.processed);
-  if(!valid.length){toast('ไม่มีเอกสาร','err');return;}
-  setLoad(true,'กำลังสร้าง PDF...');
-  await new Promise(r=>setTimeout(r,60));
-  try{
-    const{jsPDF}=window.jspdf;
-    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-    for(let i=0;i<valid.length;i++){
-      const p=valid[i].processed;
-      if(i>0)pdf.addPage();
-      const rat=p.width/p.height; let iw=pw-8,ih=(pw-8)/rat;
-      if(ih>ph-8){ih=ph-8;iw=ih*rat;}
-      pdf.addImage(p.toDataURL('image/jpeg',p.width*p.height>3e6?.78:.9),'JPEG',(pw-iw)/2,(ph-ih)/2,iw,ih,undefined,'FAST');
-      setLoad(true,`หน้า ${i+1}/${valid.length}...`);
-      await new Promise(r=>setTimeout(r,8));
-    }
-    pdf.save(`scan_${Date.now()}.pdf`); setLoad(false);
-    toast(`PDF ${valid.length} หน้า สำเร็จ ✓`,'ok');
-  }catch(e){setLoad(false);toast('สร้าง PDF ไม่สำเร็จ','err');console.error(e);}
-}
-
-// ── INIT ──
-showView('camera');
+const firebaseConfig = {
+  apiKey: "AIzaSyC_UFiaMTcZIIjdy1Iyy9z1Qk03Q7a4ix4",
+  authDomain: "ude-63c04.firebaseapp.com",
+  projectId: "ude-63c04",
+  storageBucket: "ude-63c04.firebasestorage.app",
+  messagingSenderId: "1073813309750",
+  appId: "1:1073813309750:web:378ce0f130c7b84b58cb97",
+  measurementId: "G-PNSCDYDQYJ"
+};
 </script>
 
+<style>
+:root {
+  --bg:       #0b0d14;
+  --surface:  #10131e;
+  --card:     #13172299;
+  --border:   rgba(255,255,255,.08);
+  --accent:   #6366f1;
+  --green:    #10b981;
+  --amber:    #f59e0b;
+  --red:      #ef4444;
+  --orange:   #f97316;
+  --blue:     #3b82f6;
+  --text:     #e8edf8;
+  --muted:    rgba(255,255,255,.38);
+  --font:     'Outfit', sans-serif;
+  --mono:     'DM Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* BG effects */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(99,102,241,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(99,102,241,.035) 1px,transparent 1px);
+  background-size:52px 52px;
+  z-index:0;
+}
+.glow{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+}
+.glow-1{
+  width:700px;height:700px;
+  background:radial-gradient(circle,rgba(99,102,241,.1) 0%,transparent 65%);
+  top:-300px;left:-300px;
+}
+.glow-2{
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(16,185,129,.07) 0%,transparent 65%);
+  bottom:-200px;right:-200px;
+}
+
+/* Pages */
+.page{position:relative;z-index:1}
+#loginPage{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+#appPage{display:none;max-width:1060px;margin:0 auto;padding:0 20px 80px}
+
+/* Card */
+.card{
+  background:var(--card);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--border);
+  border-radius:20px;
+  box-shadow:0 8px 40px rgba(0,0,0,.45);
+}
+
+/* ── LOGIN ───────────────────────────────────────── */
+.login-wrap{width:100%;max-width:420px}
+.login-logo{text-align:center;margin-bottom:36px}
+.login-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:76px;height:76px;border-radius:24px;font-size:34px;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  box-shadow:0 12px 40px rgba(99,102,241,.4);
+  margin-bottom:18px;
+}
+.login-title{font-size:34px;font-weight:800;letter-spacing:-.04em;color:#fff;margin-bottom:6px}
+.login-sub{color:var(--muted);font-size:14px;letter-spacing:.04em}
+.login-card{padding:36px 32px}
+.login-card h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:4px}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:28px}
+.login-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:13px 20px;border-radius:12px;font-family:var(--font);
+  font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;
+  letter-spacing:.01em;border:1px solid rgba(255,255,255,.1);margin-bottom:0;
+}
+.btn-google{background:#fff;color:#111}
+.btn-google:hover{background:#f1f1f1;transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,255,255,.15)}
+.btn-demo{background:rgba(99,102,241,.12);color:#a5b4fc;border-color:rgba(99,102,241,.25);margin-top:12px}
+.btn-demo:hover{background:rgba(99,102,241,.2);transform:translateY(-1px)}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0}
+.divider span{color:var(--muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.login-footer{text-align:center;margin-top:18px;color:var(--muted);font-size:11px}
+.error-msg{
+  margin-top:14px;padding:10px 14px;
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);
+  border-radius:10px;color:#fca5a5;font-size:12px;display:none;
+}
+
+/* ── NAVBAR ──────────────────────────────────────── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0 26px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:28px;
+  flex-wrap:wrap;gap:12px;
+}
+.nav-logo{display:flex;align-items:center;gap:12px}
+.nav-icon{
+  width:42px;height:42px;border-radius:13px;font-size:20px;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(99,102,241,.35);flex-shrink:0;
+}
+.nav-brand{font-size:20px;font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1}
+.nav-tagline{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.nav-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.saving-dot{
+  display:none;align-items:center;gap:6px;
+  font-size:11px;color:var(--muted);
+}
+.saving-dot.show{display:flex}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1s infinite}
+.user-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+}
+.user-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;overflow:hidden;
+}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;font-weight:600;color:#e8edf8}
+.user-demo{font-size:10px;color:var(--amber)}
+.btn-signout{
+  padding:7px 14px;border-radius:9px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:var(--font);
+  font-size:12px;cursor:pointer;transition:all .2s;
+}
+.btn-signout:hover{border-color:rgba(239,68,68,.4);color:#fca5a5}
+
+/* ── STATS ───────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:14px;margin-bottom:24px}
+.stat-card{padding:22px 22px 18px}
+.stat-label{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:4px}
+.stat-sub{font-size:11px;margin-top:2px}
+.gpa-card{background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(16,185,129,.1)) !important;border-color:rgba(99,102,241,.25) !important}
+.gpa-value{background:linear-gradient(135deg,#a5b4fc,#6ee7b7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:44px}
+
+/* ── SEMESTER TABS ────────────────────────────────── */
+.sem-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.sem-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 15px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);font-family:var(--font);font-size:13px;
+  cursor:pointer;transition:all .2s;
+}
+.sem-tab.active{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.5);color:#c7d2fe;font-weight:600}
+.sem-tab:hover:not(.active){border-color:rgba(99,102,241,.3);color:#c7d2fe}
+.sem-count{font-size:10px;opacity:.7}
+.sem-del{
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:14px;padding:2px 5px;border-radius:4px;margin-left:2px;
+  transition:all .15s;line-height:1;
+}
+.sem-del:hover{color:var(--red);background:rgba(239,68,68,.1)}
+.btn-add-sem{
+  padding:7px 14px;border-radius:10px;
+  border:1px dashed var(--border);background:transparent;
+  color:var(--muted);font-family:var(--font);font-size:13px;
+  cursor:pointer;transition:all .2s;
+}
+.btn-add-sem:hover{border-color:rgba(99,102,241,.4);color:#a5b4fc}
+
+/* ── ACTION BAR ──────────────────────────────────── */
+.action-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.btn-action{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:10px;font-family:var(--font);
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+  letter-spacing:.01em;border:none;
+}
+.btn-action:hover{transform:translateY(-1px);filter:brightness(1.12)}
+.btn-add{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.btn-ai{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+.btn-export{background:transparent;color:var(--muted);border:1px solid var(--border);margin-left:auto}
+.btn-export:hover{color:var(--text);border-color:var(--muted)}
+
+/* ── AI PANEL ────────────────────────────────────── */
+.ai-panel{padding:24px;margin-bottom:20px;border-color:rgba(99,102,241,.3);display:none;animation:fadeUp .25s ease}
+.ai-panel.open{display:block}
+.ai-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.ai-title{font-size:16px;font-weight:700;color:#c7d2fe;display:flex;align-items:center;gap:8px}
+.ai-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;line-height:1;padding:2px 6px}
+.ai-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.drop-zone{
+  border:2px dashed var(--border);border-radius:14px;
+  padding:32px;text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.drop-zone:hover,.drop-zone.has-img{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.04)}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.drop-icon{font-size:36px;margin-bottom:10px}
+.drop-text{font-size:13px;color:var(--muted)}
+.drop-hint{font-size:11px;color:var(--muted);opacity:.6;margin-top:4px}
+.preview-img{max-height:180px;border-radius:10px;object-fit:contain;display:none;margin:0 auto}
+.progress-bar{height:3px;background:var(--border);border-radius:2px;margin-top:14px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green),var(--accent));background-size:200%;animation:shimmer 1.5s infinite}
+.ai-status{font-size:12px;margin-top:10px;display:none}
+.ai-results{margin-top:14px;border-radius:12px;border:1px solid var(--border);overflow:hidden;display:none}
+.ai-results-head{padding:10px 16px;border-bottom:1px solid var(--border);font-size:10px;color:#a5b4fc;letter-spacing:.1em;text-transform:uppercase}
+.ai-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.ai-row:last-of-type{border-bottom:none}
+.ai-row-name{flex:1;color:var(--text)}
+.ai-row-score{color:var(--green);font-weight:600;font-family:var(--mono);min-width:38px;text-align:center}
+.ai-actions{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+.btn-import{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);padding:8px 16px;border-radius:9px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-import:hover{background:rgba(16,185,129,.25)}
+.btn-dismiss{background:transparent;color:var(--muted);border:1px solid var(--border);padding:8px 14px;border-radius:9px;font-family:var(--font);font-size:13px;cursor:pointer}
+
+/* ── TABLE ───────────────────────────────────────── */
+.table-wrap{border-radius:18px;border:1px solid var(--border);overflow:hidden;margin-bottom:18px;background:rgba(255,255,255,.02)}
+.table-header{
+  display:grid;
+  grid-template-columns:32px 1fr 104px 80px 76px 64px 110px 34px;
+  gap:0;padding:10px 18px;
+  background:rgba(255,255,255,.025);
+  border-bottom:1px solid var(--border);
+}
+.th{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.th.center{text-align:center}
+.table-body{}
+.empty-state{padding:48px 20px;text-align:center}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-text{font-size:15px;color:var(--muted);margin-bottom:6px}
+.empty-hint{font-size:12px;color:var(--muted);opacity:.6}
+.table-row{
+  display:grid;
+  grid-template-columns:32px 1fr 104px 80px 76px 64px 110px 34px;
+  gap:0;padding:11px 18px;
+  border-bottom:1px solid var(--border);
+  align-items:center;
+  transition:background .15s;
+}
+.table-row:last-child{border-bottom:none}
+.table-row:hover{background:rgba(255,255,255,.03)}
+.row-num{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.row-name input{
+  background:transparent;border:none;color:var(--text);
+  font-family:var(--font);font-size:14px;width:100%;
+  caret-color:var(--accent);
+}
+.row-name input::placeholder{color:var(--muted);opacity:.5}
+.row-name input:focus{outline:none}
+.score-input,.credits-input{
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  padding:5px 7px;text-align:center;width:100%;
+  transition:border-color .2s;
+}
+.score-input:focus,.credits-input:focus{outline:none;border-color:rgba(99,102,241,.5)}
+.score-wrap{text-align:center}
+.credits-wrap{text-align:center}
+.credits-input{width:50px}
+.grade-badge{
+  display:inline-block;padding:3px 10px;border-radius:7px;
+  font-size:12px;font-weight:700;min-width:36px;text-align:center;
+}
+.grade-wrap{text-align:center}
+.pts-wrap{text-align:center;font-size:13px;color:var(--muted);font-family:var(--mono)}
+.bar-wrap{}
+.bar-track{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.bar-label{font-size:10px;color:var(--muted);font-family:var(--mono);text-align:right;margin-top:3px}
+.del-btn{
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-size:17px;padding:4px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.del-btn:hover{color:var(--red);background:rgba(239,68,68,.1)}
+
+/* Table footer */
+.table-footer{
+  display:grid;
+  grid-template-columns:32px 1fr 104px 80px 76px 64px 110px 34px;
+  gap:0;padding:11px 18px;
+  border-top:1px solid var(--border);
+  background:rgba(255,255,255,.015);
+  align-items:center;
+}
+.footer-label{font-size:12px;color:var(--muted);font-weight:600}
+.footer-val{text-align:center;font-size:13px;font-family:var(--mono)}
+
+/* ── GRADE SCALE ─────────────────────────────────── */
+.scale-card{padding:16px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:6px}
+.scale-label{font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;flex-shrink:0}
+.scale-bars{display:flex;flex:1;gap:4px;min-width:200px}
+.scale-seg{border-radius:3px;height:7px}
+.scale-legends{display:flex;flex:1;justify-content:space-between;min-width:200px}
+.scale-legend{font-size:10px;color:var(--muted);text-align:center}
+.scale-legend b{display:block}
+
+/* ── TOAST ───────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  padding:11px 18px;border-radius:12px;
+  background:rgba(11,13,20,.96);
+  border:1px solid var(--green);color:#6ee7b7;
+  font-size:13px;font-weight:500;z-index:9999;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  backdrop-filter:blur(20px);
+  display:none;animation:fadeUp .3s ease;
+}
+.toast.warn{border-color:var(--amber);color:#fcd34d}
+.toast.show{display:block}
+
+/* ── LOADING ─────────────────────────────────────── */
+.loading-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;flex-direction:column;gap:14px;
+}
+.spinner{
+  width:42px;height:42px;border-radius:50%;
+  border:3px solid rgba(99,102,241,.15);
+  border-top-color:var(--accent);
+  animation:spin .8s linear infinite;
+}
+
+/* ── ANIMATIONS ──────────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+input[type=number]::-webkit-inner-spin-button{opacity:0}
+input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+
+@media(max-width:700px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .table-header,.table-row,.table-footer{grid-template-columns:28px 1fr 90px 60px 60px 0 90px 30px}
+  .th:nth-child(6),.pts-wrap{display:none}
+}
+@media(max-width:500px){
+  .table-header,.table-row,.table-footer{grid-template-columns:24px 1fr 80px 0 60px 0 80px 28px}
+  .th:nth-child(4),.credits-wrap{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<!-- ── LOADING ──────────────────────────────────────────────────── -->
+<div id="loadingScreen" class="loading-screen page">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:14px">กำลังโหลด…</div>
+</div>
+
+<!-- ── LOGIN PAGE ────────────────────────────────────────────────── -->
+<div id="loginPage" class="page" style="display:none">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-icon">🎓</div>
+      <div class="login-title">UniGrade</div>
+      <div class="login-sub">Smart University Grade Tracker</div>
+    </div>
+    <div class="card login-card">
+      <h2>ยินดีต้อนรับ 👋</h2>
+      <p>ลงชื่อเข้าใช้เพื่อซิงค์เกรดของคุณทุกเครื่อง</p>
+
+      <button class="login-btn btn-google" onclick="signInGoogle()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        เข้าสู่ระบบด้วย Google
+      </button>
+
+      <div class="divider"><span>หรือ</span></div>
+
+      <button class="login-btn btn-demo" onclick="signInDemo()">
+        🚀 ทดลองใช้งาน (ไม่ต้องสมัคร)
+      </button>
+
+      <div class="error-msg" id="loginError"></div>
+    </div>
+    <div class="login-footer">🔒 ข้อมูลเข้ารหัสและปลอดภัยด้วย Firebase</div>
+  </div>
+</div>
+
+<!-- ── APP PAGE ──────────────────────────────────────────────────── -->
+<div id="appPage" class="page">
+
+  <!-- NAVBAR -->
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-icon">🎓</div>
+      <div>
+        <div class="nav-brand">UniGrade</div>
+        <div class="nav-tagline">Grade Calculator</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="saving-dot" id="savingDot">
+        <span class="dot"></span> กำลังบันทึก…
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div>
+          <div class="user-name" id="userName">Student</div>
+          <div class="user-demo" id="userDemo" style="display:none">Demo Mode</div>
+        </div>
+      </div>
+      <button class="btn-signout" onclick="doSignOut()">ออกจากระบบ</button>
+    </div>
+  </nav>
+
+  <!-- STATS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="card stat-card gpa-card">
+      <div class="stat-label">Cumulative GPA</div>
+      <div class="stat-value gpa-value" id="cumGPA">—</div>
+      <div class="stat-sub" id="gpaHonor" style="color:#a5b4fc;font-size:11px"></div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-label">Semester GPA</div>
+      <div class="stat-value" id="semGPA" style="color:var(--accent)">—</div>
+      <div style="font-size:20px;margin-top:4px">📊</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-label">Credit Hours</div>
+      <div class="stat-value" id="totalCredits" style="color:var(--green)">0</div>
+      <div style="font-size:20px;margin-top:4px">📚</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-label">Avg Score</div>
+      <div class="stat-value" id="avgScore" style="color:var(--amber)">—</div>
+      <div style="font-size:20px;margin-top:4px">🎯</div>
+    </div>
+  </div>
+
+  <!-- SEMESTER TABS -->
+  <div class="sem-row" id="semRow"></div>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar">
+    <button class="btn-action btn-add" onclick="addRow()">＋ เพิ่มวิชา</button>
+    <button class="btn-action btn-ai" onclick="toggleAI()">📷 สแกนจากรูป (AI)</button>
+    <button class="btn-action btn-export" onclick="exportCSV()">↓ Export CSV</button>
+  </div>
+
+  <!-- AI PANEL -->
+  <div class="card ai-panel" id="aiPanel">
+    <div class="ai-head">
+      <div class="ai-title">🤖 AI Grade Scanner</div>
+      <button class="ai-close" onclick="toggleAI()">×</button>
+    </div>
+    <div class="ai-sub">อัปโหลดรูปใบเกรด หรือ transcript — AI จะดึงวิชาและคะแนนให้อัตโนมัติ</div>
+    <label class="drop-zone" id="dropZone">
+      <input type="file" accept="image/*" onchange="handleAIFile(this.files[0])">
+      <img id="aiPreview" class="preview-img" alt="">
+      <div id="dropContent">
+        <div class="drop-icon">📷</div>
+        <div class="drop-text">คลิกหรือลากรูปมาวางที่นี่</div>
+        <div class="drop-hint">JPG · PNG · WEBP</div>
+      </div>
+    </label>
+    <div class="progress-bar" id="aiProgress"><div class="progress-fill"></div></div>
+    <div class="ai-status" id="aiStatus"></div>
+    <div class="ai-results" id="aiResults"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="th">#</div>
+      <div class="th">วิชา</div>
+      <div class="th center">คะแนน</div>
+      <div class="th center">หน่วยกิต</div>
+      <div class="th center">เกรด</div>
+      <div class="th center">คะแนน GPA</div>
+      <div class="th">ความคืบหน้า</div>
+      <div class="th"></div>
+    </div>
+    <div class="table-body" id="tableBody">
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <div class="empty-text">ยังไม่มีวิชา</div>
+        <div class="empty-hint">กด "เพิ่มวิชา" หรือ "สแกนจากรูป" เพื่อเริ่มต้น</div>
+      </div>
+    </div>
+    <div class="table-footer" id="tableFooter" style="display:none">
+      <div></div>
+      <div class="footer-label">รวม / GPA</div>
+      <div class="footer-val" id="footerAvg" style="color:var(--amber)"></div>
+      <div class="footer-val" id="footerCr" style="color:var(--green)"></div>
+      <div class="footer-val" id="footerGPA">
+        <span style="display:inline-block;padding:3px 10px;border-radius:7px;background:rgba(99,102,241,.15);color:#a5b4fc;font-weight:700"></span>
+      </div>
+      <div></div><div></div><div></div>
+    </div>
+  </div>
+
+  <!-- GRADE SCALE -->
+  <div class="card scale-card">
+    <div class="scale-label">Grade Scale</div>
+    <div>
+      <div class="scale-bars">
+        <div class="scale-seg" style="flex:1;background:var(--red)"></div>
+        <div class="scale-seg" style="flex:1;background:var(--orange)"></div>
+        <div class="scale-seg" style="flex:1;background:var(--amber)"></div>
+        <div class="scale-seg" style="flex:1.5;background:var(--accent)"></div>
+        <div class="scale-seg" style="flex:2;background:var(--green)"></div>
+      </div>
+      <div class="scale-legends" style="margin-top:6px">
+        <div class="scale-legend"><b style="color:var(--red)">F</b>0–49</div>
+        <div class="scale-legend"><b style="color:var(--orange)">D</b>50–59</div>
+        <div class="scale-legend"><b style="color:var(--amber)">C</b>60–69</div>
+        <div class="scale-legend"><b style="color:var(--accent)">B</b>70–84</div>
+        <div class="scale-legend"><b style="color:var(--green)">A</b>85–100</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end appPage -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ── FIREBASE SDK ────────────────────────────────────────────── -->
+<script type="module">
+import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider,
+         signInWithPopup, signOut,
+         onAuthStateChanged }                     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection,
+         getDocs, deleteDoc,
+         serverTimestamp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── Init Firebase ──────────────────────────────────────────────
+const app  = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── State ──────────────────────────────────────────────────────
+let currentUser = null;
+let isDemo      = false;
+let semesters   = { "Semester 1": [] };
+let activeSem   = "Semester 1";
+let saveTimer   = null;
+
+// ── Grade helpers ──────────────────────────────────────────────
+function toGrade(s) {
+  const n = parseFloat(s);
+  if (isNaN(n)||s==="") return {letter:"—",pts:null,cls:"none"};
+  if (n>=90) return {letter:"A+",pts:4.0,cls:"A"};
+  if (n>=85) return {letter:"A", pts:4.0,cls:"A"};
+  if (n>=80) return {letter:"A−",pts:3.7,cls:"A"};
+  if (n>=77) return {letter:"B+",pts:3.3,cls:"B"};
+  if (n>=73) return {letter:"B", pts:3.0,cls:"B"};
+  if (n>=70) return {letter:"B−",pts:2.7,cls:"B"};
+  if (n>=67) return {letter:"C+",pts:2.3,cls:"C"};
+  if (n>=63) return {letter:"C", pts:2.0,cls:"C"};
+  if (n>=60) return {letter:"C−",pts:1.7,cls:"C"};
+  if (n>=50) return {letter:"D", pts:1.0,cls:"D"};
+  return {letter:"F",pts:0.0,cls:"F"};
+}
+const gradeColor = {A:"#10b981",B:"#6366f1",C:"#f59e0b",D:"#f97316",F:"#ef4444",none:"#4b5563"};
+function barColor(s) {
+  const n=parseFloat(s);
+  if(isNaN(n)) return "#1e2535";
+  if(n>=85) return "#10b981"; if(n>=70) return "#6366f1";
+  if(n>=60) return "#f59e0b"; if(n>=50) return "#f97316"; return "#ef4444";
+}
+function calcGPA(rows) {
+  let pts=0,cr=0;
+  rows.forEach(r=>{const g=toGrade(r.score);if(g.pts!==null){const c=+r.credits||3;pts+=g.pts*c;cr+=c;}});
+  return cr?pts/cr:null;
+}
+function honor(g) {
+  if(!g) return "";
+  if(g>=3.7) return "Summa Cum Laude ✦";
+  if(g>=3.3) return "Magna Cum Laude";
+  if(g>=3.0) return "Cum Laude";
+  if(g>=2.0) return "Good Standing";
+  return "Needs Improvement";
+}
+const uid = ()=>Math.random().toString(36).slice(2);
+
+// ── DB ─────────────────────────────────────────────────────────
+async function dbSave(semName, rows) {
+  if (!currentUser||isDemo) return;
+  try {
+    await setDoc(doc(db,"users",currentUser.uid,"semesters",semName),
+      {rows, updatedAt:serverTimestamp()});
+  } catch(e){console.warn("DB save:",e.message)}
+}
+async function dbLoadAll() {
+  if (!currentUser||isDemo) return null;
+  try {
+    const snap = await getDocs(collection(db,"users",currentUser.uid,"semesters"));
+    const data = {};
+    snap.forEach(d=>{data[d.id]=d.data().rows||[];});
+    return Object.keys(data).length ? data : null;
+  } catch(e){console.warn("DB load:",e.message);return null;}
+}
+async function dbDeleteSem(semName) {
+  if (!currentUser||isDemo) return;
+  try { await deleteDoc(doc(db,"users",currentUser.uid,"semesters",semName)); }
+  catch(e){console.warn("DB del:",e.message)}
+}
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  document.getElementById("savingDot").classList.add("show");
+  saveTimer = setTimeout(async()=>{
+    await dbSave(activeSem, semesters[activeSem]||[]);
+    document.getElementById("savingDot").classList.remove("show");
+  }, 800);
+}
+
+// ── Auth ───────────────────────────────────────────────────────
+window.signInGoogle = async function() {
+  document.getElementById("loginError").style.display="none";
+  try {
+    const prov = new GoogleAuthProvider();
+    await signInWithPopup(auth, prov);
+  } catch(e) {
+    const el = document.getElementById("loginError");
+    el.textContent = e.message?.includes("popup") ? "Popup ถูกบล็อก — อนุญาต Popup แล้วลองใหม่" : (e.message||"เกิดข้อผิดพลาด");
+    el.style.display = "block";
+  }
+};
+
+window.signInDemo = function() {
+  isDemo = true;
+  currentUser = {uid:"demo", displayName:"Demo Student", email:"demo@unigrade.app", photoURL:null};
+  semesters = {"Semester 1":[
+    {id:uid(),name:"Calculus II",    score:"88",credits:"3"},
+    {id:uid(),name:"Data Structures",score:"75",credits:"3"},
+    {id:uid(),name:"Physics I",      score:"92",credits:"4"},
+  ]};
+  activeSem = "Semester 1";
+  showApp();
+};
+
+window.doSignOut = async function() {
+  if (!isDemo) await signOut(auth);
+  currentUser=null; isDemo=false;
+  semesters={"Semester 1":[]}; activeSem="Semester 1";
+  document.getElementById("appPage").style.display="none";
+  document.getElementById("loginPage").style.display="flex";
+};
+
+onAuthStateChanged(auth, async user=>{
+  document.getElementById("loadingScreen").style.display="none";
+  if (user) {
+    isDemo=false; currentUser=user;
+    const data = await dbLoadAll();
+    if (data) { semesters=data; activeSem=Object.keys(data)[0]; }
+    else { semesters={"Semester 1":[]}; activeSem="Semester 1"; }
+    showApp();
+  } else if (!isDemo) {
+    document.getElementById("loginPage").style.display="flex";
+  }
+});
+
+function showApp() {
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("appPage").style.display="block";
+  // User info
+  const u = currentUser;
+  document.getElementById("userName").textContent = u.displayName||u.email||"Student";
+  document.getElementById("userDemo").style.display = isDemo?"block":"none";
+  const av = document.getElementById("userAvatar");
+  if (u.photoURL) { av.innerHTML=`<img src="${u.photoURL}" alt="">`; }
+  else { av.textContent=(u.displayName||u.email||"U")[0].toUpperCase(); }
+  renderAll();
+}
+
+// ── Render ─────────────────────────────────────────────────────
+function renderAll() { renderSemTabs(); renderTable(); renderStats(); }
+
+function renderSemTabs() {
+  const row = document.getElementById("semRow");
+  row.innerHTML = "";
+  Object.keys(semesters).forEach(s=>{
+    const isActive = s===activeSem;
+    const wrap = document.createElement("div");
+    wrap.style.display="flex"; wrap.style.alignItems="center"; wrap.style.gap="2px";
+    const btn = document.createElement("button");
+    btn.className = "sem-tab"+(isActive?" active":"");
+    btn.innerHTML = `${s} <span class="sem-count">${(semesters[s]||[]).length}</span>`;
+    btn.onclick = ()=>{ activeSem=s; renderAll(); };
+    wrap.appendChild(btn);
+    if (isActive && Object.keys(semesters).length>1) {
+      const del = document.createElement("button");
+      del.className="sem-del"; del.textContent="×"; del.title="ลบ semester นี้";
+      del.onclick=()=>deleteSem(s);
+      wrap.appendChild(del);
+    }
+    row.appendChild(wrap);
+  });
+  const addBtn = document.createElement("button");
+  addBtn.className="btn-add-sem"; addBtn.textContent="+ Semester";
+  addBtn.onclick=addSemester;
+  row.appendChild(addBtn);
+}
+
+function renderTable() {
+  const rows = semesters[activeSem]||[];
+  const body = document.getElementById("tableBody");
+  const footer = document.getElementById("tableFooter");
+  if (!rows.length) {
+    body.innerHTML=`<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">ยังไม่มีวิชา</div><div class="empty-hint">กด "เพิ่มวิชา" หรือ "สแกนจากรูป" เพื่อเริ่มต้น</div></div>`;
+    footer.style.display="none"; return;
+  }
+  body.innerHTML="";
+  rows.forEach((row,i)=>{
+    const g = toGrade(row.score);
+    const pct = Math.min(100,Math.max(0,parseFloat(row.score)||0));
+    const color = barColor(row.score);
+    const gc = gradeColor[g.cls];
+    const div = document.createElement("div");
+    div.className="table-row";
+    div.innerHTML=`
+      <div class="row-num">${i+1}</div>
+      <div class="row-name"><input value="${row.name}" placeholder="ชื่อวิชา…" oninput="updateField('${row.id}','name',this.value)"></div>
+      <div class="score-wrap"><input class="score-input" type="number" min="0" max="100" value="${row.score}" placeholder="0-100" oninput="updateField('${row.id}','score',this.value)"></div>
+      <div class="credits-wrap"><input class="credits-input" type="number" min="1" max="6" value="${row.credits}" placeholder="3" oninput="updateField('${row.id}','credits',this.value)"></div>
+      <div class="grade-wrap"><span class="grade-badge" style="background:${gc}1a;color:${gc}">${g.letter}</span></div>
+      <div class="pts-wrap">${g.pts!==null?g.pts.toFixed(1):"—"}</div>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="bar-label">${row.score||"—"}/100</div>
+      </div>
+      <div><button class="del-btn" onclick="deleteRow('${row.id}')">×</button></div>
+    `;
+    body.appendChild(div);
+  });
+  // footer
+  const gpa = calcGPA(rows);
+  const cr  = rows.reduce((a,r)=>a+(+r.credits||3),0);
+  const valid = rows.filter(r=>r.score!==""&&!isNaN(+r.score));
+  const avg = valid.length?(valid.reduce((a,r)=>a+(+r.score),0)/valid.length).toFixed(1):null;
+  document.getElementById("footerAvg").textContent=avg?`${avg}%`:"—";
+  document.getElementById("footerCr").textContent=`${cr}cr`;
+  document.getElementById("footerGPA").innerHTML=`<span style="display:inline-block;padding:3px 10px;border-radius:7px;background:rgba(99,102,241,.15);color:#a5b4fc;font-weight:700">${gpa?gpa.toFixed(2):"—"}</span>`;
+  footer.style.display="grid";
+}
+
+function renderStats() {
+  const rows = semesters[activeSem]||[];
+  const allRows = Object.values(semesters).flat();
+  const cumGPA = calcGPA(allRows);
+  const semGPA = calcGPA(rows);
+  const cr  = rows.reduce((a,r)=>a+(+r.credits||3),0);
+  const valid=rows.filter(r=>r.score!==""&&!isNaN(+r.score));
+  const avg=valid.length?(valid.reduce((a,r)=>a+(+r.score),0)/valid.length).toFixed(1):null;
+  document.getElementById("cumGPA").textContent    = cumGPA?cumGPA.toFixed(2):"—";
+  document.getElementById("gpaHonor").textContent  = honor(cumGPA);
+  document.getElementById("semGPA").textContent    = semGPA?semGPA.toFixed(2):"—";
+  document.getElementById("totalCredits").textContent = cr;
+  document.getElementById("avgScore").textContent  = avg?`${avg}%`:"—";
+}
+
+// ── CRUD ───────────────────────────────────────────────────────
+window.addRow = function(name="",score="",credits="3") {
+  if (!semesters[activeSem]) semesters[activeSem]=[];
+  semesters[activeSem].push({id:uid(),name,score,credits});
+  scheduleSave(); renderAll();
+};
+window.updateField = function(id,field,val) {
+  const rows=semesters[activeSem]||[];
+  const r=rows.find(x=>x.id===id); if(r) r[field]=val;
+  scheduleSave(); renderStats(); renderTable();
+};
+window.deleteRow = function(id) {
+  semesters[activeSem]=(semesters[activeSem]||[]).filter(x=>x.id!==id);
+  scheduleSave(); renderAll();
+};
+
+function addSemester() {
+  const name=`Semester ${Object.keys(semesters).length+1}`;
+  semesters[name]=[]; activeSem=name; renderAll();
+}
+async function deleteSem(name) {
+  if (!confirm(`ลบ "${name}" ทิ้งไหม?`)) return;
+  const keys=Object.keys(semesters).filter(k=>k!==name);
+  if (!keys.length) { showToast("ต้องมีอย่างน้อย 1 semester","warn"); return; }
+  delete semesters[name];
+  activeSem=keys[0];
+  await dbDeleteSem(name);
+  renderAll();
+}
+
+// ── AI Scanner ─────────────────────────────────────────────────
+window.toggleAI = function() {
+  document.getElementById("aiPanel").classList.toggle("open");
+};
+
+window.handleAIFile = async function(file) {
+  if (!file) return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result.split(",")[1];
+    const prev=document.getElementById("aiPreview");
+    prev.src=e.target.result; prev.style.display="block";
+    document.getElementById("dropContent").style.display="none";
+    document.getElementById("dropZone").classList.add("has-img");
+
+    const prog=document.getElementById("aiProgress");
+    const status=document.getElementById("aiStatus");
+    const results=document.getElementById("aiResults");
+    prog.style.display="block";
+    status.style.display="block"; status.style.color="var(--muted)"; status.textContent="⚡ กำลังวิเคราะห์ด้วย AI…";
+    results.style.display="none";
+
+    try {
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",max_tokens:1000,
+          messages:[{role:"user",content:[
+            {type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},
+            {type:"text",text:`Extract all subjects and scores from this academic document.
+Return ONLY valid JSON (no markdown, no explanation):
+{"subjects":[{"name":"Subject Name","score":85,"credits":3}]}
+Rules: score=numeric 0-100, convert letter grades (A=93,B=83,C=73,D=63,F=50), credits default 3. If nothing: {"subjects":[],"error":"not found"}`}
+          ]}]
+        })
+      });
+      const data=await res.json();
+      const txt=data.content?.map(c=>c.text||"").join("")||"";
+      const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());
+      prog.style.display="none";
+      if (!parsed.subjects?.length) {
+        status.style.color="var(--amber)"; status.textContent="⚠️ ไม่พบข้อมูลเกรด ลองรูปที่ชัดกว่านี้";
+        return;
+      }
+      status.style.color="var(--green)"; status.textContent=`✅ พบ ${parsed.subjects.length} วิชา`;
+      renderAIResults(parsed.subjects);
+    } catch(e) {
+      prog.style.display="none";
+      status.style.color="var(--red)"; status.textContent="❌ "+(e.message||"เกิดข้อผิดพลาด");
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
+let aiSubjects=[];
+function renderAIResults(subjects) {
+  aiSubjects=subjects;
+  const box=document.getElementById("aiResults");
+  const gc=gradeColor;
+  let html=`<div class="ai-results-head">✦ ผลที่ดึงได้ — เลือกวิชาที่ต้องการนำเข้า</div>`;
+  subjects.forEach((s,i)=>{
+    const g=toGrade(s.score);
+    html+=`<div class="ai-row">
+      <input type="checkbox" id="aic${i}" checked>
+      <span class="ai-row-name">${s.name}</span>
+      <span class="ai-row-score">${s.score}</span>
+      <span class="grade-badge" style="background:${gc[g.cls]}1a;color:${gc[g.cls]}">${g.letter}</span>
+      <span style="font-size:11px;color:var(--muted)">${s.credits||3}cr</span>
+    </div>`;
+  });
+  html+=`<div class="ai-actions">
+    <button class="btn-import" onclick="importAI()">นำเข้าที่เลือก</button>
+    <button class="btn-dismiss" onclick="document.getElementById('aiResults').style.display='none'">ปิด</button>
+  </div>`;
+  box.innerHTML=html; box.style.display="block";
+}
+window.importAI=function(){
+  let count=0;
+  aiSubjects.forEach((s,i)=>{
+    if (document.getElementById("aic"+i)?.checked) { window.addRow(s.name,String(s.score),String(s.credits||3)); count++; }
+  });
+  document.getElementById("aiPanel").classList.remove("open");
+  showToast(`✅ นำเข้า ${count} วิชาแล้ว`);
+};
+
+// ── Export CSV ─────────────────────────────────────────────────
+window.exportCSV=function(){
+  let csv="Semester,Subject,Score,Credits,Grade,GPA Points\n";
+  Object.entries(semesters).forEach(([sem,rs])=>{
+    rs.forEach(r=>{
+      const g=toGrade(r.score);
+      csv+=`"${sem}","${r.name}",${r.score},${r.credits},"${g.letter}",${g.pts??""}\n`;
+    });
+  });
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="unigrade.csv"; a.click();
+  showToast("📥 Export สำเร็จ");
+};
+
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg,type="ok"){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className="toast show"+(type==="warn"?" warn":"");
+  setTimeout(()=>t.classList.remove("show"),3000);
+}
+window.showToast=showToast;
+
+</script>
 </body>
 </html>
