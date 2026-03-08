@@ -14,7 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════════
-           MODERN MINIMALIST DESIGN
+           MODERN MINIMALIST DESIGN + ANIMATIONS
            ══════════════════════════════════════════════════════════ */
         :root {
           --bg: #f5f5f7;
@@ -56,79 +56,101 @@
         }
         
         * { margin:0; padding:0; box-sizing:border-box; }
-        html { -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg); color: var(--ink); font-family: var(--body); min-height: 100vh; transition: background 0.3s, color 0.3s; overflow-x: hidden; }
+        html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--ink); font-family: var(--body); min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; overflow-x: hidden; }
         input, button, textarea, select { font-family: var(--body); }
 
+        /* Smooth Animations */
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.98) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-in { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
         /* ── Login Screen ── */
-        #login-view { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 24px; }
+        #login-view { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 24px; transition: opacity 0.4s ease; }
         .login-card { background: var(--surface); padding: 48px 40px; border-radius: 24px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; }
         .login-logo { font-size: 64px; margin-bottom: 16px; line-height: 1; display: inline-block; animation: bounce 2s infinite ease-in-out; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
         .login-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
         .login-sub { font-size: 14px; color: var(--ink3); margin-bottom: 32px; line-height: 1.5; }
-        .auth-btn-lg { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; transition: all 0.2s; box-shadow: var(--shadow-sm); }
-        .auth-btn-lg:hover { background: var(--bg); transform: translateY(-1px); box-shadow: var(--shadow); }
-        .auth-btn-guest { background: transparent; border: none; color: var(--ink3); font-size: 14px; margin-top: 16px; cursor: pointer; text-decoration: underline; }
+        .auth-btn-lg { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: var(--shadow-sm); }
+        .auth-btn-lg:hover { background: var(--bg); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .auth-btn-guest { background: transparent; border: none; color: var(--ink3); font-size: 14px; margin-top: 16px; cursor: pointer; text-decoration: underline; transition: color 0.2s; }
+        .auth-btn-guest:hover { color: var(--ink); }
 
         /* ── App Layout ── */
-        .app { display:none; min-height:100vh; }
-        .sidebar { width: 280px; background: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; position: fixed; top:0; left:0; bottom:0; z-index: 10; overflow-y: auto; border-right: 1px solid var(--border); }
+        .app { display:none; height:100vh; width: 100vw; overflow: hidden; display: flex; }
+        
+        /* Sidebar */
+        .sidebar { width: 280px; background: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; height: 100%; z-index: 100; overflow-y: auto; border-right: 1px solid var(--border); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); flex-shrink: 0; }
         
         /* Profile Section */
-        .sidebar-profile { padding: 32px 24px 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border); }
+        .sidebar-profile { padding: 32px 24px 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border); position: relative; }
+        .close-sidebar-btn { display: none; }
         .profile-img-wrap { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; position: relative; cursor: pointer; border: 2px solid var(--accent); flex-shrink: 0; background: var(--bg); }
         .profile-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
         .profile-edit-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; font-size: 20px; }
         .profile-img-wrap:hover .profile-edit-overlay { opacity: 1; }
-        .profile-info { overflow: hidden; }
+        .profile-info { overflow: hidden; flex: 1; }
         .profile-name { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .profile-email { font-size: 12px; color: var(--ink3); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
         .sidebar-section { padding: 16px 24px 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--ink3); text-transform: uppercase; font-weight: 600; }
         .sidebar-nav { padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
         
-        .nav-btn { width: 100%; padding: 10px 16px; border-radius: var(--radius-sm); background: transparent; border: none; color: var(--ink2); font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; align-items: center; gap: 10px; }
-        .nav-btn:hover { background: var(--border); color: var(--ink); }
-        .nav-btn.active { background: var(--accent); color: #fff; }
+        .nav-btn { width: 100%; padding: 10px 16px; border-radius: var(--radius-sm); background: transparent; border: none; color: var(--ink2); font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); text-align: left; display: flex; align-items: center; gap: 10px; }
+        .nav-btn:hover { background: var(--border); color: var(--ink); transform: translateX(4px); }
         
         .term-dropdown { position: relative; width: 100%; margin-bottom: 8px; }
-        .term-dropdown-btn { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); font-family: var(--mono); font-size: 12px; padding: 10px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; }
+        .term-dropdown-btn { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); font-family: var(--mono); font-size: 12px; padding: 10px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; transition: all 0.2s; }
+        .term-dropdown-btn:hover { border-color: var(--ink3); }
         .term-dropdown-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 50; max-height: 180px; overflow-y: auto; box-shadow: var(--shadow); }
-        .term-dropdown-list.open { display: block; border-top: none; }
-        .term-dropdown-item { padding: 10px 16px; font-family: var(--mono); font-size: 12px; color: var(--ink2); cursor: pointer; }
+        .term-dropdown-list.open { display: block; border-top: none; animation: fadeInScale 0.2s ease forwards; transform-origin: top; }
+        .term-dropdown-item { padding: 10px 16px; font-family: var(--mono); font-size: 12px; color: var(--ink2); cursor: pointer; transition: background 0.2s; }
         .term-dropdown-item:hover { background: var(--bg); color: var(--ink); }
         
         .subject-list { flex: 1; padding: 0 16px; overflow-y: auto; }
-        .subject-item { padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 4px; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--ink2); font-weight: 500; }
-        .subject-item:hover { background: var(--bg); color: var(--ink); }
-        .subject-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.3); }
-        .subject-item-grade { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 6px; background: var(--border); flex-shrink: 0; font-weight: 600; }
+        .subject-item { padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 4px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--ink2); font-weight: 500; }
+        .subject-item:hover { background: var(--bg); color: var(--ink); transform: translateX(4px); }
+        .subject-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.3); transform: translateX(4px); }
+        .subject-item-grade { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 6px; background: var(--border); flex-shrink: 0; font-weight: 600; transition: background 0.2s; }
         .subject-item.active .subject-item-grade { background: rgba(255,255,255,0.2); color: #fff; }
         
         .sidebar-footer { padding: 24px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
-        .btn-new-subject { width: 100%; padding: 12px; background: rgba(10,132,255,0.1); border: none; border-radius: var(--radius-sm); color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .btn-new-subject { width: 100%; padding: 12px; background: rgba(10,132,255,0.1); border: none; border-radius: var(--radius-sm); color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .btn-new-subject:hover { background: rgba(10,132,255,0.15); transform: translateY(-2px); }
         
-        /* ── Main Area ── */
-        .main { margin-left: 280px; flex: 1; padding: 40px; max-width: calc(100vw - 280px); }
+        /* ── Main Area & Navbar ── */
+        .main-content-wrap { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; background: var(--bg); position: relative; }
+        
+        .navbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 40; backdrop-filter: blur(10px); background: rgba(var(--surface-rgb), 0.8); }
+        .navbar-brand { font-weight: 700; font-size: 18px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+        .navbar-menu-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); margin-right: 12px; transition: transform 0.2s; }
+        .navbar-menu-btn:active { transform: scale(0.9); }
+        
+        .main { padding: 40px; width: 100%; max-width: 1000px; margin: 0 auto; }
+        
         .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; gap: 16px; flex-wrap: wrap; }
-        .subject-title input { background: transparent; border: none; font-family: var(--body); font-size: 32px; font-weight: 700; color: var(--ink); outline: none; letter-spacing: -0.5px; width: 100%; max-width: 500px; }
+        .subject-title input { background: transparent; border: none; font-family: var(--body); font-size: 32px; font-weight: 700; color: var(--ink); outline: none; letter-spacing: -0.5px; width: 100%; max-width: 500px; transition: border-color 0.2s; border-bottom: 2px solid transparent; }
         .subject-title input:focus { border-bottom: 2px solid var(--accent); }
-        .grade-pill { font-family: var(--mono); font-size: 14px; padding: 6px 16px; border-radius: 99px; font-weight: 700; border: 2px solid; margin-top: 8px; display: inline-block; }
+        .grade-pill { font-family: var(--mono); font-size: 14px; padding: 6px 16px; border-radius: 99px; font-weight: 700; border: 2px solid; margin-top: 8px; display: inline-block; transition: all 0.3s; }
         .score-detail { font-size: 13px; color: var(--ink3); margin-top: 8px; font-family: var(--mono); }
         
-        .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid transparent; }
         .btn-outline { background: var(--surface); border-color: var(--border); color: var(--ink); }
-        .btn-outline:hover { background: var(--bg); border-color: var(--ink3); }
-        .theme-toggle { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
+        .btn-outline:hover { background: var(--bg); border-color: var(--ink3); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        .theme-toggle { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; transition: transform 0.2s; }
+        .theme-toggle:hover { transform: scale(1.05); }
         
         .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
         .stat-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--ink3); text-transform: uppercase; margin-bottom: 12px; font-weight: 600; }
         .stat-value { font-family: var(--mono); font-size: 32px; font-weight: 700; line-height: 1; color: var(--ink); }
         
-        .section-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+        .section-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); transition: box-shadow 0.3s ease; }
+        .section-box:hover { box-shadow: var(--shadow); }
         .section-label { font-family: var(--mono); font-size: 13px; color: var(--ink2); margin-bottom: 16px; font-weight: 600; display:flex; justify-content:space-between; align-items:center; }
         
         /* ── Quick Grade Toggle ── */
@@ -136,70 +158,87 @@
         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--border); transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         input:checked + .slider { background-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(20px); }
 
         .quick-grade-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-        .qg-btn { padding: 8px 16px; border-radius: 8px; border: 2px solid var(--border); background: var(--surface); color: var(--ink2); font-weight: 700; cursor: pointer; transition: 0.2s; font-family: var(--mono); }
-        .qg-btn.active { border-color: var(--accent); background: var(--accent); color: white; }
+        .qg-btn { padding: 8px 16px; border-radius: 8px; border: 2px solid var(--border); background: var(--surface); color: var(--ink2); font-weight: 700; cursor: pointer; transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1); font-family: var(--mono); }
+        .qg-btn:hover { border-color: var(--ink3); transform: translateY(-2px); }
+        .qg-btn.active { border-color: var(--accent); background: var(--accent); color: white; transform: scale(1.05); }
 
         /* ── Categories ── */
         .categories { display: flex; flex-direction: column; gap: 16px; }
-        .category-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .category-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .category-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
         .category-header { display: grid; grid-template-columns: 1fr 85px 85px 90px 70px 32px; gap: 12px; align-items: center; padding: 16px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
-        .cat-name-input { background: none; border: none; font-size: 15px; font-weight: 600; color: var(--ink); outline: none; width: 100%; }
+        .cat-name-input { background: none; border: none; font-size: 15px; font-weight: 600; color: var(--ink); outline: none; width: 100%; transition: border-bottom 0.2s; border-bottom: 1px solid transparent; }
+        .cat-name-input:focus { border-bottom: 1px solid var(--accent); }
         .cat-stat { font-family: var(--mono); font-size: 11px; color: var(--ink3); text-align: center; }
         .cat-stat strong { display: block; font-size: 15px; color: var(--ink); font-weight: 700; margin-bottom: 2px; }
-        .weight-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: var(--mono); font-size: 13px; color: var(--ink); width: 64px; text-align: center; outline: none; }
+        .weight-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: var(--mono); font-size: 13px; color: var(--ink); width: 64px; text-align: center; outline: none; transition: border-color 0.2s; }
+        .weight-input:focus { border-color: var(--accent); }
         
         .items-list { padding: 12px 16px; }
-        .item-row { display: grid; grid-template-columns: 1fr 90px 90px 40px 60px 32px; gap: 12px; align-items: center; padding: 8px; border-radius: 8px; }
+        .item-row { display: grid; grid-template-columns: 1fr 90px 90px 40px 60px 32px; gap: 12px; align-items: center; padding: 8px; border-radius: 8px; transition: background 0.2s; }
         .item-row:hover { background: var(--bg); }
-        .item-row input { background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--ink); outline: none; padding: 6px 10px; border-radius: 8px; width: 100%; }
+        .item-row input { background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--ink); outline: none; padding: 6px 10px; border-radius: 8px; width: 100%; transition: border-color 0.2s; }
+        .item-row input:focus { border-color: var(--accent); }
         .item-row input[type=number] { text-align: center; font-family: var(--mono); }
         .item-pct { font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: center; }
-        .btn-icon { background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--ink3); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:hover { background: var(--border); color: var(--ink); }
+        .btn-icon { background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--ink3); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-icon:hover { background: var(--border); color: var(--ink); transform: scale(1.1); }
         .btn-lock.locked { color: var(--accent); background: rgba(10,132,255,0.1); }
-        .btn-add-item { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px; text-align: left; margin: 4px 8px 8px; }
-        .btn-add-category { background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink3); width: 100%; margin-top: 8px; }
+        .btn-add-item { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px; text-align: left; margin: 4px 8px 8px; transition: opacity 0.2s; }
+        .btn-add-item:hover { opacity: 0.7; }
+        .btn-add-category { background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink3); width: 100%; margin-top: 8px; transition: all 0.2s; }
+        .btn-add-category:hover { background: var(--bg); border-color: var(--ink2); color: var(--ink); }
         
         /* ── AI Feature ── */
-        .btn-ai-import { background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(10,132,255,0.3); transition: 0.2s; }
-        .btn-ai-import:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,132,255,0.4); }
-        .btn-ai-multi { background: linear-gradient(135deg, #FF9F0A 0%, #FF453A 100%); margin-top: 0; margin-bottom: 24px;}
+        .btn-ai-import { background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(10,132,255,0.3); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .btn-ai-import:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(10,132,255,0.4); }
+        .btn-ai-multi { background: linear-gradient(135deg, #FF9F0A 0%, #FF453A 100%); margin-top: 0; margin-bottom: 24px; box-shadow: 0 4px 14px rgba(255,159,10,0.3); }
+        .btn-ai-multi:hover { box-shadow: 0 8px 20px rgba(255,159,10,0.4); }
         
         /* ── Dashboard ── */
-        .dash-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; }
+        .dash-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .dash-hero:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
         .dash-hero-gpa { font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -1px; color: var(--ink); }
         .dash-hero-label { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--ink3); text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
         .dash-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 24px; }
-        .dash-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
-        .dash-table th, .dash-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid var(--border); }
+        .dash-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+        .dash-table th, .dash-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+        .dash-table tbody tr:hover td { background: var(--bg); }
         .dash-table th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--ink3); font-weight: 600; background: var(--bg); }
         
         /* ── General ── */
-        .note-area { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 14px; color: var(--ink); resize: vertical; min-height: 80px; outline: none; }
+        .note-area { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 14px; color: var(--ink); resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
+        .note-area:focus { border-color: var(--accent); }
         #toast-container { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; }
-        .toast { background: var(--ink); color: var(--bg); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; animation: slideIn 0.3s forwards; }
+        .toast { background: var(--ink); color: var(--bg); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        #ai-loading { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 10001; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; gap: 16px; text-align:center;}
+        #ai-loading { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 10001; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; gap: 16px; text-align:center; animation: fadeInScale 0.3s ease; }
         .ai-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #0A84FF; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         @media (max-width: 1024px) { .stats-row { grid-template-columns: 1fr 1fr; } .category-header { display: flex; flex-wrap: wrap; } }
         @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main { margin-left: 0; padding: 20px; padding-bottom: 100px; max-width: 100vw; }
+            .sidebar { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); z-index: 1000; box-shadow: var(--shadow-lg); }
+            .sidebar.open { transform: translateX(0); }
+            .close-sidebar-btn { display: block; position: absolute; top: 24px; right: 20px; background: rgba(0,0,0,0.05); border-radius: 50%; width: 32px; height: 32px; border: none; font-size: 14px; color: var(--ink); cursor: pointer; transition: background 0.2s; }
+            .close-sidebar-btn:active { background: rgba(0,0,0,0.1); }
+            .navbar-menu-btn { display: block; }
+            
+            .main { padding: 20px; padding-bottom: 100px; }
             .topbar { flex-direction: column; }
             .subject-title input { font-size: 24px; }
             .item-row { grid-template-columns: 1fr 60px 60px 40px 40px 32px; }
-            #bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--surface); border-top: 1px solid var(--border); z-index: 100; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); }
-            .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink3); font-size: 10px; font-weight: 600; border: none; background: transparent; }
+            #bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--surface); border-top: 1px solid var(--border); z-index: 90; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); backdrop-filter: blur(10px); background: rgba(var(--surface-rgb), 0.9); transition: transform 0.3s ease; }
+            .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink3); font-size: 10px; font-weight: 600; border: none; background: transparent; transition: color 0.2s; }
             .bnav-item.active { color: var(--accent); }
-            .bnav-icon { font-size: 20px; margin-bottom: 4px; }
+            .bnav-icon { font-size: 20px; margin-bottom: 4px; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+            .bnav-item:active .bnav-icon { transform: scale(0.8); }
         }
     </style>
 </head>
@@ -207,14 +246,12 @@
     <div id="toast-container"></div>
     <input type="file" id="profile-upload" accept="image/*" style="display:none" onchange="uploadProfilePic(event)">
     
-    <!-- AI Loading Screen -->
     <div id="ai-loading">
         <div class="ai-spinner"></div>
         <div style="font-weight:600;" id="ai-loading-text">✨ กำลังให้ AI ประมวลผลภาพ...</div>
         <div style="font-size: 13px; opacity: 0.8;">บีบอัดรูปภาพแล้ว ทำให้รวดเร็วขึ้น (3-5 วินาที)</div>
     </div>
 
-    <!-- ── Login View ── -->
     <div id="login-view">
         <div class="login-card">
             <div class="login-logo">🎓</div>
@@ -229,7 +266,6 @@
         </div>
     </div>
 
-    <!-- ── Main App ── -->
     <div class="app" id="main-app">
         <aside class="sidebar">
             <div class="sidebar-profile">
@@ -241,6 +277,7 @@
                     <div class="profile-name" id="profile-name">นักศึกษา</div>
                     <div class="profile-email" id="profile-email">Guest Mode</div>
                 </div>
+                <button class="close-sidebar-btn" onclick="closeSidebar()">✕</button>
             </div>
 
             <div class="sidebar-nav">
@@ -261,90 +298,97 @@
             <div class="sidebar-footer">
                 <button class="btn-new-subject" onclick="addSubject()">+ เพิ่มวิชาใหม่</button>
                 <button class="btn-outline" onclick="logout()" style="width:100%; border-radius:8px;">ออกจากระบบ</button>
-                <button class="theme-toggle" onclick="toggleTheme()" style="margin-top:8px;">🌙 เปลี่ยนธีม</button>
             </div>
         </aside>
 
-        <main class="main">
-            <!-- Dashboard View -->
-            <div id="dashboard-view"></div>
-
-            <!-- Subject View -->
-            <div id="subject-view" style="display:none;">
-                <div class="topbar">
-                    <div style="flex:1;">
-                        <div class="subject-title"><input type="text" id="subject-name-input" maxlength="40" oninput="renameSubject(this.value)"></div>
-                        <div class="grade-pill" id="grade-pill">—</div>
-                        <div class="score-detail" id="score-detail-line"></div>
-                    </div>
-                    <button class="btn btn-outline" onclick="deleteSubject()">🗑️ ลบวิชา</button>
+        <div class="main-content-wrap">
+            <nav class="navbar">
+                <div style="display:flex; align-items:center;">
+                    <button class="navbar-menu-btn" onclick="openSidebar()">☰</button>
+                    <div class="navbar-brand">🎓 Score Tracker</div>
                 </div>
+                <div>
+                    <button class="theme-toggle" onclick="toggleTheme()">🌙 เปลี่ยนธีม</button>
+                </div>
+            </nav>
 
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-label">คะแนนสะสม</div>
-                        <div class="stat-value" id="stat-raw">—</div>
+            <main class="main">
+                <div id="dashboard-view" class="animate-in"></div>
+
+                <div id="subject-view" class="animate-in" style="display:none;">
+                    <div class="topbar">
+                        <div style="flex:1;">
+                            <div class="subject-title"><input type="text" id="subject-name-input" maxlength="40" oninput="renameSubject(this.value)"></div>
+                            <div class="grade-pill" id="grade-pill">—</div>
+                            <div class="score-detail" id="score-detail-line"></div>
+                        </div>
+                        <button class="btn btn-outline" onclick="deleteSubject()">🗑️ ลบวิชา</button>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">เกรดที่คาดหวัง / ได้แล้ว</div>
-                        <div class="stat-value" id="stat-grade">—</div>
-                    </div>
-                    <div class="stat-card" style="grid-column: span 2;">
-                        <div class="stat-label">หน่วยกิต & Final</div>
-                        <div style="display:flex; gap:16px; margin-top:8px;">
-                            <div><div style="font-size:11px; color:var(--ink3);">Credit</div><input type="number" id="credits-input" class="weight-input" oninput="updateCredits(this.value)" style="width:60px;"></div>
-                            <div><div style="font-size:11px; color:var(--ink3);">Final Weight %</div><input type="number" id="final-weight-input" class="weight-input" oninput="calculate()" style="width:60px;"></div>
+
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-label">คะแนนสะสม</div>
+                            <div class="stat-value" id="stat-raw">—</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">เกรดที่คาดหวัง / ได้แล้ว</div>
+                            <div class="stat-value" id="stat-grade">—</div>
+                        </div>
+                        <div class="stat-card" style="grid-column: span 2;">
+                            <div class="stat-label">หน่วยกิต & Final</div>
+                            <div style="display:flex; gap:16px; margin-top:8px;">
+                                <div><div style="font-size:11px; color:var(--ink3);">Credit</div><input type="number" id="credits-input" class="weight-input" onchange="updateCredits(this.value)" style="width:60px;"></div>
+                                <div><div style="font-size:11px; color:var(--ink3);">Final Weight %</div><input type="number" id="final-weight-input" class="weight-input" onchange="calculate()" style="width:60px;"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="section-box">
-                    <div class="section-label">
-                        รูปแบบการคำนวณคะแนน
-                        <div class="quick-mode-wrap">
-                            <span>กรอกเฉพาะเกรด (ไม่อยากแยกคะแนน)</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="quick-mode-toggle" onchange="toggleQuickMode(this.checked)">
-                                <span class="slider"></span>
-                            </label>
+                    <div class="section-box">
+                        <div class="section-label">
+                            รูปแบบการคำนวณคะแนน
+                            <div class="quick-mode-wrap">
+                                <span>กรอกเฉพาะเกรด (ไม่อยากแยกคะแนน)</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="quick-mode-toggle" onchange="toggleQuickMode(this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div id="quick-grade-section" style="display:none;">
-                        <div style="font-size:13px; margin-bottom:12px; color:var(--ink3);">เลือกเกรดที่คุณได้สำหรับวิชานี้ (ข้อมูลจะไปรวมในกราฟและ GPA อัตโนมัติ)</div>
-                        <div class="quick-grade-buttons" id="qg-buttons-container"></div>
-                    </div>
-
-                    <div id="full-grade-section">
-                        <div id="categories-container" class="categories"></div>
-                        <button class="btn-add-category" onclick="addCategory()">+ เพิ่มหมวดคะแนน</button>
                         
-                        <button class="btn-ai-import" onclick="document.getElementById('ai-image-input').click()">
-                            <span style="font-size: 20px;">🪄</span> ให้ AI อ่านคะแนนรายวิชานี้จากรูปภาพ (เช่น Syllabus)
-                        </button>
-                        <input type="file" id="ai-image-input" accept="image/*" style="display:none" onchange="processAIImage(event)">
+                        <div id="quick-grade-section" style="display:none;" class="animate-in">
+                            <div style="font-size:13px; margin-bottom:12px; color:var(--ink3);">เลือกเกรดที่คุณได้สำหรับวิชานี้ (ข้อมูลจะไปรวมในกราฟและ GPA อัตโนมัติ)</div>
+                            <div class="quick-grade-buttons" id="qg-buttons-container"></div>
+                        </div>
+
+                        <div id="full-grade-section" class="animate-in">
+                            <div id="categories-container" class="categories"></div>
+                            <button class="btn-add-category" onclick="addCategory()">+ เพิ่มหมวดคะแนน</button>
+                            
+                            <button class="btn-ai-import" onclick="document.getElementById('ai-image-input').click()">
+                                <span style="font-size: 20px;">🪄</span> ให้ AI อ่านคะแนนรายวิชานี้จากรูปภาพ (เช่น Syllabus)
+                            </button>
+                            <input type="file" id="ai-image-input" accept="image/*" style="display:none" onchange="processAIImage(event)">
+                        </div>
+                    </div>
+
+                    <div class="section-box" style="margin-top:24px;">
+                        <div class="section-label">โน้ต / หมายเหตุ</div>
+                        <textarea class="note-area" id="subject-note" onchange="saveNote(this.value)"></textarea>
                     </div>
                 </div>
-
-                <div class="section-box" style="margin-top:24px;">
-                    <div class="section-label">โน้ต / หมายเหตุ</div>
-                    <textarea class="note-area" id="subject-note" oninput="saveNote(this.value)"></textarea>
-                </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
-    <!-- Mobile Bottom Nav -->
     <div id="bottom-nav">
         <button class="bnav-item active" onclick="showDashboard()">
             <div class="bnav-icon">📊</div>Dashboard
         </button>
-        <button class="bnav-item" onclick="document.querySelector('.sidebar').style.display='flex'; document.querySelector('.sidebar').style.width='100vw'; document.querySelector('.sidebar').style.zIndex='200';">
+        <button class="bnav-item" onclick="openSidebar()">
             <div class="bnav-icon">📚</div>วิชาเรียน
         </button>
     </div>
 
-    <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -369,7 +413,7 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'score-tracker-v1';
         let currentUser = null;
         let userId = null;
-        let gpaChartInstance = null; // สำหรับกราฟ
+        let gpaChartInstance = null; 
 
         const initAuth = async () => {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -395,18 +439,21 @@
                 }
             } else {
                 userId = null;
-                showLoginScreen();
+                if (!isGuest) showLoginScreen();
             }
         });
 
         function showLoginScreen() {
-            document.getElementById('login-view').style.display = 'flex';
+            const loginView = document.getElementById('login-view');
+            loginView.style.display = 'flex';
+            setTimeout(() => { loginView.style.opacity = '1'; }, 10);
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('bottom-nav').style.display = 'none';
         }
 
         function showMainApp() {
-            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('login-view').style.opacity = '0';
+            setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 400);
             document.getElementById('main-app').style.display = 'flex';
             if(window.innerWidth <= 768) document.getElementById('bottom-nav').style.display = 'flex';
             window.renderAll();
@@ -417,15 +464,19 @@
             catch(e) { window.showToast("Login Failed", true); }
         };
 
+        // FIX: Guest Mode By-pass wait for Firebase so it responds instantly
         window.loginGuest = function() {
             localStorage.setItem('guest_mode', 'true');
-            if (currentUser) { showMainApp(); window.renderProfile(); } else { initAuth(); }
+            showMainApp();
+            window.renderProfile();
+            if (!currentUser) { initAuth(); } 
         };
 
         window.logout = async function() {
             localStorage.removeItem('guest_mode');
             await signOut(auth);
             initAuth();
+            showLoginScreen();
         };
 
         function updateAuthUI(user) {
@@ -433,10 +484,23 @@
         }
 
         // ══════════════════════════════════════════════════════════
+        // UI HELPERS & MOBILE NAV
+        // ══════════════════════════════════════════════════════════
+        window.openSidebar = () => document.querySelector('.sidebar').classList.add('open');
+        window.closeSidebar = () => document.querySelector('.sidebar').classList.remove('open');
+
+        // RGB variable for navbar translucency
+        function updateSurfaceRGB() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.style.setProperty('--surface-rgb', isDark ? '28, 28, 30' : '255, 255, 255');
+        }
+        updateSurfaceRGB();
+
+        // ══════════════════════════════════════════════════════════
         // DATA MANAGEMENT
         // ══════════════════════════════════════════════════════════
         let data = JSON.parse(localStorage.getItem('scoretracker_v4') || 'null') || { terms: [{ id: 1, name: 'เทอม 1', subjects: [] }], currentTermId: 1, userProfilePic: null };
-        let currentTermId = data.currentTermId;
+        let currentTermId = data.currentTermId || 1;
         let currentSubjectId = null;
         let idCounter = Date.now();
 
@@ -478,10 +542,10 @@
         window.toggleTheme = function() {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            updateSurfaceRGB();
             window.renderDashboardChart(); // Update chart colors
         };
 
-        // Profile Picture Logic
         window.renderProfile = function() {
             const img = document.getElementById('profile-img');
             const name = document.getElementById('profile-name');
@@ -501,11 +565,9 @@
 
         window.uploadProfilePic = async function(event) {
             const file = event.target.files[0]; if (!file) return;
-            // Compress heavily for profile (max 300px)
             const base64 = await compressImage(file, 300);
             data.userProfilePic = "data:image/jpeg;base64," + base64;
-            window.save();
-            window.renderProfile();
+            window.save(); window.renderProfile();
         };
 
         // ══════════════════════════════════════════════════════════
@@ -516,21 +578,24 @@
         window.addTerm = () => { const name = prompt("ชื่อเทอมใหม่:"); if(name?.trim()) { const id = window.nextId(); data.terms.push({ id, name: name.trim(), subjects: [] }); window.switchTerm(id); } };
         window.renameTerm = () => { const t = getTerm(); if(!t) return; const name = prompt("แก้ชื่อเทอม:", t.name); if(name?.trim()) { t.name = name.trim(); window.save(); window.renderAll(); } };
         
-        window.addSubject = () => { const t = getTerm(); if(!t) return; const id = window.nextId(); t.subjects.push({ id, name:`วิชาใหม่`, credits: 3, finalWeight:30, categories:[], note:'', quickMode: false, quickGrade: null }); window.save(); window.renderAll(); window.selectSubject(id); window.addCategory('เก็บคะแนน', 70); if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none'; };
-        window.selectSubject = (id) => { currentSubjectId = id; document.getElementById('dashboard-view').style.display = 'none'; document.getElementById('subject-view').style.display = 'block'; window.renderAll(); window.renderSubjectView(); if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none'; };
+        window.addSubject = () => { const t = getTerm(); if(!t) return; const id = window.nextId(); t.subjects.push({ id, name:`วิชาใหม่`, credits: 3, finalWeight:30, categories:[], note:'', quickMode: false, quickGrade: null }); window.save(); window.renderAll(); window.selectSubject(id); window.addCategory('เก็บคะแนน', 70); if(window.innerWidth <= 768) closeSidebar(); };
+        window.selectSubject = (id) => { currentSubjectId = id; document.getElementById('dashboard-view').style.display = 'none'; const sv = document.getElementById('subject-view'); sv.style.display = 'block'; sv.classList.remove('animate-in'); void sv.offsetWidth; sv.classList.add('animate-in'); window.renderAll(); window.renderSubjectView(); if(window.innerWidth <= 768) closeSidebar(); };
         window.deleteSubject = () => { if(confirm("ยืนยันการลบวิชานี้?")) { getTerm().subjects = getTerm().subjects.filter(s => s.id !== currentSubjectId); currentSubjectId = null; window.save(); window.renderAll(); window.showDashboard(); } };
-        window.showDashboard = () => { currentSubjectId = null; document.getElementById('subject-view').style.display = 'none'; document.getElementById('dashboard-view').style.display = 'block'; window.renderAll(); window.renderDashboardView(); if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none'; };
+        window.showDashboard = () => { currentSubjectId = null; document.getElementById('subject-view').style.display = 'none'; const dv = document.getElementById('dashboard-view'); dv.style.display = 'block'; dv.classList.remove('animate-in'); void dv.offsetWidth; dv.classList.add('animate-in'); window.renderAll(); window.renderDashboardView(); if(window.innerWidth <= 768) closeSidebar(); };
 
         window.renameSubject = (val) => { const s = getSubject(); if(s){ s.name = val; window.save(); window.renderSidebar(); } };
         window.saveNote = (val) => { const s = getSubject(); if(s){ s.note = val; window.save(); } };
-        window.updateCredits = (val) => { const s = getSubject(); if(s){ s.credits = parseFloat(val)||0; window.save(); window.calculate(); } };
+        window.updateCredits = (val) => { const s = getSubject(); if(s){ s.credits = parseFloat(val)||0; window.save(); window.calculate(); window.renderSidebar(); } };
 
+        // FIX: Remove renderCategories from inside item updates to prevent UI focus loss
         window.addCategory = (name='หมวดใหม่', weight=10) => { const s=getSubject(); if(s){ s.categories.push({id:window.nextId(), name, weight, items:[]}); window.save(); window.renderSubjectView(); } };
         window.removeCategory = (cid) => { const s=getSubject(); if(s){ s.categories = s.categories.filter(c=>c.id!==cid); window.save(); window.renderSubjectView(); } };
         window.updateCategory = (cid, field, val) => { const s=getSubject(); const c = s.categories.find(c=>c.id===cid); if(c){ c[field] = field==='weight'?parseFloat(val)||0:val; window.save(); window.calculate(); } };
         
         window.addItem = (cid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items.push({id:window.nextId(), name:'', score:'', maxScore:100, locked:true}); window.save(); window.renderCategories(); window.calculate(); } };
         window.removeItem = (cid, iid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items = c.items.filter(i=>i.id!==iid); window.save(); window.renderCategories(); window.calculate(); } };
+        
+        // Use onchange inside renderCategories so users can finish typing before re-render
         window.updateItem = (cid, iid, field, val) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i[field]=field==='name'?val:parseFloat(val)||0; window.save(); window.renderCategories(); window.calculate(); } };
         window.toggleLock = (cid, iid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i.locked = !i.locked; window.save(); window.renderCategories(); window.calculate(); } };
 
@@ -559,7 +624,6 @@
             });
         }
 
-        // 1. AI อ่านทีละวิชา (Single Subject)
         window.processAIImage = async function(event) {
             const file = event.target.files[0]; if (!file) return;
             document.getElementById('ai-loading').style.display = 'flex';
@@ -594,7 +658,6 @@
             finally { document.getElementById('ai-loading').style.display = 'none'; event.target.value = ''; }
         };
 
-        // 2. AI อ่านหน้า Dashboard เพิ่มหลายวิชา (Smart Multi-Subject Import)
         window.processAIMultiSubject = async function(event) {
             const file = event.target.files[0]; if (!file) return;
             document.getElementById('ai-loading').style.display = 'flex';
@@ -636,7 +699,7 @@
                                 finalWeight: 30,
                                 categories: [],
                                 note: '',
-                                quickMode: !!gradeVal, // ถ้า AI เจอเกรดแล้ว ให้เปิดโหมด Quick Mode เลย
+                                quickMode: !!gradeVal,
                                 quickGrade: gradeVal
                             });
                         });
@@ -658,7 +721,6 @@
         
         window.calcSubject = function(s) {
             if(!s) return { score: 0, raw: 0 };
-            // ถ้าเปิดโหมด QuickGrade ให้คะแนนเป็นคะแนนขั้นต่ำของเกรดนั้นๆ เพื่อไปโชว์
             if(s.quickMode && s.quickGrade) {
                 const min = BOUNDARY[s.quickGrade] || 0;
                 return { score: min, raw: min, isQuick: true };
@@ -709,7 +771,6 @@
             window.renderSidebar(); const t = getTerm();
             document.getElementById('term-dropdown-list').innerHTML = data.terms.map(tm => `<div class="term-dropdown-item" onclick="switchTerm(${tm.id})">${tm.name}</div>`).join('');
             document.getElementById('term-dropdown-label').textContent = t ? t.name : 'เลือกเทอม';
-            document.getElementById('brand-term-label').textContent = t ? t.name : '';
             window.renderProfile();
         };
 
@@ -743,23 +804,24 @@
         };
 
         window.renderCategories = function() {
-            document.getElementById('categories-container').innerHTML = getSubject().categories.map(c => {
+            // FIX: Changed oninput -> onchange to prevent UI focus loss when typing score details
+            document.getElementById('categories-container').innerHTML = getSubject().categories.map((c, index) => {
                 const act = c.items.filter(i=>i.locked && i.score!=='');
                 const avg = act.length ? act.reduce((sum,i)=>sum+(parseFloat(i.score)/(parseFloat(i.maxScore)||100))*100,0)/act.length : 0;
                 return `
-                <div class="category-card">
+                <div class="category-card" style="animation-delay: ${index * 0.05}s;">
                     <div class="category-header">
-                        <input class="cat-name-input" value="${c.name}" oninput="updateCategory(${c.id}, 'name', this.value)">
+                        <input class="cat-name-input" value="${c.name}" onchange="updateCategory(${c.id}, 'name', this.value)">
                         <div class="cat-stat"><strong>${avg.toFixed(1)}%</strong></div>
                         <div class="cat-stat"><strong>${act.length}/${c.items.length}</strong></div>
-                        <div><input class="weight-input" type="number" value="${c.weight}" oninput="updateCategory(${c.id}, 'weight', this.value)">%</div>
+                        <div><input class="weight-input" type="number" value="${c.weight}" onchange="updateCategory(${c.id}, 'weight', this.value)">%</div>
                         <button class="btn-icon" onclick="removeCategory(${c.id})" style="color:var(--red)">✕</button>
                     </div>
                     <div class="items-list">
                         ${c.items.map(i => `<div class="item-row" style="opacity:${i.locked?'1':'0.5'}">
-                            <input value="${i.name}" oninput="updateItem(${c.id},${i.id},'name',this.value)">
-                            <input type="number" placeholder="คะแนน" value="${i.score}" oninput="updateItem(${c.id},${i.id},'score',this.value)">
-                            <input type="number" placeholder="เต็ม" value="${i.maxScore}" oninput="updateItem(${c.id},${i.id},'maxScore',this.value)">
+                            <input value="${i.name}" onchange="updateItem(${c.id},${i.id},'name',this.value)">
+                            <input type="number" placeholder="คะแนน" value="${i.score}" onchange="updateItem(${c.id},${i.id},'score',this.value)">
+                            <input type="number" placeholder="เต็ม" value="${i.maxScore}" onchange="updateItem(${c.id},${i.id},'maxScore',this.value)">
                             <button class="btn-icon ${i.locked?'locked':''}" onclick="toggleLock(${c.id},${i.id})">${i.locked?'🔒':'🔓'}</button>
                             <button class="btn-icon" onclick="removeItem(${c.id},${i.id})" style="color:var(--red)">✕</button>
                         </div>`).join('')}
@@ -772,7 +834,6 @@
         window.renderDashboardView = function() {
             const subjects = getSubjects(); const dv = document.getElementById('dashboard-view');
             
-            // Calculate Current Term GPA
             let totalCr = 0, totalGp = 0;
             const rows = subjects.map(s => {
                 const r = window.calcSubject(s); const g = window.scoreToGrade(r.score, s); const cr = parseFloat(s.credits)||0;
@@ -799,14 +860,15 @@
 
                 <div class="section-box">
                     <div class="section-label">แนวโน้มผลการเรียน (GPA Trend)</div>
-                    <canvas id="gpaChart" height="80"></canvas>
+                    <div style="height: 220px; width: 100%; position: relative;">
+                        <canvas id="gpaChart"></canvas>
+                    </div>
                 </div>
 
                 <div class="section-label" style="margin-top:24px;">รายวิชาในเทอมนี้</div>
                 ${subjects.length ? `<table class="dash-table"><thead><tr><th>วิชา</th><th>คะแนน / เกรดดิบ</th><th>เกรด</th></tr></thead><tbody>${rows}</tbody></table>` : `<div style="text-align:center; padding:40px; color:var(--ink3);">ยังไม่มีข้อมูลวิชาเรียนในเทอมนี้</div>`}
             `;
             
-            // Render Chart
             window.renderDashboardChart();
         };
 
@@ -829,7 +891,8 @@
                     }
                 });
                 labels.push(term.name);
-                gpaData.push(tCr > 0 ? parseFloat((tGp/tCr).toFixed(2)) : 0);
+                // FIX: push null instead of 0 so empty terms don't pull the graph line down
+                gpaData.push(tCr > 0 ? parseFloat((tGp/tCr).toFixed(2)) : null); 
             });
 
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -846,8 +909,9 @@
                         borderColor: '#0A84FF',
                         backgroundColor: 'rgba(10,132,255,0.1)',
                         borderWidth: 3,
-                        tension: 0.3,
+                        tension: 0.4,
                         fill: true,
+                        spanGaps: true, // FIX: Connect lines even if some terms lack data
                         pointBackgroundColor: '#0A84FF',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
@@ -857,6 +921,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false, // FIX: allows explicit container height
                     scales: { 
                         y: { min: 0, max: 4, grid: { color: gridColor }, ticks: { color: textColor } },
                         x: { grid: { display: false }, ticks: { color: textColor } }
@@ -869,5 +934,3 @@
     </script>
 </body>
 </html>
-
-
