@@ -605,7 +605,11 @@
         // ══════════════════════════════════════════════════════════
         // AI VISION (IMAGE COMPRESSION + API)
         // ══════════════════════════════════════════════════════════
+             // ══════════════════════════════════════════════════════════
+        // AI VISION (IMAGE COMPRESSION + API) - อัปเดตแก้บั๊ก & ป้องกัน Free Tier Limit
+        // ══════════════════════════════════════════════════════════
         const AI_API_KEY = "AIzaSyCQCOBGq_yQSOivgvSp3j2YrkEOHyIn668";
+        const AI_MODEL = "gemini-1.5-flash"; 
 
         function compressImage(file, maxWidth = 1000) {
             return new Promise((resolve) => {
@@ -624,15 +628,30 @@
             });
         }
 
+        // ตัวช่วยลบ Markdown ที่ AI มักจะเผลอใส่มาครอบ JSON
+        function cleanJSON(text) {
+            let cleaned = text.trim();
+            if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json/, '');
+            if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```/, '');
+            if (cleaned.endsWith('```')) cleaned = cleaned.replace(/```$/, '');
+            return cleaned.trim();
+        }
+
+        // 1. AI อ่านทีละวิชา (Single Subject)
         window.processAIImage = async function(event) {
             const file = event.target.files[0]; if (!file) return;
+            const btn = document.querySelector('.btn-ai-import:not(.btn-ai-multi)');
+            
+            // ป้องกันกดซ้ำ (Cooldown)
+            if(btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+            
             document.getElementById('ai-loading').style.display = 'flex';
-            document.getElementById('ai-loading-text').textContent = "✨ กำลังให้ AI ประมวลผลภาพ...";
+            document.getElementById('ai-loading-text').textContent = "✨ กำลังให้ AI ประมวลผลภาพ (อาจใช้เวลา 5-10 วินาที)...";
 
             try {
                 const base64Clean = await compressImage(file);
                 const promptText = `วิเคราะห์ภาพนี้ ส่งกลับเป็น JSON อย่างเดียวรูปแบบ: {"categories":[{"name":"ชื่อหมวด", "weight":20, "items":[{"name":"ชื่องาน","score":8,"maxScore":10}]}]}`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${AI_API_KEY}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${AI_API_KEY}`;
                 
                 const response = await fetch(url, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -642,10 +661,15 @@
                     })
                 });
                 
-                if (!response.ok) throw new Error("API Error");
+                if (!response.ok) {
+                    const errData = await response.json();
+                    console.error("Gemini API Error:", errData);
+                    throw new Error(errData.error?.message || `HTTP Error ${response.status}`);
+                }
+                
                 const textContent = (await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text;
                 if(textContent) { 
-                    const data = JSON.parse(textContent);
+                    const data = JSON.parse(cleanJSON(textContent));
                     const s = getSubject(); if (!s) return;
                     (data.categories||[]).forEach(cat => {
                         const newCat = { id: window.nextId(), name: cat.name || 'AI Category', weight: cat.weight || 0, items: [] };
@@ -654,14 +678,27 @@
                     });
                     window.save(); window.renderSubjectView(); window.showToast("✨ AI นำเข้าข้อมูลสำเร็จ!");
                 } 
-            } catch (e) { console.error(e); window.showToast("เกิดข้อผิดพลาดของระบบ AI", true); } 
-            finally { document.getElementById('ai-loading').style.display = 'none'; event.target.value = ''; }
+            } catch (e) { 
+                console.error("Process AI Error:", e); 
+                window.showToast("ระบบ AI มีปัญหา: " + (e.message || "กรุณาลองใหม่อีกครั้ง"), true); 
+            } 
+            finally { 
+                document.getElementById('ai-loading').style.display = 'none'; 
+                event.target.value = ''; 
+                if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
+            }
         };
 
+        // 2. AI อ่านหน้า Dashboard เพิ่มหลายวิชา (Smart Multi-Subject Import)
         window.processAIMultiSubject = async function(event) {
             const file = event.target.files[0]; if (!file) return;
+            const btn = document.querySelector('.btn-ai-multi');
+            
+            // ป้องกันกดซ้ำ (Cooldown)
+            if(btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+
             document.getElementById('ai-loading').style.display = 'flex';
-            document.getElementById('ai-loading-text').textContent = "🪄 AI กำลังวิเคราะห์ Transcript / พอร์ตทัลเกรดเพื่อเพิ่มหลายวิชา...";
+            document.getElementById('ai-loading-text').textContent = "🪄 AI กำลังวิเคราะห์ Transcript / พอร์ตทัลเกรด...";
 
             try {
                 const base64Clean = await compressImage(file);
@@ -670,7 +707,7 @@
                 ส่งกลับเป็น JSON อย่างเดียว ห้ามมีข้อความอื่น รูปแบบ:
                 {"subjects": [{"name": "ชื่อวิชา", "credits": 3, "grade": "A" หรือ null}]}`;
 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${AI_API_KEY}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${AI_API_KEY}`;
                 
                 const response = await fetch(url, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -680,11 +717,16 @@
                     })
                 });
                 
-                if (!response.ok) throw new Error("API Error");
+                if (!response.ok) {
+                    const errData = await response.json();
+                    console.error("Gemini API Error:", errData);
+                    throw new Error(errData.error?.message || `HTTP Error ${response.status}`);
+                }
+                
                 const textContent = (await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if(textContent) {
-                    const aiData = JSON.parse(textContent);
+                    const aiData = JSON.parse(cleanJSON(textContent));
                     const t = getTerm();
                     if(aiData.subjects && aiData.subjects.length > 0) {
                         aiData.subjects.forEach(sub => {
@@ -709,8 +751,15 @@
                         window.showToast("AI ไม่พบรายวิชาในภาพนี้", true);
                     }
                 }
-            } catch (e) { console.error(e); window.showToast("เกิดข้อผิดพลาดของระบบ AI", true); } 
-            finally { document.getElementById('ai-loading').style.display = 'none'; event.target.value = ''; }
+            } catch (e) { 
+                console.error("Process AI Multi Error:", e); 
+                window.showToast("ระบบ AI มีปัญหา: " + (e.message || "กรุณาลองใหม่อีกครั้ง"), true); 
+            } 
+            finally { 
+                document.getElementById('ai-loading').style.display = 'none'; 
+                event.target.value = ''; 
+                if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
+            }
         };
 
         // ══════════════════════════════════════════════════════════
