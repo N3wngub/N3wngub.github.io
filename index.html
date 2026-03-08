@@ -3,241 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Score Tracker | จัดการเกรดและคะแนน</title>
+    <title>Score Tracker | จัดการเกรด</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
-    <meta name="theme-color" content="#f5f5f7">
+    <!-- App Icon in Browser Tab -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230A84FF'/><text x='50' y='68' font-size='56' fill='white' text-anchor='middle' font-family='sans-serif' font-weight='bold'>S</text></svg>">
+    
+    <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         /* ══════════════════════════════════════════════════════════
-           MODERN MINIMALIST DESIGN + ANIMATIONS
+           BENTO + LIQUID GLASS DESIGN SYSTEM
            ══════════════════════════════════════════════════════════ */
         :root {
-          --bg: #f5f5f7;
-          --surface: #ffffff;
-          --card: #ffffff;
-          --border: rgba(0,0,0,0.08);
+          /* Light Theme Colors - Liquid BG */
+          --bg-gradient-1: #fdfbfb;
+          --bg-gradient-2: #ebedee;
+          --bg-gradient-3: #e0c3fc;
+          --bg-gradient-4: #8ec5fc;
+          
+          /* Glass Properties (Bento Boxes) */
+          --glass-bg: rgba(255, 255, 255, 0.7);
+          --glass-surface: rgba(255, 255, 255, 0.85);
+          --glass-border: rgba(255, 255, 255, 0.6);
+          --glass-border-strong: rgba(255, 255, 255, 1);
+          --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+          --glass-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.08);
+          
           --ink: #1d1d1f;
           --ink2: #515154;
           --ink3: #86868b;
-          --sidebar-bg: #ffffff;
-          --sidebar-text: #1d1d1f;
           --accent: #0A84FF;
-          --green: #34C759;
-          --yellow: #FF9F0A;
+          --green: #30D158;
           --red: #FF453A;
           
           --mono: 'DM Mono', monospace;
           --body: 'Prompt', sans-serif;
           
-          --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
-          --shadow: 0 4px 14px rgba(0,0,0,0.06);
-          --shadow-lg: 0 12px 32px rgba(0,0,0,0.1);
+          --radius-xl: 32px;
+          --radius-lg: 24px;
           --radius: 16px;
-          --radius-sm: 10px;
+          --radius-sm: 12px;
+          
+          --transition-spring: 0.5s cubic-bezier(0.25, 1, 0.3, 1);
         }
         
         [data-theme="dark"] {
-          --bg: #000000;
-          --surface: #1c1c1e;
-          --card: #1c1c1e;
-          --border: rgba(255,255,255,0.12);
+          --bg-gradient-1: #0f172a;
+          --bg-gradient-2: #1e1b4b;
+          --bg-gradient-3: #312e81;
+          --bg-gradient-4: #050505;
+          
+          --glass-bg: rgba(20, 20, 25, 0.6);
+          --glass-surface: rgba(30, 30, 38, 0.75);
+          --glass-border: rgba(255, 255, 255, 0.08);
+          --glass-border-strong: rgba(255, 255, 255, 0.15);
+          --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          --glass-shadow-hover: 0 16px 40px rgba(0, 0, 0, 0.5);
+          
           --ink: #f5f5f7;
           --ink2: #ebebf5;
           --ink3: #8e8e93;
-          --sidebar-bg: #1c1c1e;
-          --sidebar-text: #f5f5f7;
-          --shadow-sm: 0 1px 4px rgba(0,0,0,0.4);
-          --shadow: 0 4px 14px rgba(0,0,0,0.4);
         }
         
         * { margin:0; padding:0; box-sizing:border-box; }
         html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
-        body { background: var(--bg); color: var(--ink); font-family: var(--body); min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; overflow-x: hidden; }
+        
+        /* Animated Liquid Background */
+        body { 
+            color: var(--ink); 
+            font-family: var(--body); 
+            min-height: 100vh; 
+            overflow-x: hidden;
+            background: linear-gradient(-45deg, var(--bg-gradient-1), var(--bg-gradient-2), var(--bg-gradient-3), var(--bg-gradient-4));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            transition: color 0.4s ease;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         input, button, textarea, select { font-family: var(--body); }
 
-        /* Smooth Animations */
-        @keyframes fadeInScale {
-            0% { opacity: 0; transform: scale(0.98) translateY(10px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
+        /* Bento Grid Layout System */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
         }
-        .animate-in { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .bento-col-span-2 { grid-column: span 2; }
+        .bento-col-span-3 { grid-column: span 3; }
+        .bento-full-width { grid-column: 1 / -1; }
+
+        @media (max-width: 1024px) {
+            .bento-col-span-3 { grid-column: span 2; }
+        }
+        @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr; gap: 16px; }
+            .bento-col-span-2, .bento-col-span-3 { grid-column: 1 / -1; }
+        }
+
+        /* Bento Box (Glass Card) */
+        .bento-box {
+            background: var(--glass-surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            box-shadow: var(--glass-shadow);
+            transition: all var(--transition-spring);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .bento-box:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: var(--glass-shadow-hover);
+            border-color: var(--glass-border-strong);
+        }
+
+        /* Animations */
+        @keyframes fadeUpBento {
+            0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-bento { animation: fadeUpBento 0.6s var(--transition-spring) forwards; opacity: 0; }
         
         /* ── Login Screen ── */
-        #login-view { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 24px; transition: opacity 0.4s ease; }
-        .login-card { background: var(--surface); padding: 48px 40px; border-radius: 24px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; }
-        .login-logo { font-size: 64px; margin-bottom: 16px; line-height: 1; display: inline-block; animation: bounce 2s infinite ease-in-out; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .login-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-        .login-sub { font-size: 14px; color: var(--ink3); margin-bottom: 32px; line-height: 1.5; }
-        .auth-btn-lg { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: var(--shadow-sm); }
-        .auth-btn-lg:hover { background: var(--bg); transform: translateY(-2px); box-shadow: var(--shadow); }
-        .auth-btn-guest { background: transparent; border: none; color: var(--ink3); font-size: 14px; margin-top: 16px; cursor: pointer; text-decoration: underline; transition: color 0.2s; }
-        .auth-btn-guest:hover { color: var(--ink); }
+        #login-view { position: fixed; inset: 0; background: inherit; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.5s ease; backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+        .login-card { padding: 48px 40px; width: 100%; max-width: 400px; text-align: center; border-radius: 40px; }
+        .login-logo { font-size: 72px; margin-bottom: 24px; display: inline-block; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); animation: float 4s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .login-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .login-sub { font-size: 15px; color: var(--ink2); margin-bottom: 40px; line-height: 1.5; }
+        .auth-btn-lg { width: 100%; padding: 16px; border-radius: 20px; border: 1px solid var(--glass-border-strong); background: var(--glass-surface); color: var(--ink); font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px; transition: all var(--transition-spring); box-shadow: var(--glass-shadow); }
+        .auth-btn-lg:hover { background: var(--glass-bg); transform: scale(1.03); box-shadow: var(--glass-shadow-hover); }
+        .auth-btn-guest { background: transparent; border: none; color: var(--ink3); font-size: 14px; cursor: pointer; transition: color 0.3s; padding: 8px; border-radius: 12px; }
+        .auth-btn-guest:hover { color: var(--ink); background: rgba(0,0,0,0.05); }
 
         /* ── App Layout ── */
-        .app { display:none; height:100vh; width: 100vw; overflow: hidden; display: flex; }
+        .app { display:none; height:100vh; width: 100vw; overflow: hidden; display: flex; padding: 20px; gap: 20px; }
         
-        /* Sidebar */
-        .sidebar { width: 280px; background: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; height: 100%; z-index: 100; overflow-y: auto; border-right: 1px solid var(--border); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); flex-shrink: 0; }
+        /* Floating Sidebar (Bento Style) */
+        .sidebar { width: 280px; display: flex; flex-direction: column; height: 100%; z-index: 100; overflow: hidden; flex-shrink: 0; background: var(--glass-surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); box-shadow: var(--glass-shadow); transition: transform var(--transition-spring); }
         
-        /* Profile Section */
-        .sidebar-profile { padding: 32px 24px 20px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border); position: relative; }
+        /* Sidebar Profile Info */
+        .sidebar-profile { padding: 32px 24px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        [data-theme="dark"] .sidebar-profile { border-bottom-color: rgba(255,255,255,0.05); }
         .close-sidebar-btn { display: none; }
-        .profile-img-wrap { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; position: relative; cursor: pointer; border: 2px solid var(--accent); flex-shrink: 0; background: var(--bg); }
-        .profile-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-edit-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); color: white; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; font-size: 20px; }
-        .profile-img-wrap:hover .profile-edit-overlay { opacity: 1; }
         .profile-info { overflow: hidden; flex: 1; }
-        .profile-name { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .profile-email { font-size: 12px; color: var(--ink3); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+        .profile-name { font-weight: 600; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px; }
+        .profile-email { font-size: 13px; color: var(--ink3); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; }
 
-        .sidebar-section { padding: 16px 24px 8px; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--ink3); text-transform: uppercase; font-weight: 600; }
-        .sidebar-nav { padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+        .sidebar-nav { padding: 16px 16px 8px; display: flex; flex-direction: column; gap: 8px; }
         
-        .nav-btn { width: 100%; padding: 10px 16px; border-radius: var(--radius-sm); background: transparent; border: none; color: var(--ink2); font-weight: 500; font-size: 14px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); text-align: left; display: flex; align-items: center; gap: 10px; }
-        .nav-btn:hover { background: var(--border); color: var(--ink); transform: translateX(4px); }
+        .nav-btn { width: 100%; padding: 14px 16px; border-radius: 16px; background: transparent; border: none; color: var(--ink2); font-weight: 500; font-size: 14px; cursor: pointer; transition: all var(--transition-spring); text-align: left; display: flex; align-items: center; gap: 12px; }
+        .nav-btn:hover { background: rgba(0,0,0,0.04); color: var(--ink); transform: translateX(4px); }
+        [data-theme="dark"] .nav-btn:hover { background: rgba(255,255,255,0.05); }
+        .nav-btn.active { background: var(--accent); color: white; font-weight: 600; box-shadow: 0 8px 20px rgba(10,132,255,0.3); transform: scale(1.02); }
         
-        .term-dropdown { position: relative; width: 100%; margin-bottom: 8px; }
-        .term-dropdown-btn { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); font-family: var(--mono); font-size: 12px; padding: 10px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; transition: all 0.2s; }
-        .term-dropdown-btn:hover { border-color: var(--ink3); }
-        .term-dropdown-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 50; max-height: 180px; overflow-y: auto; box-shadow: var(--shadow); }
-        .term-dropdown-list.open { display: block; border-top: none; animation: fadeInScale 0.2s ease forwards; transform-origin: top; }
-        .term-dropdown-item { padding: 10px 16px; font-family: var(--mono); font-size: 12px; color: var(--ink2); cursor: pointer; transition: background 0.2s; }
-        .term-dropdown-item:hover { background: var(--bg); color: var(--ink); }
+        .term-dropdown { position: relative; width: 100%; margin-bottom: 12px; }
+        .term-dropdown-btn { width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; color: var(--ink); font-family: var(--mono); font-size: 14px; padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; transition: all var(--transition-spring); box-shadow: var(--glass-shadow); }
+        .term-dropdown-btn:hover { border-color: var(--glass-border-strong); transform: scale(1.02); }
+        .term-dropdown-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--glass-bg); backdrop-filter: blur(24px); border: 1px solid var(--glass-border); border-radius: 16px; z-index: 50; max-height: 180px; overflow-y: auto; box-shadow: var(--glass-shadow-hover); margin-top: 8px; padding: 8px; }
+        .term-dropdown-list.open { display: block; animation: fadeUpBento 0.3s var(--transition-spring) forwards; transform-origin: top; }
+        .term-dropdown-item { padding: 12px 16px; border-radius: 10px; font-family: var(--mono); font-size: 13px; color: var(--ink); cursor: pointer; transition: background 0.2s; font-weight: 500; }
+        .term-dropdown-item:hover { background: var(--glass-surface); }
         
-        .subject-list { flex: 1; padding: 0 16px; overflow-y: auto; }
-        .subject-item { padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 4px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--ink2); font-weight: 500; }
-        .subject-item:hover { background: var(--bg); color: var(--ink); transform: translateX(4px); }
-        .subject-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(10,132,255,0.3); transform: translateX(4px); }
-        .subject-item-grade { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 6px; background: var(--border); flex-shrink: 0; font-weight: 600; transition: background 0.2s; }
-        .subject-item.active .subject-item-grade { background: rgba(255,255,255,0.2); color: #fff; }
+        .sidebar-section { padding: 16px 24px 8px; font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--ink3); text-transform: uppercase; font-weight: 600; }
         
-        .sidebar-footer { padding: 24px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
-        .btn-new-subject { width: 100%; padding: 12px; background: rgba(10,132,255,0.1); border: none; border-radius: var(--radius-sm); color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .btn-new-subject:hover { background: rgba(10,132,255,0.15); transform: translateY(-2px); }
+        /* Custom Scrollbar for sleekness */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
         
-        /* ── Main Area & Navbar ── */
-        .main-content-wrap { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; background: var(--bg); position: relative; }
+        .sidebar-footer { padding: 24px 16px; display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
         
-        .navbar { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 40; backdrop-filter: blur(10px); background: rgba(var(--surface-rgb), 0.8); }
-        .navbar-brand { font-weight: 700; font-size: 18px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
-        .navbar-menu-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); margin-right: 12px; transition: transform 0.2s; }
+        /* ── Main Content Area ── */
+        .main-content-wrap { flex: 1; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; position: relative; padding-right: 4px; }
+        
+        /* Floating Navbar Bento (Top Bar) */
+        .navbar-bento { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; margin-bottom: 24px; position: sticky; top: 0; z-index: 40; background: var(--glass-surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); box-shadow: var(--glass-shadow); }
+        .navbar-brand { font-weight: 700; font-size: 18px; color: var(--ink); display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+        .navbar-menu-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--ink); margin-right: 16px; transition: transform 0.2s; }
         .navbar-menu-btn:active { transform: scale(0.9); }
         
-        .main { padding: 40px; width: 100%; max-width: 1000px; margin: 0 auto; }
+        /* Top Bar Account Profile Image */
+        .profile-img-wrap-topbar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px solid var(--glass-border-strong); box-shadow: var(--glass-shadow); transition: transform var(--transition-spring); }
+        .profile-img-wrap-topbar:hover { transform: scale(1.1); box-shadow: var(--glass-shadow-hover); }
+        .profile-img-wrap-topbar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .main { width: 100%; max-width: 1200px; margin: 0 auto; padding-bottom: 40px; }
         
-        .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; gap: 16px; flex-wrap: wrap; }
-        .subject-title input { background: transparent; border: none; font-family: var(--body); font-size: 32px; font-weight: 700; color: var(--ink); outline: none; letter-spacing: -0.5px; width: 100%; max-width: 500px; transition: border-color 0.2s; border-bottom: 2px solid transparent; }
+        /* Components within Bento */
+        .bento-label { font-family: var(--mono); font-size: 13px; color: var(--ink2); margin-bottom: 16px; font-weight: 600; display:flex; justify-content:space-between; align-items:center; }
+        .bento-hero-value { font-size: 72px; font-weight: 800; line-height: 1; letter-spacing: -2px; color: var(--ink); margin-top: 12px; }
+        .bento-stat-value { font-family: var(--mono); font-size: 40px; font-weight: 700; line-height: 1; color: var(--ink); letter-spacing: -1px; margin-top: 12px; }
+        
+        .subject-title input { background: transparent; border: none; font-family: var(--body); font-size: 36px; font-weight: 700; color: var(--ink); outline: none; letter-spacing: -1px; width: 100%; max-width: 100%; transition: border-color 0.2s; border-bottom: 2px solid transparent; padding-bottom: 4px; }
         .subject-title input:focus { border-bottom: 2px solid var(--accent); }
-        .grade-pill { font-family: var(--mono); font-size: 14px; padding: 6px 16px; border-radius: 99px; font-weight: 700; border: 2px solid; margin-top: 8px; display: inline-block; transition: all 0.3s; }
-        .score-detail { font-size: 13px; color: var(--ink3); margin-top: 8px; font-family: var(--mono); }
+        .grade-pill { font-family: var(--mono); font-size: 18px; padding: 8px 24px; border-radius: 99px; font-weight: 700; border: 2px solid; margin-top: 16px; display: inline-block; transition: all var(--transition-spring); box-shadow: var(--glass-shadow); }
+        .score-detail { font-size: 14px; color: var(--ink3); margin-top: 12px; font-family: var(--mono); }
         
-        .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid transparent; }
-        .btn-outline { background: var(--surface); border-color: var(--border); color: var(--ink); }
-        .btn-outline:hover { background: var(--bg); border-color: var(--ink3); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-        .theme-toggle { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; transition: transform 0.2s; }
-        .theme-toggle:hover { transform: scale(1.05); }
+        .btn { padding: 12px 24px; border-radius: 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all var(--transition-spring); border: 1px solid transparent; backdrop-filter: blur(10px); }
+        .btn-outline { background: var(--glass-surface); border-color: var(--glass-border); color: var(--ink); box-shadow: var(--glass-shadow); }
+        .btn-outline:hover { background: var(--glass-bg); border-color: var(--glass-border-strong); transform: translateY(-2px); box-shadow: var(--glass-shadow-hover); }
         
-        .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; }
-        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
-        .stat-label { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--ink3); text-transform: uppercase; margin-bottom: 12px; font-weight: 600; }
-        .stat-value { font-family: var(--mono); font-size: 32px; font-weight: 700; line-height: 1; color: var(--ink); }
+        .btn-icon { background: transparent; border: none; font-size: 18px; cursor: pointer; color: var(--ink3); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: all var(--transition-spring); }
+        .btn-icon:hover { background: rgba(0,0,0,0.05); color: var(--ink); transform: scale(1.1); }
+        [data-theme="dark"] .btn-icon:hover { background: rgba(255,255,255,0.1); }
         
-        .section-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); transition: box-shadow 0.3s ease; }
-        .section-box:hover { box-shadow: var(--shadow); }
-        .section-label { font-family: var(--mono); font-size: 13px; color: var(--ink2); margin-bottom: 16px; font-weight: 600; display:flex; justify-content:space-between; align-items:center; }
+        .theme-toggle { background: var(--glass-bg); color: var(--ink); border: 1px solid var(--glass-border); border-radius: 24px; padding: 10px 16px; font-size: 16px; cursor: pointer; transition: all var(--transition-spring); box-shadow: var(--glass-shadow); display: flex; align-items: center; justify-content: center; }
+        .theme-toggle:hover { transform: scale(1.05); background: var(--glass-surface); }
+        
+        .weight-input { background: rgba(0,0,0,0.03); border: 1px solid transparent; border-radius: 12px; padding: 8px 12px; font-family: var(--mono); font-size: 16px; color: var(--ink); width: 80px; outline: none; transition: all 0.2s; font-weight: 600; text-align: center; }
+        [data-theme="dark"] .weight-input { background: rgba(255,255,255,0.05); }
+        .weight-input:focus { border-color: var(--accent); background: var(--glass-surface); box-shadow: 0 0 0 3px rgba(10,132,255,0.2); }
         
         /* ── Quick Grade Toggle ── */
-        .quick-mode-wrap { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; font-size: 13px; color: var(--ink2); }
+        .quick-mode-wrap { display: flex; gap: 12px; align-items: center; font-size: 13px; color: var(--ink2); background: rgba(0,0,0,0.03); padding: 8px 16px; border-radius: 20px; }
+        [data-theme="dark"] .quick-mode-wrap { background: rgba(255,255,255,0.05); }
         .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--border); transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        input:checked + .slider { background-color: var(--accent); }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(0,0,0,0.1); transition: .4s var(--transition-spring); border-radius: 34px; border: 1px solid var(--glass-border); }
+        [data-theme="dark"] .slider { background-color: rgba(255,255,255,0.1); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; transition: .4s var(--transition-spring); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--accent); border-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .quick-grade-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-        .qg-btn { padding: 8px 16px; border-radius: 8px; border: 2px solid var(--border); background: var(--surface); color: var(--ink2); font-weight: 700; cursor: pointer; transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1); font-family: var(--mono); }
-        .qg-btn:hover { border-color: var(--ink3); transform: translateY(-2px); }
-        .qg-btn.active { border-color: var(--accent); background: var(--accent); color: white; transform: scale(1.05); }
+        .quick-grade-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+        .qg-btn { flex: 1; min-width: 60px; padding: 16px 0; border-radius: 16px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--ink); font-weight: 700; cursor: pointer; transition: all var(--transition-spring); font-family: var(--mono); font-size: 18px; box-shadow: var(--glass-shadow); text-align: center; }
+        .qg-btn:hover { border-color: var(--glass-border-strong); transform: translateY(-4px) scale(1.05); box-shadow: var(--glass-shadow-hover); background: var(--glass-surface); }
+        .qg-btn.active { border-color: var(--accent); background: var(--accent); color: white; transform: scale(1.05); box-shadow: 0 10px 24px rgba(10,132,255,0.4); }
 
-        /* ── Categories ── */
-        .categories { display: flex; flex-direction: column; gap: 16px; }
-        .category-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .category-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-        .category-header { display: grid; grid-template-columns: 1fr 85px 85px 90px 70px 32px; gap: 12px; align-items: center; padding: 16px 24px; background: var(--bg); border-bottom: 1px solid var(--border); }
-        .cat-name-input { background: none; border: none; font-size: 15px; font-weight: 600; color: var(--ink); outline: none; width: 100%; transition: border-bottom 0.2s; border-bottom: 1px solid transparent; }
+        /* ── Categories (Inside Bento) ── */
+        .category-item-bento { background: rgba(0,0,0,0.02); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; border: 1px solid var(--glass-border); transition: all var(--transition-spring); }
+        [data-theme="dark"] .category-item-bento { background: rgba(255,255,255,0.02); }
+        .category-item-bento:hover { background: var(--glass-surface); box-shadow: var(--glass-shadow); }
+        
+        .category-header { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 16px; }
+        .cat-name-input { background: transparent; border: none; font-size: 18px; font-weight: 600; color: var(--ink); outline: none; flex: 1; min-width: 150px; transition: border-bottom 0.2s; border-bottom: 1px solid transparent; font-family: var(--body); }
         .cat-name-input:focus { border-bottom: 1px solid var(--accent); }
-        .cat-stat { font-family: var(--mono); font-size: 11px; color: var(--ink3); text-align: center; }
-        .cat-stat strong { display: block; font-size: 15px; color: var(--ink); font-weight: 700; margin-bottom: 2px; }
-        .weight-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: var(--mono); font-size: 13px; color: var(--ink); width: 64px; text-align: center; outline: none; transition: border-color 0.2s; }
-        .weight-input:focus { border-color: var(--accent); }
+        .cat-stat-group { display: flex; gap: 24px; align-items: center; }
+        .cat-stat { font-family: var(--mono); font-size: 12px; color: var(--ink3); text-align: center; }
+        .cat-stat strong { display: block; font-size: 18px; color: var(--ink); font-weight: 700; margin-bottom: 2px; letter-spacing: -0.5px; }
         
-        .items-list { padding: 12px 16px; }
-        .item-row { display: grid; grid-template-columns: 1fr 90px 90px 40px 60px 32px; gap: 12px; align-items: center; padding: 8px; border-radius: 8px; transition: background 0.2s; }
-        .item-row:hover { background: var(--bg); }
-        .item-row input { background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--ink); outline: none; padding: 6px 10px; border-radius: 8px; width: 100%; transition: border-color 0.2s; }
-        .item-row input:focus { border-color: var(--accent); }
-        .item-row input[type=number] { text-align: center; font-family: var(--mono); }
-        .item-pct { font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: center; }
-        .btn-icon { background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--ink3); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .btn-icon:hover { background: var(--border); color: var(--ink); transform: scale(1.1); }
+        .item-row { display: grid; grid-template-columns: 1fr 90px 90px 40px 60px 40px; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 12px; transition: all var(--transition-spring); background: var(--glass-surface); border: 1px solid var(--glass-border); margin-bottom: 8px; box-shadow: var(--glass-shadow); }
+        .item-row:hover { transform: scale(1.01); box-shadow: var(--glass-shadow-hover); border-color: var(--glass-border-strong); }
+        .item-row input { background: transparent; border: none; border-bottom: 1px solid var(--glass-border-strong); font-size: 14px; color: var(--ink); outline: none; padding: 6px; width: 100%; transition: border-color 0.2s; }
+        .item-row input:focus { border-bottom-color: var(--accent); }
+        .item-row input[type=number] { text-align: center; font-family: var(--mono); font-weight: 600; }
+        
         .btn-lock.locked { color: var(--accent); background: rgba(10,132,255,0.1); }
-        .btn-add-item { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px; text-align: left; margin: 4px 8px 8px; transition: opacity 0.2s; }
-        .btn-add-item:hover { opacity: 0.7; }
-        .btn-add-category { background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink3); width: 100%; margin-top: 8px; transition: all 0.2s; }
-        .btn-add-category:hover { background: var(--bg); border-color: var(--ink2); color: var(--ink); }
         
-        /* ── AI Feature ── */
-        .btn-ai-import { background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%); color: white; border: none; border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(10,132,255,0.3); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .btn-ai-import:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(10,132,255,0.4); }
-        .btn-ai-multi { background: linear-gradient(135deg, #FF9F0A 0%, #FF453A 100%); margin-top: 0; margin-bottom: 24px; box-shadow: 0 4px 14px rgba(255,159,10,0.3); }
-        .btn-ai-multi:hover { box-shadow: 0 8px 20px rgba(255,159,10,0.4); }
+        .btn-add-item { background: transparent; border: 1px dashed var(--glass-border-strong); color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 12px; text-align: center; width: 100%; transition: all var(--transition-spring); border-radius: 12px; margin-top: 8px; }
+        .btn-add-item:hover { background: rgba(10,132,255,0.05); border-style: solid; }
+        .btn-add-category { background: transparent; border: 2px dashed var(--glass-border-strong); border-radius: var(--radius-lg); padding: 24px; text-align: center; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--ink2); width: 100%; margin-top: 8px; transition: all var(--transition-spring); }
+        .btn-add-category:hover { background: var(--glass-surface); border-style: solid; color: var(--ink); transform: scale(1.01); box-shadow: var(--glass-shadow); }
         
-        /* ── Dashboard ── */
-        .dash-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .dash-hero:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-        .dash-hero-gpa { font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: -1px; color: var(--ink); }
-        .dash-hero-label { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--ink3); text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
-        .dash-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 24px; }
-        .dash-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-        .dash-table th, .dash-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid var(--border); transition: background 0.2s; }
-        .dash-table tbody tr:hover td { background: var(--bg); }
-        .dash-table th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--ink3); font-weight: 600; background: var(--bg); }
+        /* ── Dashboard Table ── */
+        .dash-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .dash-table th, .dash-table td { padding: 20px 24px; border-bottom: 1px solid var(--glass-border); transition: background 0.2s; }
+        .dash-table tbody tr:hover td { background: rgba(0,0,0,0.02); }
+        [data-theme="dark"] .dash-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+        .dash-table th { font-family: var(--mono); font-size: 12px; text-transform: uppercase; color: var(--ink3); font-weight: 600; padding-top: 16px; padding-bottom: 16px; border-bottom-width: 2px; }
         
         /* ── General ── */
-        .note-area { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 14px; color: var(--ink); resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
-        .note-area:focus { border-color: var(--accent); }
-        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; }
-        .toast { background: var(--ink); color: var(--bg); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .note-area { width: 100%; background: transparent; border: none; padding: 0; font-size: 15px; color: var(--ink); resize: vertical; min-height: 120px; outline: none; transition: border-color 0.2s; line-height: 1.6; font-family: var(--body); }
+        .note-area::placeholder { color: var(--ink3); }
         
-        #ai-loading { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 10001; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; gap: 16px; text-align:center; animation: fadeInScale 0.3s ease; }
-        .ai-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #0A84FF; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #toast-container { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; }
+        .toast { background: var(--glass-surface); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); color: var(--ink); padding: 16px 24px; border-radius: 20px; box-shadow: var(--glass-shadow-hover); font-size: 14px; font-weight: 600; animation: slideIn 0.5s var(--transition-spring) forwards; display: flex; align-items: center; gap: 12px; }
+        @keyframes slideIn { from { transform: translateX(120%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
 
-        @media (max-width: 1024px) { .stats-row { grid-template-columns: 1fr 1fr; } .category-header { display: flex; flex-wrap: wrap; } }
+        /* Decor elements */
+        .bento-icon-bg { position: absolute; right: -20px; bottom: -20px; font-size: 120px; opacity: 0.05; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1)); pointer-events: none; transform: rotate(-15deg); }
+        [data-theme="dark"] .bento-icon-bg { opacity: 0.03; }
+        
+        .subject-item-grade { font-family: var(--mono); font-size: 14px; padding: 4px 12px; border-radius: 12px; background: rgba(0,0,0,0.05); font-weight: 700; color: var(--ink); }
+        [data-theme="dark"] .subject-item-grade { background: rgba(255,255,255,0.1); }
+
+        @media (max-width: 1024px) { 
+            .item-row { grid-template-columns: 1fr 70px 70px 40px 40px 32px; gap: 8px; }
+            .cat-stat-group { width: 100%; justify-content: space-between; }
+        }
         @media (max-width: 768px) {
-            .sidebar { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); z-index: 1000; box-shadow: var(--shadow-lg); }
+            .app { padding: 12px; gap: 12px; flex-direction: column; }
+            .sidebar { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); z-index: 1000; box-shadow: 20px 0 40px rgba(0,0,0,0.2); border-radius: 0 32px 32px 0; background: var(--glass-bg); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
             .sidebar.open { transform: translateX(0); }
-            .close-sidebar-btn { display: block; position: absolute; top: 24px; right: 20px; background: rgba(0,0,0,0.05); border-radius: 50%; width: 32px; height: 32px; border: none; font-size: 14px; color: var(--ink); cursor: pointer; transition: background 0.2s; }
-            .close-sidebar-btn:active { background: rgba(0,0,0,0.1); }
+            .close-sidebar-btn { display: block; position: absolute; top: 32px; right: 24px; background: rgba(0,0,0,0.05); border-radius: 50%; width: 40px; height: 40px; border: none; font-size: 18px; color: var(--ink); cursor: pointer; transition: background 0.2s; }
+            [data-theme="dark"] .close-sidebar-btn { background: rgba(255,255,255,0.1); }
+            
+            .navbar-bento { border-radius: var(--radius-xl); padding: 16px 24px; margin-bottom: 16px; }
             .navbar-menu-btn { display: block; }
             
-            .main { padding: 20px; padding-bottom: 100px; }
-            .topbar { flex-direction: column; }
-            .subject-title input { font-size: 24px; }
-            .item-row { grid-template-columns: 1fr 60px 60px 40px 40px 32px; }
-            #bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--surface); border-top: 1px solid var(--border); z-index: 90; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); backdrop-filter: blur(10px); background: rgba(var(--surface-rgb), 0.9); transition: transform 0.3s ease; }
-            .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink3); font-size: 10px; font-weight: 600; border: none; background: transparent; transition: color 0.2s; }
-            .bnav-item.active { color: var(--accent); }
-            .bnav-icon { font-size: 20px; margin-bottom: 4px; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+            .main { padding: 0 0 120px 0; }
+            .subject-title input { font-size: 28px; }
+            .bento-hero-value { font-size: 56px; }
+            .bento-box { padding: 24px; border-radius: var(--radius-lg); }
+            
+            #bottom-nav { display: flex; position: fixed; bottom: 12px; left: 12px; right: 12px; height: 72px; background: var(--glass-surface); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); z-index: 90; justify-content: space-around; box-shadow: var(--glass-shadow-hover); transition: transform 0.3s ease; padding: 0 12px; }
+            .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink3); font-size: 11px; font-weight: 600; border: none; background: transparent; transition: color 0.2s; border-radius: 16px; margin: 4px; }
+            .bnav-item.active { color: var(--accent); background: rgba(10,132,255,0.1); }
+            .bnav-icon { font-size: 22px; margin-bottom: 4px; transition: transform var(--transition-spring); }
             .bnav-item:active .bnav-icon { transform: scale(0.8); }
         }
     </style>
@@ -246,33 +324,27 @@
     <div id="toast-container"></div>
     <input type="file" id="profile-upload" accept="image/*" style="display:none" onchange="uploadProfilePic(event)">
     
-    <div id="ai-loading">
-        <div class="ai-spinner"></div>
-        <div style="font-weight:600;" id="ai-loading-text">✨ กำลังให้ AI ประมวลผลภาพ...</div>
-        <div style="font-size: 13px; opacity: 0.8;">บีบอัดรูปภาพแล้ว ทำให้รวดเร็วขึ้น (3-5 วินาที)</div>
-    </div>
-
-    <div id="login-view">
-        <div class="login-card">
+    <!-- ── Login View ── -->
+    <div id="login-view" class="bento-box" style="border-radius: 0; border: none;">
+        <div class="login-card bento-box" style="animation: fadeUpBento 0.8s var(--transition-spring) forwards;">
             <div class="login-logo">🎓</div>
             <h1 class="login-title">Score Tracker</h1>
-            <p class="login-sub">จัดการเกรด ติดตามคะแนน <br>และให้ AI ช่วยกรอกข้อมูลอัตโนมัติ</p>
+            <p class="login-sub">จัดการเกรดและติดตามคะแนน<br>ดีไซน์ Bento Glass เรียบง่าย ทรงพลัง</p>
 
             <button class="auth-btn-lg" onclick="loginGoogle()">
-                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                 Sign in with Google
             </button>
-            <button class="auth-btn-guest" onclick="loginGuest()">ใช้งานแบบไม่ต้องล็อกอิน (Guest)</button>
+            <button class="auth-btn-guest" onclick="loginGuest()">เข้าใช้งานแบบไม่ระบุตัวตน (Guest)</button>
         </div>
     </div>
 
+    <!-- ── Main App ── -->
     <div class="app" id="main-app">
+        
+        <!-- Floating Sidebar (Navigation Only) -->
         <aside class="sidebar">
             <div class="sidebar-profile">
-                <div class="profile-img-wrap" onclick="document.getElementById('profile-upload').click()">
-                    <img id="profile-img" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%230A84FF'/><text x='50' y='65' font-size='50' fill='white' text-anchor='middle'>S</text></svg>" alt="Profile">
-                    <div class="profile-edit-overlay">📷</div>
-                </div>
                 <div class="profile-info">
                     <div class="profile-name" id="profile-name">นักศึกษา</div>
                     <div class="profile-email" id="profile-email">Guest Mode</div>
@@ -280,74 +352,128 @@
                 <button class="close-sidebar-btn" onclick="closeSidebar()">✕</button>
             </div>
 
-            <div class="sidebar-nav">
+            <div class="sidebar-nav" style="margin-top: 12px;">
                 <div class="term-dropdown">
                   <button class="term-dropdown-btn" onclick="toggleTermDropdown()">
-                    <span id="term-dropdown-label">เลือกเทอม</span> <span>▾</span>
+                    <span id="term-dropdown-label">เลือกเทอม</span> <span style="font-size: 10px;">▼</span>
                   </button>
                   <div class="term-dropdown-list" id="term-dropdown-list"></div>
                 </div>
-                <button class="nav-btn" onclick="addTerm()">＋ เพิ่มเทอมใหม่</button>
-                <button class="nav-btn" onclick="renameTerm()">✏️ แก้ชื่อเทอม</button>
-                <button class="nav-btn" onclick="showDashboard()">📊 Dashboard</button>
+                
+                <!-- Main Navigation -->
+                <button class="nav-btn active" id="nav-dashboard" onclick="showDashboard()">
+                    <span style="font-size:18px;">📊</span> ภาพรวม (Overview)
+                </button>
+                <button class="nav-btn" id="nav-subjects" onclick="showSubjectsList()">
+                    <span style="font-size:18px;">📚</span> วิชาเรียน (Subjects)
+                </button>
             </div>
 
-            <div class="sidebar-section">วิชาในเทอมนี้</div>
-            <div class="subject-list" id="subject-list"></div>
+            <div class="sidebar-section">จัดการเทอม</div>
+            <div class="sidebar-nav" style="padding-top: 0;">
+                <button class="nav-btn" onclick="addTerm()"><span>＋</span> เพิ่มเทอมใหม่</button>
+                <button class="nav-btn" onclick="renameTerm()"><span>✎</span> แก้ไขชื่อเทอม</button>
+            </div>
 
             <div class="sidebar-footer">
-                <button class="btn-new-subject" onclick="addSubject()">+ เพิ่มวิชาใหม่</button>
-                <button class="btn-outline" onclick="logout()" style="width:100%; border-radius:8px;">ออกจากระบบ</button>
+                <button class="nav-btn" onclick="logout()" style="justify-content: center; color: var(--red); background: rgba(255,69,58,0.1);">ออกจากระบบ</button>
             </div>
         </aside>
 
+        <!-- Main Content Area -->
         <div class="main-content-wrap">
-            <nav class="navbar">
+            
+            <!-- Navbar Bento (Top Bar) -->
+            <nav class="navbar-bento">
                 <div style="display:flex; align-items:center;">
                     <button class="navbar-menu-btn" onclick="openSidebar()">☰</button>
-                    <div class="navbar-brand">🎓 Score Tracker</div>
+                    <div class="navbar-brand">
+                        <span style="font-size: 24px; margin-right: 4px;">🍱</span> Score Tracker
+                    </div>
                 </div>
-                <div>
-                    <button class="theme-toggle" onclick="toggleTheme()">🌙 เปลี่ยนธีม</button>
+                <div style="display:flex; align-items:center; gap: 16px;">
+                    <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                    <!-- Account Image on Top Bar -->
+                    <div class="profile-img-wrap-topbar" onclick="document.getElementById('profile-upload').click()" title="เปลี่ยนรูปโปรไฟล์">
+                        <img id="profile-img-top" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230A84FF'/><text x='50' y='68' font-size='50' fill='white' text-anchor='middle' font-family='sans-serif'>S</text></svg>" alt="Profile">
+                    </div>
                 </div>
             </nav>
 
             <main class="main">
-                <div id="dashboard-view" class="animate-in"></div>
+                
+                <!-- 1. Overview / Dashboard View (BENTO GRID) -->
+                <div id="dashboard-view" class="bento-grid"></div>
 
-                <div id="subject-view" class="animate-in" style="display:none;">
-                    <div class="topbar">
-                        <div style="flex:1;">
-                            <div class="subject-title"><input type="text" id="subject-name-input" maxlength="40" oninput="renameSubject(this.value)"></div>
-                            <div class="grade-pill" id="grade-pill">—</div>
-                            <div class="score-detail" id="score-detail-line"></div>
+                <!-- 2. Subjects List View (BENTO GRID - NEW) -->
+                <div id="subjects-list-view" class="bento-grid" style="display:none;">
+                    <div class="bento-box bento-full-width animate-bento" style="padding-bottom: 40px;">
+                        <div class="bento-label" style="font-size: 20px; color: var(--ink); margin-bottom: 24px;">📚 วิชาเรียนทั้งหมดในเทอมนี้</div>
+                        <!-- Grid of Subject Cards -->
+                        <div class="bento-grid" id="subjects-grid"></div>
+                    </div>
+                </div>
+
+                <!-- 3. Subject Detail View (BENTO GRID) -->
+                <div id="subject-view" class="bento-grid" style="display:none;">
+                    
+                    <!-- Box 1: Header & Grade (Spans full width) -->
+                    <div class="bento-box bento-full-width animate-bento" style="animation-delay: 0.1s;">
+                        <div class="bento-icon-bg">📚</div>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <button class="btn-icon" onclick="showSubjectsList()" style="width: auto; padding: 0 12px; font-size: 20px;" title="กลับไปหน้ารวมวิชา">←</button>
+                            <span class="bento-label" style="margin:0;">รายละเอียดวิชา</span>
                         </div>
-                        <button class="btn btn-outline" onclick="deleteSubject()">🗑️ ลบวิชา</button>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                            <div style="flex: 1; min-width: 250px;">
+                                <div class="subject-title"><input type="text" id="subject-name-input" maxlength="40" onchange="renameSubject(this.value)"></div>
+                                <div style="display: flex; gap: 16px; align-items: center; margin-top: 16px;">
+                                    <div class="grade-pill" id="grade-pill">—</div>
+                                    <div class="score-detail" id="score-detail-line"></div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline" onclick="deleteSubject()" style="color: var(--red); border-color: rgba(255,69,58,0.3);">🗑️ ลบวิชานี้</button>
+                        </div>
                     </div>
 
-                    <div class="stats-row">
-                        <div class="stat-card">
-                            <div class="stat-label">คะแนนสะสม</div>
-                            <div class="stat-value" id="stat-raw">—</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">เกรดที่คาดหวัง / ได้แล้ว</div>
-                            <div class="stat-value" id="stat-grade">—</div>
-                        </div>
-                        <div class="stat-card" style="grid-column: span 2;">
-                            <div class="stat-label">หน่วยกิต & Final</div>
-                            <div style="display:flex; gap:16px; margin-top:8px;">
-                                <div><div style="font-size:11px; color:var(--ink3);">Credit</div><input type="number" id="credits-input" class="weight-input" onchange="updateCredits(this.value)" style="width:60px;"></div>
-                                <div><div style="font-size:11px; color:var(--ink3);">Final Weight %</div><input type="number" id="final-weight-input" class="weight-input" onchange="calculate()" style="width:60px;"></div>
+                    <!-- Box 2: Stats (Credits & Final) -->
+                    <div class="bento-box animate-bento" style="animation-delay: 0.2s;">
+                        <div class="bento-label">การตั้งค่าหน่วยกิต</div>
+                        <div style="display:flex; justify-content: space-around; align-items: center; height: 100%; gap: 24px;">
+                            <div style="text-align: center;">
+                                <div style="font-size:12px; color:var(--ink3); font-weight:600; margin-bottom: 8px; text-transform: uppercase;">Credit</div>
+                                <input type="number" id="credits-input" class="weight-input" onchange="updateCredits(this.value)">
+                            </div>
+                            <div style="width: 1px; height: 50px; background: var(--glass-border-strong);"></div>
+                            <div style="text-align: center;">
+                                <div style="font-size:12px; color:var(--ink3); font-weight:600; margin-bottom: 8px; text-transform: uppercase;">Final Weight %</div>
+                                <input type="number" id="final-weight-input" class="weight-input" onchange="calculate()">
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-box">
-                        <div class="section-label">
-                            รูปแบบการคำนวณคะแนน
+                    <!-- Box 3: Current Stats (Score/Grade) -->
+                    <div class="bento-box animate-bento" style="animation-delay: 0.3s; background: linear-gradient(135deg, rgba(10,132,255,0.1), transparent);">
+                        <div class="bento-label">สถานะปัจจุบัน</div>
+                        <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 100%;">
+                            <div>
+                                <div class="cat-stat" style="text-align: left;">คะแนนสะสม</div>
+                                <div class="bento-stat-value" id="stat-raw" style="color: var(--accent);">—</div>
+                            </div>
+                            <div>
+                                <div class="cat-stat" style="text-align: left;">เกรดที่ได้</div>
+                                <div class="bento-stat-value" id="stat-grade">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Box 4: Grade Sections (Spans full width) -->
+                    <div class="bento-box bento-full-width animate-bento" style="animation-delay: 0.4s;">
+                        <div class="bento-label" style="font-size: 16px; margin-bottom: 24px;">
+                            <span>สัดส่วนคะแนน (Scoring Categories)</span>
                             <div class="quick-mode-wrap">
-                                <span>กรอกเฉพาะเกรด (ไม่อยากแยกคะแนน)</span>
+                                <span style="font-weight: 500;">โหมดกรอกเฉพาะเกรดสุทธิ</span>
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="quick-mode-toggle" onchange="toggleQuickMode(this.checked)">
                                     <span class="slider"></span>
@@ -355,40 +481,40 @@
                             </div>
                         </div>
                         
-                        <div id="quick-grade-section" style="display:none;" class="animate-in">
-                            <div style="font-size:13px; margin-bottom:12px; color:var(--ink3);">เลือกเกรดที่คุณได้สำหรับวิชานี้ (ข้อมูลจะไปรวมในกราฟและ GPA อัตโนมัติ)</div>
-                            <div class="quick-grade-buttons" id="qg-buttons-container"></div>
+                        <div id="quick-grade-section" style="display:none;" class="animate-bento">
+                            <div style="background: rgba(0,0,0,0.02); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--glass-border);">
+                                <div style="font-size:14px; margin-bottom:16px; color:var(--ink2); font-weight: 500;">เลือกเกรดที่ได้รับสำหรับวิชานี้ (ข้อมูลจะถูกนำไปคำนวณ GPA อัตโนมัติในหน้าภาพรวม)</div>
+                                <div class="quick-grade-buttons" id="qg-buttons-container"></div>
+                            </div>
                         </div>
 
-                        <div id="full-grade-section" class="animate-in">
-                            <div id="categories-container" class="categories"></div>
-                            <button class="btn-add-category" onclick="addCategory()">+ เพิ่มหมวดคะแนน</button>
-                            
-                            <button class="btn-ai-import" onclick="document.getElementById('ai-image-input').click()">
-                                <span style="font-size: 20px;">🪄</span> ให้ AI อ่านคะแนนรายวิชานี้จากรูปภาพ (เช่น Syllabus)
-                            </button>
-                            <input type="file" id="ai-image-input" accept="image/*" style="display:none" onchange="processAIImage(event)">
+                        <div id="full-grade-section" class="animate-bento">
+                            <div id="categories-container"></div>
+                            <button class="btn-add-category" onclick="addCategory()">+ เพิ่มหมวดหมู่คะแนน (เช่น มิดเทอม, โปรเจกต์)</button>
                         </div>
                     </div>
 
-                    <div class="section-box" style="margin-top:24px;">
-                        <div class="section-label">โน้ต / หมายเหตุ</div>
-                        <textarea class="note-area" id="subject-note" onchange="saveNote(this.value)"></textarea>
+                    <!-- Box 5: Notes -->
+                    <div class="bento-box bento-full-width animate-bento" style="animation-delay: 0.5s;">
+                        <div class="bento-label">📝 โน้ตช่วยจำ (Notes)</div>
+                        <textarea class="note-area" id="subject-note" placeholder="พิมพ์ข้อความช่วยจำ หรือเป้าหมายสำหรับวิชานี้..." onchange="saveNote(this.value)"></textarea>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <div id="bottom-nav">
-        <button class="bnav-item active" onclick="showDashboard()">
-            <div class="bnav-icon">📊</div>Dashboard
+    <!-- Mobile Bottom Nav -->
+    <div id="bottom-nav" style="display:none;">
+        <button class="bnav-item" id="bnav-dashboard" onclick="showDashboard()">
+            <div class="bnav-icon">📊</div>ภาพรวม
         </button>
-        <button class="bnav-item" onclick="openSidebar()">
+        <button class="bnav-item" id="bnav-subjects" onclick="showSubjectsList()">
             <div class="bnav-icon">📚</div>วิชาเรียน
         </button>
     </div>
 
+    <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -434,7 +560,7 @@
                     showLoginScreen();
                 } else {
                     showMainApp();
-                    updateAuthUI(user);
+                    window.renderProfile();
                     await loadFromCloud();
                 }
             } else {
@@ -453,7 +579,7 @@
 
         function showMainApp() {
             document.getElementById('login-view').style.opacity = '0';
-            setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 400);
+            setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 500);
             document.getElementById('main-app').style.display = 'flex';
             if(window.innerWidth <= 768) document.getElementById('bottom-nav').style.display = 'flex';
             window.renderAll();
@@ -461,10 +587,9 @@
 
         window.loginGoogle = async function() {
             try { await signInWithPopup(auth, new GoogleAuthProvider()); localStorage.setItem('guest_mode', 'false'); } 
-            catch(e) { window.showToast("Login Failed", true); }
+            catch(e) { window.showToast("เข้าสู่ระบบล้มเหลว", true); }
         };
 
-        // FIX: Guest Mode By-pass wait for Firebase so it responds instantly
         window.loginGuest = function() {
             localStorage.setItem('guest_mode', 'true');
             showMainApp();
@@ -479,32 +604,32 @@
             showLoginScreen();
         };
 
-        function updateAuthUI(user) {
-            window.renderProfile();
-        }
-
         // ══════════════════════════════════════════════════════════
-        // UI HELPERS & MOBILE NAV
+        // UI HELPERS
         // ══════════════════════════════════════════════════════════
         window.openSidebar = () => document.querySelector('.sidebar').classList.add('open');
         window.closeSidebar = () => document.querySelector('.sidebar').classList.remove('open');
 
-        // RGB variable for navbar translucency
-        function updateSurfaceRGB() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.style.setProperty('--surface-rgb', isDark ? '28, 28, 30' : '255, 255, 255');
+        // Helper to restart CSS animations for Bento Boxes
+        function reTriggerAnimations(container) {
+            const elements = container.querySelectorAll('.animate-bento');
+            elements.forEach(el => {
+                el.classList.remove('animate-bento');
+                void el.offsetWidth; // trigger reflow
+                el.classList.add('animate-bento');
+            });
         }
-        updateSurfaceRGB();
 
         // ══════════════════════════════════════════════════════════
         // DATA MANAGEMENT
         // ══════════════════════════════════════════════════════════
-        let data = JSON.parse(localStorage.getItem('scoretracker_v4') || 'null') || { terms: [{ id: 1, name: 'เทอม 1', subjects: [] }], currentTermId: 1, userProfilePic: null };
+        let data = JSON.parse(localStorage.getItem('scoretracker_v2') || 'null') || { terms: [{ id: 1, name: 'เทอม 1', subjects: [] }], currentTermId: 1, userProfilePic: null };
         let currentTermId = data.currentTermId || 1;
         let currentSubjectId = null;
+        let currentView = 'dashboard'; // 'dashboard', 'subjects', 'subject-detail'
         let idCounter = Date.now();
 
-        function getDocRef() { return userId ? doc(db, 'artifacts', appId, 'users', userId, 'appData', 'trackerData') : null; }
+        function getDocRef() { return userId ? doc(db, 'artifacts', appId, 'users', userId, 'appData', 'trackerDataV2') : null; }
 
         async function loadFromCloud() {
             const ref = getDocRef(); if (!ref) return;
@@ -513,7 +638,7 @@
                 if (snap.exists() && snap.data().payload) {
                     data = JSON.parse(snap.data().payload);
                     currentTermId = data.currentTermId || (data.terms.length ? data.terms[0].id : 1);
-                    window.renderAll(); window.showDashboard(); window.renderProfile();
+                    window.renderAll(); window.renderProfile();
                 } else { saveToCloud(); }
             } catch(e) {}
         }
@@ -524,243 +649,133 @@
         }
 
         window.nextId = () => ++idCounter;
-        window.save = () => { data.currentTermId = currentTermId; localStorage.setItem('scoretracker_v4', JSON.stringify(data)); saveToCloud(); };
+        window.save = () => { data.currentTermId = currentTermId; localStorage.setItem('scoretracker_v2', JSON.stringify(data)); saveToCloud(); };
 
         const getTerm = () => data.terms.find(t => t.id === currentTermId);
         const getSubjects = () => getTerm()?.subjects || [];
         const getSubject = () => getSubjects().find(s => s.id === currentSubjectId);
 
         // ══════════════════════════════════════════════════════════
-        // UI & PROFILE HELPERS
+        // PROFILE & THEME
         // ══════════════════════════════════════════════════════════
         window.showToast = function(msg, isErr=false) {
             const c = document.getElementById('toast-container'); const t = document.createElement('div');
-            t.className = 'toast'; t.textContent = msg; if(isErr) t.style.borderLeft = '4px solid var(--red)';
-            c.appendChild(t); setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3000);
+            t.className = 'toast'; t.innerHTML = isErr ? `<span style="font-size:18px;">⚠️</span> <span>${msg}</span>` : `<span style="font-size:18px;">✨</span> <span>${msg}</span>`;
+            c.appendChild(t); setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(100%) scale(0.9)'; setTimeout(()=>t.remove(),500); }, 3000);
         };
 
         window.toggleTheme = function() {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            updateSurfaceRGB();
-            window.renderDashboardChart(); // Update chart colors
+            if (currentView === 'dashboard') window.renderDashboardChart();
         };
 
         window.renderProfile = function() {
-            const img = document.getElementById('profile-img');
+            // Update Top Bar Image
+            const imgTop = document.getElementById('profile-img-top');
+            
+            // Update Sidebar text (Image is removed from sidebar)
             const name = document.getElementById('profile-name');
             const email = document.getElementById('profile-email');
 
+            const defaultImg = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230A84FF'/><text x='50' y='68' font-size='50' fill='white' text-anchor='middle' font-family='sans-serif'>S</text></svg>";
+
             if (data.userProfilePic) {
-                img.src = data.userProfilePic;
+                imgTop.src = data.userProfilePic;
             } else if (currentUser && currentUser.photoURL) {
-                img.src = currentUser.photoURL;
+                imgTop.src = currentUser.photoURL;
             } else {
-                img.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%230A84FF'/><text x='50' y='65' font-size='50' fill='white' text-anchor='middle'>S</text></svg>";
+                imgTop.src = defaultImg;
             }
 
             name.textContent = (currentUser && currentUser.displayName) ? currentUser.displayName : 'นักศึกษา';
-            email.textContent = (currentUser && !currentUser.isAnonymous) ? currentUser.email : 'Guest Mode';
+            email.textContent = (currentUser && !currentUser.isAnonymous) ? currentUser.email : 'เข้าสู่ระบบแบบ Guest';
         };
 
-        window.uploadProfilePic = async function(event) {
+        window.uploadProfilePic = function(event) {
             const file = event.target.files[0]; if (!file) return;
-            const base64 = await compressImage(file, 300);
-            data.userProfilePic = "data:image/jpeg;base64," + base64;
-            window.save(); window.renderProfile();
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image(); img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > 300) { h = Math.round(h * 300 / w); w = 300; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    data.userProfilePic = canvas.toDataURL('image/jpeg', 0.8);
+                    window.save(); window.renderProfile();
+                }
+            };
+            reader.readAsDataURL(file);
         };
 
         // ══════════════════════════════════════════════════════════
-        // APP LOGIC
+        // NAVIGATION & ROUTING
+        // ══════════════════════════════════════════════════════════
+        window.showDashboard = () => { 
+            currentSubjectId = null; 
+            currentView = 'dashboard';
+            document.getElementById('subject-view').style.display = 'none'; 
+            document.getElementById('subjects-list-view').style.display = 'none'; 
+            const dv = document.getElementById('dashboard-view'); 
+            dv.style.display = 'grid'; 
+            window.renderAll(); 
+            reTriggerAnimations(dv); 
+            if(window.innerWidth <= 768) closeSidebar(); 
+        };
+
+        window.showSubjectsList = () => {
+            currentSubjectId = null;
+            currentView = 'subjects';
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('subject-view').style.display = 'none';
+            const slv = document.getElementById('subjects-list-view');
+            slv.style.display = 'grid';
+            window.renderAll();
+            reTriggerAnimations(slv);
+            if(window.innerWidth <= 768) closeSidebar();
+        };
+
+        window.selectSubject = (id) => { 
+            currentSubjectId = id; 
+            currentView = 'subject-detail';
+            document.getElementById('dashboard-view').style.display = 'none'; 
+            document.getElementById('subjects-list-view').style.display = 'none'; 
+            const sv = document.getElementById('subject-view'); 
+            sv.style.display = 'grid'; 
+            window.renderAll(); 
+            reTriggerAnimations(sv); 
+            if(window.innerWidth <= 768) closeSidebar(); 
+        };
+
+        // ══════════════════════════════════════════════════════════
+        // SUBJECT LOGIC
         // ══════════════════════════════════════════════════════════
         window.toggleTermDropdown = () => document.getElementById('term-dropdown-list').classList.toggle('open');
-        window.switchTerm = (id) => { currentTermId = id; window.save(); currentSubjectId = null; window.renderAll(); window.showDashboard(); document.getElementById('term-dropdown-list').classList.remove('open'); };
-        window.addTerm = () => { const name = prompt("ชื่อเทอมใหม่:"); if(name?.trim()) { const id = window.nextId(); data.terms.push({ id, name: name.trim(), subjects: [] }); window.switchTerm(id); } };
-        window.renameTerm = () => { const t = getTerm(); if(!t) return; const name = prompt("แก้ชื่อเทอม:", t.name); if(name?.trim()) { t.name = name.trim(); window.save(); window.renderAll(); } };
+        window.switchTerm = (id) => { currentTermId = id; window.save(); currentSubjectId = null; window.showDashboard(); document.getElementById('term-dropdown-list').classList.remove('open'); };
+        window.addTerm = () => { const name = prompt("ตั้งชื่อเทอมใหม่:"); if(name?.trim()) { const id = window.nextId(); data.terms.push({ id, name: name.trim(), subjects: [] }); window.switchTerm(id); } };
+        window.renameTerm = () => { const t = getTerm(); if(!t) return; const name = prompt("แก้ไขชื่อเทอม:", t.name); if(name?.trim()) { t.name = name.trim(); window.save(); window.renderAll(); } };
         
-        window.addSubject = () => { const t = getTerm(); if(!t) return; const id = window.nextId(); t.subjects.push({ id, name:`วิชาใหม่`, credits: 3, finalWeight:30, categories:[], note:'', quickMode: false, quickGrade: null }); window.save(); window.renderAll(); window.selectSubject(id); window.addCategory('เก็บคะแนน', 70); if(window.innerWidth <= 768) closeSidebar(); };
-        window.selectSubject = (id) => { currentSubjectId = id; document.getElementById('dashboard-view').style.display = 'none'; const sv = document.getElementById('subject-view'); sv.style.display = 'block'; sv.classList.remove('animate-in'); void sv.offsetWidth; sv.classList.add('animate-in'); window.renderAll(); window.renderSubjectView(); if(window.innerWidth <= 768) closeSidebar(); };
-        window.deleteSubject = () => { if(confirm("ยืนยันการลบวิชานี้?")) { getTerm().subjects = getTerm().subjects.filter(s => s.id !== currentSubjectId); currentSubjectId = null; window.save(); window.renderAll(); window.showDashboard(); } };
-        window.showDashboard = () => { currentSubjectId = null; document.getElementById('subject-view').style.display = 'none'; const dv = document.getElementById('dashboard-view'); dv.style.display = 'block'; dv.classList.remove('animate-in'); void dv.offsetWidth; dv.classList.add('animate-in'); window.renderAll(); window.renderDashboardView(); if(window.innerWidth <= 768) closeSidebar(); };
+        window.addSubject = () => { const t = getTerm(); if(!t) return; const id = window.nextId(); t.subjects.push({ id, name:`วิชาใหม่`, credits: 3, finalWeight:30, categories:[], note:'', quickMode: false, quickGrade: null }); window.save(); window.selectSubject(id); window.addCategory('คะแนนเก็บ', 70); };
+        window.deleteSubject = () => { if(confirm("ต้องการลบวิชานี้ใช่หรือไม่?")) { getTerm().subjects = getTerm().subjects.filter(s => s.id !== currentSubjectId); currentSubjectId = null; window.save(); window.showSubjectsList(); } };
 
-        window.renameSubject = (val) => { const s = getSubject(); if(s){ s.name = val; window.save(); window.renderSidebar(); } };
+        window.renameSubject = (val) => { const s = getSubject(); if(s){ s.name = val; window.save(); } };
         window.saveNote = (val) => { const s = getSubject(); if(s){ s.note = val; window.save(); } };
-        window.updateCredits = (val) => { const s = getSubject(); if(s){ s.credits = parseFloat(val)||0; window.save(); window.calculate(); window.renderSidebar(); } };
+        window.updateCredits = (val) => { const s = getSubject(); if(s){ s.credits = parseFloat(val)||0; window.save(); window.calculate(); } };
 
-        // FIX: Remove renderCategories from inside item updates to prevent UI focus loss
-        window.addCategory = (name='หมวดใหม่', weight=10) => { const s=getSubject(); if(s){ s.categories.push({id:window.nextId(), name, weight, items:[]}); window.save(); window.renderSubjectView(); } };
+        window.addCategory = (name='หมวดหมู่ใหม่', weight=10) => { const s=getSubject(); if(s){ s.categories.push({id:window.nextId(), name, weight, items:[]}); window.save(); window.renderSubjectView(); } };
         window.removeCategory = (cid) => { const s=getSubject(); if(s){ s.categories = s.categories.filter(c=>c.id!==cid); window.save(); window.renderSubjectView(); } };
         window.updateCategory = (cid, field, val) => { const s=getSubject(); const c = s.categories.find(c=>c.id===cid); if(c){ c[field] = field==='weight'?parseFloat(val)||0:val; window.save(); window.calculate(); } };
         
         window.addItem = (cid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items.push({id:window.nextId(), name:'', score:'', maxScore:100, locked:true}); window.save(); window.renderCategories(); window.calculate(); } };
         window.removeItem = (cid, iid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items = c.items.filter(i=>i.id!==iid); window.save(); window.renderCategories(); window.calculate(); } };
         
-        // Use onchange inside renderCategories so users can finish typing before re-render
         window.updateItem = (cid, iid, field, val) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i[field]=field==='name'?val:parseFloat(val)||0; window.save(); window.renderCategories(); window.calculate(); } };
         window.toggleLock = (cid, iid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i.locked = !i.locked; window.save(); window.renderCategories(); window.calculate(); } };
 
         window.toggleQuickMode = (isQuick) => { const s = getSubject(); if(s) { s.quickMode = isQuick; window.save(); window.renderSubjectView(); } };
-        window.setQuickGrade = (grade) => { const s = getSubject(); if(s) { s.quickGrade = grade; window.save(); window.calculate(); window.renderSidebar(); window.renderSubjectView(); } };
-
-        // ══════════════════════════════════════════════════════════
-        // AI VISION (IMAGE COMPRESSION + API)
-        // ══════════════════════════════════════════════════════════
-             // ══════════════════════════════════════════════════════════
-        // AI VISION (IMAGE COMPRESSION + API) - อัปเดตแก้บั๊ก & ป้องกัน Free Tier Limit
-        // ══════════════════════════════════════════════════════════
-        const AI_API_KEY = "AIzaSyCQCOBGq_yQSOivgvSp3j2YrkEOHyIn668";
-        const AI_MODEL = "gemini-2.5-flash"; 
-
-        function compressImage(file, maxWidth = 1000) {
-            return new Promise((resolve) => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = event => {
-                    const img = new Image(); img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let w = img.width; let h = img.height;
-                        if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
-                    }
-                }
-            });
-        }
-
-        // ตัวช่วยลบ Markdown ที่ AI มักจะเผลอใส่มาครอบ JSON
-        function cleanJSON(text) {
-            let cleaned = text.trim();
-            if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json/, '');
-            if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```/, '');
-            if (cleaned.endsWith('```')) cleaned = cleaned.replace(/```$/, '');
-            return cleaned.trim();
-        }
-
-        // 1. AI อ่านทีละวิชา (Single Subject)
-        window.processAIImage = async function(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const btn = document.querySelector('.btn-ai-import:not(.btn-ai-multi)');
-            
-            // ป้องกันกดซ้ำ (Cooldown)
-            if(btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
-            
-            document.getElementById('ai-loading').style.display = 'flex';
-            document.getElementById('ai-loading-text').textContent = "✨ กำลังให้ AI ประมวลผลภาพ (อาจใช้เวลา 5-10 วินาที)...";
-
-            try {
-                const base64Clean = await compressImage(file);
-                const promptText = `วิเคราะห์ภาพนี้ ส่งกลับเป็น JSON อย่างเดียวรูปแบบ: {"categories":[{"name":"ชื่อหมวด", "weight":20, "items":[{"name":"ชื่องาน","score":8,"maxScore":10}]}]}`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${AI_API_KEY}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [ { text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Clean } } ] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errData = await response.json();
-                    console.error("Gemini API Error:", errData);
-                    throw new Error(errData.error?.message || `HTTP Error ${response.status}`);
-                }
-                
-                const textContent = (await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if(textContent) { 
-                    const data = JSON.parse(cleanJSON(textContent));
-                    const s = getSubject(); if (!s) return;
-                    (data.categories||[]).forEach(cat => {
-                        const newCat = { id: window.nextId(), name: cat.name || 'AI Category', weight: cat.weight || 0, items: [] };
-                        (cat.items||[]).forEach(i => { newCat.items.push({ id: window.nextId(), name: i.name||'Item', score: i.score!==null?i.score:'', maxScore: i.maxScore||100, locked: i.score!==null }); });
-                        s.categories.push(newCat);
-                    });
-                    window.save(); window.renderSubjectView(); window.showToast("✨ AI นำเข้าข้อมูลสำเร็จ!");
-                } 
-            } catch (e) { 
-                console.error("Process AI Error:", e); 
-                window.showToast("ระบบ AI มีปัญหา: " + (e.message || "กรุณาลองใหม่อีกครั้ง"), true); 
-            } 
-            finally { 
-                document.getElementById('ai-loading').style.display = 'none'; 
-                event.target.value = ''; 
-                if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
-            }
-        };
-
-        // 2. AI อ่านหน้า Dashboard เพิ่มหลายวิชา (Smart Multi-Subject Import)
-        window.processAIMultiSubject = async function(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const btn = document.querySelector('.btn-ai-multi');
-            
-            // ป้องกันกดซ้ำ (Cooldown)
-            if(btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
-
-            document.getElementById('ai-loading').style.display = 'flex';
-            document.getElementById('ai-loading-text').textContent = "🪄 AI กำลังวิเคราะห์ Transcript / พอร์ตทัลเกรด...";
-
-            try {
-                const base64Clean = await compressImage(file);
-                const promptText = `คุณคือผู้ช่วยจัดการตารางเรียนและผลการเรียน วิเคราะห์ภาพพอร์ตทัลเกรด ใบรายงานผล (Transcript) หรือตารางเรียนนี้ 
-                ค้นหาวิชาเรียนทั้งหมดที่พบ พร้อมหน่วยกิต และเกรดที่ได้ (ถ้ามี เช่น A, B+, B, C+, C, D+, D, F) 
-                ส่งกลับเป็น JSON อย่างเดียว ห้ามมีข้อความอื่น รูปแบบ:
-                {"subjects": [{"name": "ชื่อวิชา", "credits": 3, "grade": "A" หรือ null}]}`;
-
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent?key=${AI_API_KEY}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [ { text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Clean } } ] }],
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errData = await response.json();
-                    console.error("Gemini API Error:", errData);
-                    throw new Error(errData.error?.message || `HTTP Error ${response.status}`);
-                }
-                
-                const textContent = (await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if(textContent) {
-                    const aiData = JSON.parse(cleanJSON(textContent));
-                    const t = getTerm();
-                    if(aiData.subjects && aiData.subjects.length > 0) {
-                        aiData.subjects.forEach(sub => {
-                            let gradeVal = null;
-                            if(sub.grade && ['A','B+','B','C+','C','D+','D','F'].includes(sub.grade.toUpperCase())) {
-                                gradeVal = sub.grade.toUpperCase();
-                            }
-                            t.subjects.push({
-                                id: window.nextId(),
-                                name: sub.name || 'วิชาใหม่',
-                                credits: parseFloat(sub.credits) || 3,
-                                finalWeight: 30,
-                                categories: [],
-                                note: '',
-                                quickMode: !!gradeVal,
-                                quickGrade: gradeVal
-                            });
-                        });
-                        window.save(); window.renderAll(); window.showDashboard(); 
-                        window.showToast(`✨ AI นำเข้าสำเร็จ ${aiData.subjects.length} วิชา!`);
-                    } else {
-                        window.showToast("AI ไม่พบรายวิชาในภาพนี้", true);
-                    }
-                }
-            } catch (e) { 
-                console.error("Process AI Multi Error:", e); 
-                window.showToast("ระบบ AI มีปัญหา: " + (e.message || "กรุณาลองใหม่อีกครั้ง"), true); 
-            } 
-            finally { 
-                document.getElementById('ai-loading').style.display = 'none'; 
-                event.target.value = ''; 
-                if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
-            }
-        };
+        window.setQuickGrade = (grade) => { const s = getSubject(); if(s) { s.quickGrade = grade; window.save(); window.calculate(); window.renderSubjectView(); } };
 
         // ══════════════════════════════════════════════════════════
         // CALCULATIONS & RENDERING
@@ -808,7 +823,7 @@
             } else {
                 document.getElementById('stat-raw').textContent = res.raw.toFixed(1) + '%';
                 document.getElementById('stat-grade').textContent = g.letter;
-                document.getElementById('score-detail-line').textContent = `สะสมสุทธิ ${res.score.toFixed(1)} คะแนน | Final ${s.finalWeight}%`;
+                document.getElementById('score-detail-line').textContent = `คะแนนสุทธิ ${res.score.toFixed(1)} | น้ำหนักไฟนอล ${s.finalWeight}%`;
             }
             
             document.getElementById('grade-pill').textContent = g.letter;
@@ -817,19 +832,55 @@
         };
 
         window.renderAll = function() {
-            window.renderSidebar(); const t = getTerm();
+            // Update Navigation active states
+            document.getElementById('nav-dashboard').classList.toggle('active', currentView === 'dashboard');
+            document.getElementById('nav-subjects').classList.toggle('active', currentView === 'subjects' || currentView === 'subject-detail');
+            
+            // Mobile bottom nav active states
+            if(document.getElementById('bnav-dashboard')) {
+                document.getElementById('bnav-dashboard').classList.toggle('active', currentView === 'dashboard');
+                document.getElementById('bnav-subjects').classList.toggle('active', currentView === 'subjects' || currentView === 'subject-detail');
+            }
+
+            const t = getTerm();
             document.getElementById('term-dropdown-list').innerHTML = data.terms.map(tm => `<div class="term-dropdown-item" onclick="switchTerm(${tm.id})">${tm.name}</div>`).join('');
             document.getElementById('term-dropdown-label').textContent = t ? t.name : 'เลือกเทอม';
-            window.renderProfile();
+            
+            if (currentView === 'dashboard') window.renderDashboardView();
+            if (currentView === 'subjects') window.renderSubjectsList();
+            if (currentView === 'subject-detail') window.renderSubjectView();
         };
 
-        window.renderSidebar = function() {
-            document.getElementById('subject-list').innerHTML = getSubjects().map(s => {
-                const g = window.scoreToGrade(window.calcSubject(s).score, s);
-                return `<div class="subject-item ${s.id===currentSubjectId?'active':''}" onclick="selectSubject(${s.id})">
-                            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</span> <span class="subject-item-grade">${g.letter}</span>
-                        </div>`;
+        // NEW: Render Subjects Overview
+        window.renderSubjectsList = function() {
+            const grid = document.getElementById('subjects-grid');
+            const subjects = getSubjects();
+            
+            let html = subjects.map((s, idx) => {
+                const r = window.calcSubject(s);
+                const g = window.scoreToGrade(r.score, s);
+                const scoreDisplay = s.quickMode ? (s.quickGrade||'-') : r.score.toFixed(1);
+                
+                return `
+                    <div class="bento-box animate-bento" style="animation-delay: ${idx * 0.05}s; cursor: pointer; padding: 24px;" onclick="selectSubject(${s.id})">
+                        <div style="font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 8px;">${s.name}</div>
+                        <div style="font-family: var(--mono); color: var(--ink3); font-size: 13px; margin-bottom: 24px;">คะแนน: ${scoreDisplay}</div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                            <span style="font-family: var(--mono); color: var(--ink2); font-weight: 600;">${s.credits} Credits</span>
+                            <span class="subject-item-grade" style="font-size: 16px;">${g.letter}</span>
+                        </div>
+                    </div>
+                `;
             }).join('');
+            
+            html += `
+                <div class="bento-box animate-bento" style="animation-delay: ${subjects.length * 0.05}s; cursor: pointer; border: 2px dashed var(--glass-border-strong); display: flex; align-items: center; justify-content: center; min-height: 140px; background: transparent; box-shadow: none;" onclick="addSubject()">
+                    <div style="color: var(--accent); font-weight: 600; font-size: 16px;">+ เพิ่มวิชาใหม่</div>
+                </div>
+            `;
+            
+            grid.innerHTML = html;
         };
 
         window.renderSubjectView = function() {
@@ -853,28 +904,32 @@
         };
 
         window.renderCategories = function() {
-            // FIX: Changed oninput -> onchange to prevent UI focus loss when typing score details
             document.getElementById('categories-container').innerHTML = getSubject().categories.map((c, index) => {
                 const act = c.items.filter(i=>i.locked && i.score!=='');
                 const avg = act.length ? act.reduce((sum,i)=>sum+(parseFloat(i.score)/(parseFloat(i.maxScore)||100))*100,0)/act.length : 0;
                 return `
-                <div class="category-card" style="animation-delay: ${index * 0.05}s;">
+                <div class="category-item-bento">
                     <div class="category-header">
-                        <input class="cat-name-input" value="${c.name}" onchange="updateCategory(${c.id}, 'name', this.value)">
-                        <div class="cat-stat"><strong>${avg.toFixed(1)}%</strong></div>
-                        <div class="cat-stat"><strong>${act.length}/${c.items.length}</strong></div>
-                        <div><input class="weight-input" type="number" value="${c.weight}" onchange="updateCategory(${c.id}, 'weight', this.value)">%</div>
-                        <button class="btn-icon" onclick="removeCategory(${c.id})" style="color:var(--red)">✕</button>
+                        <input class="cat-name-input" value="${c.name}" onchange="updateCategory(${c.id}, 'name', this.value)" placeholder="ชื่อหมวดหมู่">
+                        <div class="cat-stat-group">
+                            <div class="cat-stat"><strong>${avg.toFixed(1)}%</strong>ค่าเฉลี่ย</div>
+                            <div class="cat-stat"><strong>${act.length}/${c.items.length}</strong>จำนวนงาน</div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input class="weight-input" type="number" value="${c.weight}" onchange="updateCategory(${c.id}, 'weight', this.value)" style="width:70px;">
+                                <span style="font-family:var(--mono); font-weight:600;">%</span>
+                            </div>
+                        </div>
+                        <button class="btn-icon" onclick="removeCategory(${c.id})" style="color:var(--red); border:1px solid rgba(255,69,58,0.2);">✕</button>
                     </div>
-                    <div class="items-list">
+                    <div class="items-list" style="padding:0;">
                         ${c.items.map(i => `<div class="item-row" style="opacity:${i.locked?'1':'0.5'}">
-                            <input value="${i.name}" onchange="updateItem(${c.id},${i.id},'name',this.value)">
-                            <input type="number" placeholder="คะแนน" value="${i.score}" onchange="updateItem(${c.id},${i.id},'score',this.value)">
+                            <input value="${i.name}" onchange="updateItem(${c.id},${i.id},'name',this.value)" placeholder="ชื่องาน/สอบ">
+                            <input type="number" placeholder="ได้" value="${i.score}" onchange="updateItem(${c.id},${i.id},'score',this.value)">
                             <input type="number" placeholder="เต็ม" value="${i.maxScore}" onchange="updateItem(${c.id},${i.id},'maxScore',this.value)">
                             <button class="btn-icon ${i.locked?'locked':''}" onclick="toggleLock(${c.id},${i.id})">${i.locked?'🔒':'🔓'}</button>
-                            <button class="btn-icon" onclick="removeItem(${c.id},${i.id})" style="color:var(--red)">✕</button>
+                            <button class="btn-icon" onclick="removeItem(${c.id},${i.id})" style="color:var(--red);">✕</button>
                         </div>`).join('')}
-                        <button class="btn-add-item" onclick="addItem(${c.id})">+ เพิ่มคะแนน</button>
+                        <button class="btn-add-item" onclick="addItem(${c.id})">+ เพิ่มช่องคะแนนย่อย</button>
                     </div>
                 </div>`
             }).join('');
@@ -888,34 +943,50 @@
                 const r = window.calcSubject(s); const g = window.scoreToGrade(r.score, s); const cr = parseFloat(s.credits)||0;
                 if(g.gp !== null && g.gp !== undefined) { totalCr += cr; totalGp += (g.gp * cr); }
                 const scoreDisplay = s.quickMode ? (s.quickGrade||'-') : r.score.toFixed(1);
-                return `<tr><td>${s.name}</td><td>${scoreDisplay}</td><td><span class="subject-item-grade">${g.letter}</span></td></tr>`;
+                return `<tr style="cursor:pointer;" onclick="selectSubject(${s.id})"><td style="font-weight:500;">${s.name}</td><td>${scoreDisplay}</td><td><span class="subject-item-grade" style="font-size:13px;">${g.letter}</span></td></tr>`;
             }).join('');
             
             const currGPA = totalCr > 0 ? (totalGp/totalCr).toFixed(2) : '0.00';
 
+            // Constructing the Bento Overview
             dv.innerHTML = `
-                <div class="dash-hero">
-                    <div>
-                        <div class="dash-hero-label">GPA เทอมนี้ (${getTerm()?.name || ''})</div>
-                        <div class="dash-hero-gpa">${currGPA}</div>
-                    </div>
-                    <div style="font-size:48px; opacity:0.8;">🎓</div>
+                <!-- Bento Box 1: Hero (Span 2) -->
+                <div class="bento-box bento-col-span-2 animate-bento" style="animation-delay: 0.1s; background: linear-gradient(135deg, rgba(10,132,255,0.1), transparent);">
+                    <div class="bento-icon-bg">🎓</div>
+                    <div class="bento-label">เกรดเฉลี่ยเทอมนี้ (${getTerm()?.name || ''})</div>
+                    <div class="bento-hero-value" style="color: var(--accent);">${currGPA}</div>
                 </div>
-                
-                <button class="btn-ai-import btn-ai-multi" onclick="document.getElementById('ai-multi-input').click()">
-                    <span style="font-size: 20px;">🪄</span> ดึงข้อมูลหลายวิชาจากพอร์ตทัล / Transcript อัตโนมัติด้วย AI
-                </button>
-                <input type="file" id="ai-multi-input" accept="image/*" style="display:none" onchange="processAIMultiSubject(event)">
 
-                <div class="section-box">
-                    <div class="section-label">แนวโน้มผลการเรียน (GPA Trend)</div>
+                <!-- Bento Box 2: Total Credits -->
+                <div class="bento-box animate-bento" style="animation-delay: 0.2s;">
+                    <div class="bento-icon-bg" style="font-size: 80px;">📚</div>
+                    <div class="bento-label">หน่วยกิตรวม</div>
+                    <div class="bento-stat-value">${totalCr}</div>
+                </div>
+
+                <!-- Bento Box 3: Subject Count -->
+                <div class="bento-box animate-bento" style="animation-delay: 0.3s; cursor: pointer;" onclick="showSubjectsList()">
+                    <div class="bento-icon-bg" style="font-size: 80px;">📝</div>
+                    <div class="bento-label">จำนวนวิชา (คลิกดูทั้งหมด)</div>
+                    <div class="bento-stat-value">${subjects.length}</div>
+                </div>
+
+                <!-- Bento Box 4: Chart (Full Width) -->
+                <div class="bento-box bento-col-span-3 animate-bento" style="animation-delay: 0.4s; padding-bottom: 40px;">
+                    <div class="bento-label">แนวโน้มผลการเรียน (GPA Trend)</div>
                     <div style="height: 220px; width: 100%; position: relative;">
                         <canvas id="gpaChart"></canvas>
                     </div>
                 </div>
 
-                <div class="section-label" style="margin-top:24px;">รายวิชาในเทอมนี้</div>
-                ${subjects.length ? `<table class="dash-table"><thead><tr><th>วิชา</th><th>คะแนน / เกรดดิบ</th><th>เกรด</th></tr></thead><tbody>${rows}</tbody></table>` : `<div style="text-align:center; padding:40px; color:var(--ink3);">ยังไม่มีข้อมูลวิชาเรียนในเทอมนี้</div>`}
+                <!-- Bento Box 5: Table (Full Width) -->
+                <div class="bento-box bento-col-span-3 animate-bento" style="animation-delay: 0.5s; padding: 0;">
+                    <div class="bento-label" style="padding: 28px 28px 12px; margin: 0;">รายวิชาในเทอมนี้</div>
+                    ${subjects.length 
+                        ? `<div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>รายวิชา</th><th>คะแนน / เกรดดิบ</th><th>เกรดสุทธิ</th></tr></thead><tbody>${rows}</tbody></table></div>` 
+                        : `<div style="text-align:center; padding:40px 20px; color:var(--ink3);">ยังไม่มีข้อมูลวิชาเรียน<br><button class="btn btn-outline" onclick="addSubject()" style="margin-top:16px;">+ เพิ่มวิชาแรกของคุณ</button></div>`
+                    }
+                </div>
             `;
             
             window.renderDashboardChart();
@@ -940,13 +1011,16 @@
                     }
                 });
                 labels.push(term.name);
-                // FIX: push null instead of 0 so empty terms don't pull the graph line down
                 gpaData.push(tCr > 0 ? parseFloat((tGp/tCr).toFixed(2)) : null); 
             });
 
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-            const textColor = isDark ? '#8e8e93' : '#86868b';
+            const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+            const textColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
+
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 240);
+            gradient.addColorStop(0, 'rgba(10,132,255,0.3)');
+            gradient.addColorStop(1, 'rgba(10,132,255,0.0)');
 
             gpaChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -956,26 +1030,27 @@
                         label: 'GPA',
                         data: gpaData,
                         borderColor: '#0A84FF',
-                        backgroundColor: 'rgba(10,132,255,0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
+                        backgroundColor: gradient,
+                        borderWidth: 4,
+                        tension: 0.4, 
                         fill: true,
-                        spanGaps: true, // FIX: Connect lines even if some terms lack data
-                        pointBackgroundColor: '#0A84FF',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
+                        spanGaps: true,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#0A84FF',
+                        pointBorderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // FIX: allows explicit container height
+                    maintainAspectRatio: false,
                     scales: { 
-                        y: { min: 0, max: 4, grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor } }
+                        y: { min: 0, max: 4, grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, padding: 10, font: { family: "'DM Mono', monospace" } } },
+                        x: { grid: { display: false }, ticks: { color: textColor, padding: 10, font: { family: "'Prompt', sans-serif", weight: 500 } } }
                     },
-                    plugins: { legend: { display: false }, tooltip: { padding: 12, cornerRadius: 8 } }
+                    plugins: { legend: { display: false }, tooltip: { padding: 16, cornerRadius: 16, backgroundColor: isDark?'rgba(30,30,38,0.9)':'rgba(255,255,255,0.9)', titleColor: isDark?'#fff':'#000', bodyColor: '#0A84FF', borderColor: isDark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)', borderWidth: 1, bodyFont: { family: "'DM Mono', monospace", size: 16, weight: 'bold' } } },
+                    interaction: { intersect: false, mode: 'index' }
                 }
             });
         };
@@ -983,3 +1058,5 @@
     </script>
 </body>
 </html>
+
+
