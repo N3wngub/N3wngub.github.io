@@ -882,7 +882,8 @@ window.handleAIFile = async function(file) {
     try {
       // 🔥 API Key Gemini ที่ใส่มา
       const apiKey = "AIzaSyCQCOBGq_yQSOivgvSp3j2YrkEOHyIn668";
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      // แก้ไขชื่อโมเดลเป็น gemini-1.5-flash-latest เพื่อให้รองรับกับ v1beta ได้แน่นอน
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
       const res = await fetch(url, {
         method: "POST",
