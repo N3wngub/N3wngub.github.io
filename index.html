@@ -2,8 +2,17 @@
 <html lang="th" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Score Tracker - Clean & Smart</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Score Tracker | จัดการเกรดและคะแนน</title>
+    
+    <!-- App Icons & Browser Header -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+    <meta name="theme-color" content="#f5f5f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Score Tracker">
+    <meta name="application-name" content="Score Tracker">
+
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
@@ -21,9 +30,8 @@
           --ink3: #86868b;
           --sidebar-bg: #ffffff;
           --sidebar-text: #1d1d1f;
-          --accent: #0A84FF; /* iOS Blue */
+          --accent: #0A84FF;
           --accent-hover: #0070E0;
-          --accent2: #5E5CE6;
           --green: #34C759;
           --yellow: #FF9F0A;
           --red: #FF453A;
@@ -36,7 +44,6 @@
           --shadow-lg: 0 12px 32px rgba(0,0,0,0.1);
           --radius: 16px;
           --radius-sm: 10px;
-          --nav-h: 72px;
         }
         
         [data-theme="dark"] {
@@ -49,26 +56,43 @@
           --ink3: #8e8e93;
           --sidebar-bg: #1c1c1e;
           --sidebar-text: #f5f5f7;
-          
           --shadow-sm: 0 1px 4px rgba(0,0,0,0.4);
           --shadow: 0 4px 14px rgba(0,0,0,0.4);
-          --shadow-lg: 0 12px 32px rgba(0,0,0,0.6);
         }
         
         * { margin:0; padding:0; box-sizing:border-box; }
         html { -webkit-font-smoothing: antialiased; }
-        body {
-          background: var(--bg);
-          color: var(--ink);
-          font-family: var(--body);
-          min-height: 100vh;
-          transition: background 0.3s ease, color 0.3s ease;
-        }
+        body { background: var(--bg); color: var(--ink); font-family: var(--body); min-height: 100vh; transition: background 0.3s, color 0.3s; overflow-x: hidden; }
         input, button, textarea, select { font-family: var(--body); }
         
-        .app { display:flex; min-height:100vh; }
+        /* ── Login Screen ── */
+        #login-view {
+            position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex;
+            align-items: center; justify-content: center; flex-direction: column; padding: 24px;
+        }
+        .login-card {
+            background: var(--surface); padding: 48px 40px; border-radius: 24px;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            width: 100%; max-width: 400px; text-align: center;
+        }
+        .login-logo { font-size: 64px; margin-bottom: 16px; line-height: 1; display: inline-block; animation: bounce 2s infinite ease-in-out; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .login-title { font-size: 28px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; margin-bottom: 8px; }
+        .login-sub { font-size: 14px; color: var(--ink3); margin-bottom: 32px; line-height: 1.5; }
         
-        /* ── Sidebar ── */
+        .auth-btn-lg {
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+            font-size: 15px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px;
+            margin-bottom: 12px; transition: all 0.2s; box-shadow: var(--shadow-sm);
+        }
+        .auth-btn-lg:hover { background: var(--bg); transform: translateY(-1px); box-shadow: var(--shadow); }
+        .auth-btn-lg.apple { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+        .auth-btn-lg.apple:hover { opacity: 0.9; }
+        .auth-btn-guest { background: transparent; border: none; color: var(--ink3); font-size: 14px; margin-top: 16px; cursor: pointer; text-decoration: underline; }
+
+        /* ── App Layout ── */
+        .app { display:none; min-height:100vh; }
+        
         .sidebar {
           width: 280px; background: var(--sidebar-bg); color: var(--sidebar-text);
           display: flex; flex-direction: column; position: fixed; top:0; left:0; bottom:0;
@@ -108,12 +132,7 @@
         
         .sidebar-footer { padding: 24px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
         .btn-new-subject { width: 100%; padding: 12px; background: rgba(10,132,255,0.1); border: none; border-radius: var(--radius-sm); color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-        .btn-new-subject:hover { background: rgba(10,132,255,0.15); }
-        
-        .auth-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; border: 1px solid var(--border); }
-        .auth-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-family: var(--body); font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; transition: background 0.2s; }
-        .auth-btn:hover { background: var(--bg); }
-        .user-info { font-size: 11px; color: var(--ink3); text-align: center; margin-bottom: 8px; word-break: break-all; }
+        .user-info { font-size: 11px; color: var(--ink3); text-align: center; margin-bottom: 4px; }
         
         /* ── Main Area ── */
         .main { margin-left: 280px; flex: 1; padding: 40px; max-width: calc(100vw - 280px); }
@@ -128,8 +147,6 @@
         .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
         .btn-outline { background: var(--surface); border-color: var(--border); color: var(--ink); }
         .btn-outline:hover { background: var(--bg); border-color: var(--ink3); }
-        .btn-danger { background: rgba(255,69,58,0.1); color: var(--red); }
-        .btn-danger:hover { background: rgba(255,69,58,0.2); }
         .theme-toggle { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
         
         .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
@@ -150,40 +167,33 @@
         .cat-stat { font-family: var(--mono); font-size: 11px; color: var(--ink3); text-align: center; }
         .cat-stat strong { display: block; font-size: 15px; color: var(--ink); font-weight: 700; margin-bottom: 2px; }
         .weight-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-family: var(--mono); font-size: 13px; color: var(--ink); width: 64px; text-align: center; outline: none; }
-        .weight-input:focus { border-color: var(--accent); }
         
         .items-list { padding: 12px 16px; }
         .col-header-row { display: grid; grid-template-columns: 1fr 90px 90px 40px 60px 32px; gap: 12px; padding: 0 8px 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
-        .col-hdr { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--ink3); text-align: center; font-weight: 600; }
+        .col-hdr { font-family: var(--mono); font-size: 10px; color: var(--ink3); text-align: center; font-weight: 600; }
         .col-hdr:first-child { text-align: left; }
         
         .item-row { display: grid; grid-template-columns: 1fr 90px 90px 40px 60px 32px; gap: 12px; align-items: center; padding: 8px; border-radius: 8px; }
         .item-row:hover { background: var(--bg); }
         .item-row input { background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--ink); outline: none; padding: 6px 10px; border-radius: 8px; width: 100%; }
-        .item-row input:focus { border-color: var(--accent); }
         .item-row input[type=number] { text-align: center; font-family: var(--mono); }
         .item-pct { font-family: var(--mono); font-size: 12px; font-weight: 600; text-align: center; }
         
-        .btn-icon { background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--ink3); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-icon { background: transparent; border: none; font-size: 16px; cursor: pointer; color: var(--ink3); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
         .btn-icon:hover { background: var(--border); color: var(--ink); }
-        .btn-icon.delete:hover { background: rgba(255,69,58,0.1); color: var(--red); }
         .btn-lock.locked { color: var(--accent); background: rgba(10,132,255,0.1); }
+        .btn-add-item { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px; text-align: left; margin: 4px 8px 8px; }
         
-        .btn-add-item { background: none; border: none; color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px 16px; text-align: left; margin: 4px 8px 8px; border-radius: 8px; }
-        .btn-add-item:hover { background: rgba(10,132,255,0.08); }
-        
-        .btn-add-category { background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink3); transition: all 0.2s; width: 100%; margin-top: 8px; }
-        .btn-add-category:hover { border-color: var(--ink3); color: var(--ink); }
+        .btn-add-category { background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink3); width: 100%; margin-top: 8px; }
         
         /* ── AI Feature ── */
         .btn-ai-import {
           background: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
           color: white; border: none; border-radius: var(--radius);
           padding: 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600;
-          transition: all 0.2s; width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;
           box-shadow: 0 4px 14px rgba(10,132,255,0.3);
         }
-        .btn-ai-import:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,132,255,0.4); }
         
         /* ── Dashboard ── */
         .dash-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; }
@@ -191,33 +201,21 @@
         .dash-hero-label { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--ink3); text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
         .dash-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 24px; }
         
-        .dash-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+        .dash-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
         .dash-table th, .dash-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid var(--border); }
         .dash-table th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--ink3); font-weight: 600; background: var(--bg); }
-        .dash-table tr:hover td { background: var(--bg); cursor: pointer; }
-        .dash-table tr:last-child td { border-bottom: none; }
         
-        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        
-        /* ── General Elements ── */
+        /* ── General ── */
         .note-area { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 14px; color: var(--ink); resize: vertical; min-height: 80px; outline: none; }
-        .note-area:focus { border-color: var(--accent); }
-        
         #toast-container { position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; }
-        .toast { background: var(--ink); color: var(--bg); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toast { background: var(--ink); color: var(--bg); padding: 14px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); font-size: 14px; font-weight: 500; animation: slideIn 0.3s forwards; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        /* AI Loading */
         #ai-loading { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 10001; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; gap: 16px; }
         .ai-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #0A84FF; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .stats-row { grid-template-columns: 1fr 1fr; }
-            .category-header { display: flex; flex-wrap: wrap; }
-            .charts-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1024px) { .stats-row { grid-template-columns: 1fr 1fr; } .category-header { display: flex; flex-wrap: wrap; } }
         @media (max-width: 768px) {
             .sidebar { display: none; }
             .main { margin-left: 0; padding: 20px; padding-bottom: 100px; max-width: 100vw; }
@@ -225,24 +223,44 @@
             .subject-title input { font-size: 24px; }
             .item-row { grid-template-columns: 1fr 60px 60px 40px 40px 32px; }
             .col-header-row { display: none; }
-            #bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--surface); border-top: 1px solid var(--border); z-index: 100; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); }
+            #bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: var(--surface); border-top: 1px solid var(--border); z-index: 100; justify-content: space-around; padding-bottom: env(safe-area-inset-bottom); }
             .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink3); font-size: 10px; font-weight: 600; border: none; background: transparent; }
             .bnav-item.active { color: var(--accent); }
             .bnav-icon { font-size: 20px; margin-bottom: 4px; }
         }
-        @media (min-width: 769px) { #bottom-nav { display: none; } }
     </style>
 </head>
 <body>
     <div id="toast-container"></div>
+    
+    <!-- AI Loading Screen -->
     <div id="ai-loading">
         <div class="ai-spinner"></div>
-        <div style="font-weight:600;">✨ กำลังให้ AI อ่านข้อมูลจากรูปภาพ...</div>
-        <div style="font-size: 13px; opacity: 0.8;">อาจใช้เวลาสักครู่</div>
+        <div style="font-weight:600;">✨ กำลังให้ AI ประมวลผลภาพ...</div>
+        <div style="font-size: 13px; opacity: 0.8;">บีบอัดรูปภาพแล้ว ทำให้รวดเร็วขึ้น (3-5 วินาที)</div>
     </div>
 
-    <div class="app">
-        <!-- ── Sidebar ── -->
+    <!-- ── Login View ── -->
+    <div id="login-view">
+        <div class="login-card">
+            <div class="login-logo">🎓</div>
+            <h1 class="login-title">Score Tracker</h1>
+            <p class="login-sub">จัดการเกรด ติดตามคะแนน <br>และให้ AI ช่วยกรอกข้อมูลอัตโนมัติ</p>
+
+            <button class="auth-btn-lg" onclick="loginGoogle()">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+            </button>
+            <button class="auth-btn-lg apple" onclick="loginApple()">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.31-.73 3.73-.62 1.62.1 2.81.76 3.65 1.95-3.04 1.77-2.52 5.68.31 6.8-.75 1.83-1.66 3.42-2.77 4.04zm-3.53-15.6c.07-2.18 1.7-4.14 3.91-4.68.41 2.4-1.3 4.54-3.91 4.68z"/></svg>
+                Sign in with Apple
+            </button>
+            <button class="auth-btn-guest" onclick="loginGuest()">ใช้งานแบบไม่ต้องล็อกอิน (Guest)</button>
+        </div>
+    </div>
+
+    <!-- ── Main App ── -->
+    <div class="app" id="main-app">
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="brand-tag">Academic Tracker</div>
@@ -259,7 +277,7 @@
                 </div>
                 <button class="nav-btn" onclick="addTerm()">＋ เพิ่มเทอมใหม่</button>
                 <button class="nav-btn" onclick="renameTerm()">✏️ แก้ชื่อเทอม</button>
-                <button class="nav-btn" onclick="showDashboard()" id="nav-dash">📊 Dashboard</button>
+                <button class="nav-btn" onclick="showDashboard()">📊 Dashboard</button>
             </div>
 
             <div class="sidebar-section">วิชาในเทอมนี้</div>
@@ -267,99 +285,65 @@
 
             <div class="sidebar-footer">
                 <button class="btn-new-subject" onclick="addSubject()">+ เพิ่มวิชาใหม่</button>
-                
-                <!-- Auth Section -->
-                <div class="auth-box">
-                    <div id="user-info-display" class="user-info" style="display:none;"></div>
-                    <button class="auth-btn" id="btn-login-google" onclick="loginGoogle()">
-                        <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                        Sign in with Google
-                    </button>
-                    <button class="auth-btn" id="btn-login-apple" onclick="loginApple()">
-                        <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.31-.73 3.73-.62 1.62.1 2.81.76 3.65 1.95-3.04 1.77-2.52 5.68.31 6.8-.75 1.83-1.66 3.42-2.77 4.04zm-3.53-15.6c.07-2.18 1.7-4.14 3.91-4.68.41 2.4-1.3 4.54-3.91 4.68z"/></svg>
-                        Sign in with Apple
-                    </button>
-                    <button class="auth-btn" id="btn-logout" onclick="logout()" style="display:none; color:var(--red);">Logout</button>
-                </div>
-                
-                <div style="display:flex; gap:8px;">
-                    <button class="theme-toggle" onclick="toggleTheme()" style="flex:1;">🌙 Theme</button>
-                </div>
+                <div id="user-info-display" class="user-info"></div>
+                <button class="btn-outline" onclick="logout()" style="width:100%; border-radius:8px;">ออกจากระบบ</button>
+                <button class="theme-toggle" onclick="toggleTheme()" style="margin-top:8px;">🌙 เปลี่ยนธีม</button>
             </div>
         </aside>
 
-        <!-- ── Main ── -->
         <main class="main">
-            <!-- Dash View -->
             <div id="dashboard-view"></div>
-
-            <!-- Subject View -->
             <div id="subject-view" style="display:none;">
                 <div class="topbar">
                     <div style="flex:1;">
-                        <div class="subject-title">
-                            <input type="text" id="subject-name-input" maxlength="40" oninput="renameSubject(this.value)">
-                        </div>
+                        <div class="subject-title"><input type="text" id="subject-name-input" maxlength="40" oninput="renameSubject(this.value)"></div>
                         <div class="grade-pill" id="grade-pill">—</div>
                         <div class="score-detail" id="score-detail-line"></div>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:flex-start;">
-                        <button class="btn btn-outline" onclick="deleteSubject()">🗑️ ลบวิชา</button>
-                    </div>
+                    <button class="btn btn-outline" onclick="deleteSubject()">🗑️ ลบวิชา</button>
                 </div>
 
                 <div class="stats-row">
                     <div class="stat-card">
                         <div class="stat-label">คะแนนสะสม</div>
                         <div class="stat-value" id="stat-raw">—</div>
-                        <div class="stat-sub" id="stat-raw-sub"></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">คะแนนถ่วงน้ำหนัก</div>
                         <div class="stat-value" id="stat-weighted">—</div>
-                        <div class="stat-sub">คะแนนรวมสุทธิ</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">เกรดที่คาดหวัง</div>
                         <div class="stat-value" id="stat-grade">—</div>
-                        <div class="stat-sub">จากคะแนนที่มี</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">หน่วยกิต & Final</div>
-                        <div style="display:flex; gap:12px; align-items:center; margin-top:8px;">
-                            <div>
-                                <div style="font-size:11px; color:var(--ink3);">Credit</div>
-                                <input type="number" id="credits-input" class="weight-input" oninput="updateCredits(this.value)" style="width:50px; padding:4px;">
-                            </div>
-                            <div>
-                                <div style="font-size:11px; color:var(--ink3);">Final %</div>
-                                <input type="number" id="final-weight-input" class="weight-input" oninput="calculate()" style="width:50px; padding:4px;">
-                            </div>
+                        <div style="display:flex; gap:12px; margin-top:8px;">
+                            <div><div style="font-size:11px; color:var(--ink3);">Credit</div><input type="number" id="credits-input" class="weight-input" oninput="updateCredits(this.value)" style="width:50px; padding:4px;"></div>
+                            <div><div style="font-size:11px; color:var(--ink3);">Final %</div><input type="number" id="final-weight-input" class="weight-input" oninput="calculate()" style="width:50px; padding:4px;"></div>
                         </div>
                     </div>
                 </div>
 
                 <div id="categories-container" class="categories"></div>
-                
                 <button class="btn-add-category" onclick="addCategory()">+ เพิ่มหมวดคะแนน</button>
                 
-                <!-- AI Trigger -->
                 <button class="btn-ai-import" onclick="document.getElementById('ai-image-input').click()">
-                    <span style="font-size: 20px;">✨</span> ให้ AI ดึงข้อมูลคะแนนจากรูปภาพ (Syllabus/เกรด)
+                    <span style="font-size: 20px;">✨</span> ให้ AI อ่านคะแนนจากรูปภาพ (Syllabus/พอร์ตทัล)
                 </button>
                 <input type="file" id="ai-image-input" accept="image/*" style="display:none" onchange="processAIImage(event)">
 
                 <div class="section-box" style="margin-top:24px;">
                     <div class="section-label">โน้ต / หมายเหตุ</div>
-                    <textarea class="note-area" id="subject-note" placeholder="จดบันทึกเกี่ยวกับวิชานี้..." oninput="saveNote(this.value)"></textarea>
+                    <textarea class="note-area" id="subject-note" oninput="saveNote(this.value)"></textarea>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Mobile Nav -->
+    <!-- Mobile Bottom Nav -->
     <div id="bottom-nav">
-        <button class="bnav-item active" onclick="showDashboard()" id="mob-nav-dash">
+        <button class="bnav-item active" onclick="showDashboard()">
             <div class="bnav-icon">📊</div>Dashboard
         </button>
         <button class="bnav-item" onclick="document.querySelector('.sidebar').style.display='flex'; document.querySelector('.sidebar').style.width='100vw'; document.querySelector('.sidebar').style.zIndex='200';">
@@ -367,7 +351,7 @@
         </button>
     </div>
 
-    <!-- Firebase & App Logic -->
+    <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -396,124 +380,114 @@
         // RULE 3: Auth Before Queries
         const initAuth = async () => {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token).catch(e=>console.error(e));
+                await signInWithCustomToken(auth, __initial_auth_token).catch(console.error);
             } else {
-                await signInAnonymously(auth).catch(e=>console.error(e));
+                await signInAnonymously(auth).catch(console.error);
             }
         };
         initAuth();
 
+        // ── Auth State & UI Control ──
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
+            const isGuest = localStorage.getItem('guest_mode') === 'true';
+
             if (user) {
                 userId = user.uid;
-                updateAuthUI(user);
-                await loadFromCloud();
+                // If it's an anonymous user AND they haven't explicitly chosen Guest Mode, show Login Screen
+                if (user.isAnonymous && !isGuest) {
+                    showLoginScreen();
+                } else {
+                    showMainApp();
+                    updateAuthUI(user);
+                    await loadFromCloud();
+                }
             } else {
                 userId = null;
-                updateAuthUI(null);
+                showLoginScreen();
             }
         });
 
+        function showLoginScreen() {
+            document.getElementById('login-view').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('bottom-nav').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            if(window.innerWidth <= 768) document.getElementById('bottom-nav').style.display = 'flex';
+            window.renderAll();
+        }
+
         window.loginGoogle = async function() {
-            const provider = new GoogleAuthProvider();
-            try { await signInWithPopup(auth, provider); } 
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); localStorage.setItem('guest_mode', 'false'); } 
             catch(e) { window.showToast("Login Failed", true); }
         };
         
         window.loginApple = async function() {
-            const provider = new OAuthProvider('apple.com');
-            try { await signInWithPopup(auth, provider); } 
+            try { await signInWithPopup(auth, new OAuthProvider('apple.com')); localStorage.setItem('guest_mode', 'false'); } 
             catch(e) { window.showToast("Login Failed", true); }
         };
 
+        window.loginGuest = function() {
+            localStorage.setItem('guest_mode', 'true');
+            if (currentUser) { showMainApp(); } else { initAuth(); } // Usually already signed in anonymously via initAuth
+        };
+
         window.logout = async function() {
+            localStorage.removeItem('guest_mode');
             await signOut(auth);
-            initAuth(); // Re-authenticate anonymously so local usage continues
-            window.showToast("Logged out successfully");
+            initAuth();
         };
 
         function updateAuthUI(user) {
-            const isAnon = !user || user.isAnonymous;
-            document.getElementById('btn-login-google').style.display = isAnon ? 'flex' : 'none';
-            document.getElementById('btn-login-apple').style.display = isAnon ? 'flex' : 'none';
-            document.getElementById('btn-logout').style.display = isAnon ? 'none' : 'flex';
-            
             const infoEl = document.getElementById('user-info-display');
-            if (!isAnon && user.email) {
-                infoEl.style.display = 'block';
-                infoEl.textContent = `Signed in: ${user.email}`;
-            } else {
-                infoEl.style.display = 'none';
-            }
+            infoEl.textContent = (!user || user.isAnonymous) ? "สถานะ: เข้าใช้งานแบบบุคคลทั่วไป (Guest)" : `อีเมล: ${user.email}`;
         }
 
         // ══════════════════════════════════════════════════════════
         // DATA MANAGEMENT (CLOUD + LOCAL)
         // ══════════════════════════════════════════════════════════
-        let data = JSON.parse(localStorage.getItem('scoretracker_modern') || 'null') || { terms: [{ id: 1, name: 'เทอม 1', subjects: [] }], currentTermId: 1 };
+        let data = JSON.parse(localStorage.getItem('scoretracker_v3') || 'null') || { terms: [{ id: 1, name: 'เทอม 1', subjects: [] }], currentTermId: 1 };
         let currentTermId = data.currentTermId;
         let currentSubjectId = null;
         let idCounter = Date.now();
 
-        // RULE 1: Strict Paths
-        function getDocRef() {
-            if (!userId) return null;
-            return doc(db, 'artifacts', appId, 'users', userId, 'appData', 'scoreTrackerV1');
-        }
+        function getDocRef() { return userId ? doc(db, 'artifacts', appId, 'users', userId, 'appData', 'trackerData') : null; }
 
         async function loadFromCloud() {
-            const ref = getDocRef();
-            if (!ref) return;
+            const ref = getDocRef(); if (!ref) return;
             try {
                 const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    const cloudData = snap.data().payload;
-                    if (cloudData) {
-                        data = JSON.parse(cloudData);
-                        currentTermId = data.currentTermId || (data.terms.length ? data.terms[0].id : 1);
-                        window.renderAll();
-                        if(currentSubjectId) window.selectSubject(currentSubjectId);
-                        else window.showDashboard();
-                        window.showToast("☁️ ข้อมูลซิงค์จาก Cloud แล้ว");
-                    }
-                } else {
-                    // Upload local data to cloud on first login
-                    saveToCloud();
-                }
-            } catch(e) { console.error("Cloud Load Error", e); }
+                if (snap.exists() && snap.data().payload) {
+                    data = JSON.parse(snap.data().payload);
+                    currentTermId = data.currentTermId || (data.terms.length ? data.terms[0].id : 1);
+                    window.renderAll(); window.showDashboard();
+                } else { saveToCloud(); }
+            } catch(e) {}
         }
 
         function saveToCloud() {
-            const ref = getDocRef();
-            if (!ref) return;
-            try {
-                setDoc(ref, { payload: JSON.stringify(data), updatedAt: Date.now() }, { merge: true });
-            } catch(e) { console.error("Cloud Save Error", e); }
+            const ref = getDocRef(); if (!ref) return;
+            setDoc(ref, { payload: JSON.stringify(data), updatedAt: Date.now() }, { merge: true }).catch(()=>{});
         }
 
         window.nextId = () => ++idCounter;
-        window.save = () => {
-            data.currentTermId = currentTermId;
-            localStorage.setItem('scoretracker_modern', JSON.stringify(data));
-            saveToCloud();
-        };
+        window.save = () => { data.currentTermId = currentTermId; localStorage.setItem('scoretracker_v3', JSON.stringify(data)); saveToCloud(); };
 
         const getTerm = () => data.terms.find(t => t.id === currentTermId);
         const getSubjects = () => getTerm()?.subjects || [];
         const getSubject = () => getSubjects().find(s => s.id === currentSubjectId);
 
         // ══════════════════════════════════════════════════════════
-        // UI & LOGIC HELPERS
+        // UI HELPERS & LOGIC
         // ══════════════════════════════════════════════════════════
-        window.showToast = function(msg, isError=false) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = msg;
-            if(isError) toast.style.borderLeft = '4px solid var(--red)';
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity='0'; setTimeout(()=>toast.remove(),300); }, 3000);
+        window.showToast = function(msg, isErr=false) {
+            const c = document.getElementById('toast-container'); const t = document.createElement('div');
+            t.className = 'toast'; t.textContent = msg; if(isErr) t.style.borderLeft = '4px solid var(--red)';
+            c.appendChild(t); setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 3000);
         };
 
         window.toggleTheme = function() {
@@ -521,79 +495,104 @@
             document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         };
 
-        window.toggleTermDropdown = function() {
-            document.getElementById('term-dropdown-list').classList.toggle('open');
-        };
-
-        window.switchTerm = function(id) {
-            currentTermId = id; window.save(); currentSubjectId = null;
-            window.renderAll(); window.showDashboard();
-            document.getElementById('term-dropdown-list').classList.remove('open');
-        };
-
-        window.addTerm = function() {
-            const name = prompt("ชื่อเทอมใหม่:");
-            if(name && name.trim()) {
-                const id = window.nextId();
-                data.terms.push({ id, name: name.trim(), subjects: [] });
-                window.switchTerm(id);
-            }
-        };
-
-        window.renameTerm = function() {
-            const t = getTerm(); if(!t) return;
-            const name = prompt("แก้ชื่อเทอม:", t.name);
-            if(name && name.trim()) { t.name = name.trim(); window.save(); window.renderAll(); }
-        };
-
-        window.addSubject = function() {
-            const t = getTerm(); if(!t) return;
-            const id = window.nextId();
-            t.subjects.push({ id, name:`วิชาใหม่`, credits: 3, finalWeight:30, categories:[], note:'' });
-            window.save(); window.renderAll(); window.selectSubject(id);
-            window.addCategory('เก็บคะแนน', 70);
-            if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none';
-        };
-
-        window.selectSubject = function(id) {
-            currentSubjectId = id;
-            document.getElementById('dashboard-view').style.display = 'none';
-            document.getElementById('subject-view').style.display = 'block';
-            window.renderAll(); window.renderSubjectView();
-            if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none';
-        };
-
-        window.deleteSubject = function() {
-            if(confirm("ยืนยันการลบวิชานี้?")) {
-                const t = getTerm();
-                t.subjects = t.subjects.filter(s => s.id !== currentSubjectId);
-                currentSubjectId = null; window.save(); window.renderAll(); window.showDashboard();
-            }
-        };
-
-        window.showDashboard = function() {
-            currentSubjectId = null;
-            document.getElementById('subject-view').style.display = 'none';
-            document.getElementById('dashboard-view').style.display = 'block';
-            window.renderAll(); window.renderDashboardView();
-            if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none';
-        };
-
-        window.renameSubject = function(val) { const s = getSubject(); if(s){ s.name = val; window.save(); window.renderSidebar(); } };
-        window.saveNote = function(val) { const s = getSubject(); if(s){ s.note = val; window.save(); } };
-        window.updateCredits = function(val) { const s = getSubject(); if(s){ s.credits = parseFloat(val)||0; window.save(); window.calculate(); } };
-
-        window.addCategory = function(name='หมวดใหม่', weight=10) { const s=getSubject(); if(s){ s.categories.push({id:window.nextId(), name, weight, items:[]}); window.save(); window.renderSubjectView(); } };
-        window.removeCategory = function(cid) { const s=getSubject(); if(s){ s.categories = s.categories.filter(c=>c.id!==cid); window.save(); window.renderSubjectView(); } };
-        window.updateCategory = function(cid, field, val) { const s=getSubject(); const c = s.categories.find(c=>c.id===cid); if(c){ c[field] = field==='weight'?parseFloat(val)||0:val; window.save(); window.calculate(); } };
+        window.toggleTermDropdown = () => document.getElementById('term-dropdown-list').classList.toggle('open');
+        window.switchTerm = (id) => { currentTermId = id; window.save(); currentSubjectId = null; window.renderAll(); window.showDashboard(); document.getElementById('term-dropdown-list').classList.remove('open'); };
+        window.addTerm = () => { const name = prompt("ชื่อเทอมใหม่:"); if(name?.trim()) { const id = window.nextId(); data.terms.push({ id, name: name.trim(), subjects: [] }); window.switchTerm(id); } };
+        window.renameTerm = () => { const t = getTerm(); if(!t) return; const name = prompt("แก้ชื่อเทอม:", t.name); if(name?.trim()) { t.name = name.trim(); window.save(); window.renderAll(); } };
         
-        window.addItem = function(cid) { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items.push({id:window.nextId(), name:'', score:'', maxScore:100, locked:true}); window.save(); window.renderCategories(); window.calculate(); } };
-        window.removeItem = function(cid, iid) { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items = c.items.filter(i=>i.id!==iid); window.save(); window.renderCategories(); window.calculate(); } };
-        window.updateItem = function(cid, iid, field, val) { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i[field]=field==='name'?val:parseFloat(val)||0; window.save(); window.renderCategories(); window.calculate(); } };
-        window.toggleLock = function(cid, iid) { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i.locked = !i.locked; window.save(); window.renderCategories(); window.calculate(); } };
+        window.addSubject = () => { const t = getTerm(); if(!t) return; const id = window.nextId(); t.subjects.push({ id, name:`วิชาใหม่`, credits: 3, finalWeight:30, categories:[], note:'' }); window.save(); window.renderAll(); window.selectSubject(id); window.addCategory('เก็บคะแนน', 70); if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none'; };
+        window.selectSubject = (id) => { currentSubjectId = id; document.getElementById('dashboard-view').style.display = 'none'; document.getElementById('subject-view').style.display = 'block'; window.renderAll(); window.renderSubjectView(); if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none'; };
+        window.deleteSubject = () => { if(confirm("ยืนยันการลบวิชานี้?")) { getTerm().subjects = getTerm().subjects.filter(s => s.id !== currentSubjectId); currentSubjectId = null; window.save(); window.renderAll(); window.showDashboard(); } };
+        window.showDashboard = () => { currentSubjectId = null; document.getElementById('subject-view').style.display = 'none'; document.getElementById('dashboard-view').style.display = 'block'; window.renderAll(); window.renderDashboardView(); if(window.innerWidth <= 768) document.querySelector('.sidebar').style.display='none'; };
+
+        window.renameSubject = (val) => { const s = getSubject(); if(s){ s.name = val; window.save(); window.renderSidebar(); } };
+        window.saveNote = (val) => { const s = getSubject(); if(s){ s.note = val; window.save(); } };
+        window.updateCredits = (val) => { const s = getSubject(); if(s){ s.credits = parseFloat(val)||0; window.save(); window.calculate(); } };
+
+        window.addCategory = (name='หมวดใหม่', weight=10) => { const s=getSubject(); if(s){ s.categories.push({id:window.nextId(), name, weight, items:[]}); window.save(); window.renderSubjectView(); } };
+        window.removeCategory = (cid) => { const s=getSubject(); if(s){ s.categories = s.categories.filter(c=>c.id!==cid); window.save(); window.renderSubjectView(); } };
+        window.updateCategory = (cid, field, val) => { const s=getSubject(); const c = s.categories.find(c=>c.id===cid); if(c){ c[field] = field==='weight'?parseFloat(val)||0:val; window.save(); window.calculate(); } };
+        
+        window.addItem = (cid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items.push({id:window.nextId(), name:'', score:'', maxScore:100, locked:true}); window.save(); window.renderCategories(); window.calculate(); } };
+        window.removeItem = (cid, iid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); if(c){ c.items = c.items.filter(i=>i.id!==iid); window.save(); window.renderCategories(); window.calculate(); } };
+        window.updateItem = (cid, iid, field, val) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i[field]=field==='name'?val:parseFloat(val)||0; window.save(); window.renderCategories(); window.calculate(); } };
+        window.toggleLock = (cid, iid) => { const s=getSubject(); const c=s.categories.find(c=>c.id===cid); const i=c?.items.find(i=>i.id===iid); if(i){ i.locked = !i.locked; window.save(); window.renderCategories(); window.calculate(); } };
 
         // ══════════════════════════════════════════════════════════
-        // CALCULATION LOGIC
+        // AI VISION IMPORT MODULE (WITH COMPRESSION SPEEDUP)
+        // ══════════════════════════════════════════════════════════
+        const AI_API_KEY = "AIzaSyCQCOBGq_yQSOivgvSp3j2YrkEOHyIn668";
+
+        // บีบอัดรูปให้เล็กที่สุด (ความกว้างไม่เกิน 1000px) เพื่อให้ AI อ่านเร็วขึ้น
+        function compressImage(file, maxWidth = 1000) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height;
+                        if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        // Convert to base64 JPEG at 70% quality (เล็กและเร็ว)
+                        resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+                    }
+                }
+            });
+        }
+
+        window.processAIImage = async function(event) {
+            const file = event.target.files[0]; if (!file) return;
+            document.getElementById('ai-loading').style.display = 'flex';
+
+            try {
+                // Compression Step
+                const base64Clean = await compressImage(file);
+                
+                const promptText = `วิเคราะห์ตารางคะแนนจากรูปนี้ 
+                ส่งกลับเป็น JSON อย่างเดียวรูปแบบ:
+                {"categories":[{"name":"ชื่อหมวด", "weight":20, "items":[{"name":"ชื่อ","score":8,"maxScore":10}]}]}`;
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${AI_API_KEY}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [ { text: promptText }, { inlineData: { mimeType: "image/jpeg", data: base64Clean } } ] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                
+                if (!response.ok) throw new Error("API Error");
+                const result = await response.json();
+                const textContent = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if(textContent) { applyAIData(JSON.parse(textContent)); } 
+                else { window.showToast("อ่านรูปไม่สำเร็จ กรุณาลองใหม่", true); }
+            } catch (e) {
+                console.error(e); window.showToast("เกิดข้อผิดพลาดของระบบ AI", true);
+            } finally {
+                document.getElementById('ai-loading').style.display = 'none'; event.target.value = '';
+            }
+        };
+
+        function applyAIData(aiData) {
+            const s = getSubject(); if (!s) return;
+            if (!aiData.categories || !aiData.categories.length) { window.showToast('ไม่พบข้อมูลคะแนนในภาพ', true); return; }
+            aiData.categories.forEach(cat => {
+                const newCat = { id: window.nextId(), name: cat.name || 'AI Category', weight: cat.weight || 0, items: [] };
+                (cat.items||[]).forEach(i => { newCat.items.push({ id: window.nextId(), name: i.name||'Item', score: i.score!==null?i.score:'', maxScore: i.maxScore||100, locked: i.score!==null }); });
+                s.categories.push(newCat);
+            });
+            window.save(); window.renderSubjectView(); window.showToast("✨ AI นำเข้าข้อมูลสำเร็จ!");
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // CALCULATIONS & RENDERING
         // ══════════════════════════════════════════════════════════
         const GP_MAP = { A:4.0,'B+':3.5,B:3.0,'C+':2.5,C:2.0,'D+':1.5,D:1.0,F:0.0 };
         const BOUNDARY = { A:80, 'B+':75, B:70, 'C+':65, C:60, 'D+':55, D:50, F:0 };
@@ -603,7 +602,7 @@
             let totalW = 0, earned = 0;
             (s.categories||[]).forEach(c => {
                 const w = parseFloat(c.weight)||0; if(w===0) return;
-                const activeItems = c.items.filter(i => i.locked && i.score !== '' && !isNaN(i.score));
+                const activeItems = c.items.filter(i => i.locked && i.score !== '');
                 if(activeItems.length > 0) {
                     const avg = activeItems.reduce((sum,i)=>sum+(parseFloat(i.score)/(parseFloat(i.maxScore)||100))*100, 0) / activeItems.length;
                     earned += avg * (w/100); totalW += w;
@@ -613,8 +612,7 @@
         };
 
         window.scoreToGrade = function(score) {
-            const keys = ['A','B+','B','C+','C','D+','D','F'];
-            for(let k of keys) { if(score >= BOUNDARY[k]) return { letter: k, gp: GP_MAP[k] }; }
+            for(let k of ['A','B+','B','C+','C','D+','D','F']) { if(score >= BOUNDARY[k]) return { letter: k, gp: GP_MAP[k] }; }
             return { letter: 'F', gp: 0.0 };
         };
 
@@ -622,38 +620,26 @@
             const s = getSubject(); if(!s) return;
             s.finalWeight = parseFloat(document.getElementById('final-weight-input').value) || 0;
             const res = window.calcSubject(s);
-            
             document.getElementById('stat-raw').textContent = res.raw.toFixed(1) + '%';
             document.getElementById('stat-weighted').textContent = res.score.toFixed(1) + ' pts';
-            
             const g = window.scoreToGrade(res.score);
             document.getElementById('stat-grade').textContent = g.letter;
             document.getElementById('grade-pill').textContent = g.letter;
-            
             const pillColor = g.letter === 'A' ? 'var(--green)' : g.letter === 'F' ? 'var(--red)' : 'var(--accent)';
-            document.getElementById('grade-pill').style.color = pillColor;
-            document.getElementById('grade-pill').style.borderColor = pillColor;
-            document.getElementById('stat-grade').style.color = pillColor;
-
-            document.getElementById('score-detail-line').textContent = `สะสมสุทธิ ${res.score.toFixed(1)} คะแนน | น้ำหนัก Final ${s.finalWeight}% | ${s.credits} หน่วยกิต`;
+            document.getElementById('grade-pill').style.color = pillColor; document.getElementById('grade-pill').style.borderColor = pillColor; document.getElementById('stat-grade').style.color = pillColor;
+            document.getElementById('score-detail-line').textContent = `สะสมสุทธิ ${res.score.toFixed(1)} คะแนน | Final ${s.finalWeight}%`;
         };
 
-        // ══════════════════════════════════════════════════════════
-        // RENDERING
-        // ══════════════════════════════════════════════════════════
         window.renderAll = function() {
-            window.renderSidebar();
-            const t = getTerm();
+            window.renderSidebar(); const t = getTerm();
             document.getElementById('term-dropdown-list').innerHTML = data.terms.map(tm => `<div class="term-dropdown-item" onclick="switchTerm(${tm.id})">${tm.name}</div>`).join('');
             document.getElementById('term-dropdown-label').textContent = t ? t.name : 'เลือกเทอม';
             document.getElementById('brand-term-label').textContent = t ? t.name : '';
         };
 
         window.renderSidebar = function() {
-            const list = document.getElementById('subject-list');
-            list.innerHTML = getSubjects().map(s => {
-                const res = window.calcSubject(s);
-                const g = window.scoreToGrade(res.score);
+            document.getElementById('subject-list').innerHTML = getSubjects().map(s => {
+                const g = window.scoreToGrade(window.calcSubject(s).score);
                 return `<div class="subject-item ${s.id===currentSubjectId?'active':''}" onclick="selectSubject(${s.id})">
                             <span>${s.name}</span> <span class="subject-item-grade">${g.letter}</span>
                         </div>`;
@@ -666,167 +652,53 @@
             document.getElementById('final-weight-input').value = s.finalWeight || 30;
             document.getElementById('credits-input').value = s.credits || 3;
             document.getElementById('subject-note').value = s.note || '';
-            window.renderCategories();
-            window.calculate();
+            window.renderCategories(); window.calculate();
         };
 
         window.renderCategories = function() {
-            const s = getSubject();
-            const container = document.getElementById('categories-container');
-            container.innerHTML = s.categories.map(c => {
-                const activeItems = c.items.filter(i=>i.locked && i.score!=='');
-                const avg = activeItems.length ? activeItems.reduce((sum,i)=>sum+(parseFloat(i.score)/(parseFloat(i.maxScore)||100))*100,0)/activeItems.length : 0;
-                
+            document.getElementById('categories-container').innerHTML = getSubject().categories.map(c => {
+                const act = c.items.filter(i=>i.locked && i.score!=='');
+                const avg = act.length ? act.reduce((sum,i)=>sum+(parseFloat(i.score)/(parseFloat(i.maxScore)||100))*100,0)/act.length : 0;
                 return `
                 <div class="category-card">
                     <div class="category-header">
                         <input class="cat-name-input" value="${c.name}" oninput="updateCategory(${c.id}, 'name', this.value)">
-                        <div class="cat-stat"><strong>${avg.toFixed(1)}%</strong>เฉลี่ย</div>
-                        <div class="cat-stat"><strong>${activeItems.length}/${c.items.length}</strong>รายการ</div>
-                        <div style="display:flex;align-items:center;gap:4px;">
-                            <input class="weight-input" type="number" value="${c.weight}" oninput="updateCategory(${c.id}, 'weight', this.value)"><span style="font-size:12px;color:var(--ink3)">%</span>
-                        </div>
-                        <div class="cat-stat"><strong style="color:var(--accent)">${(avg*c.weight/100).toFixed(1)}</strong>สุทธิ</div>
+                        <div class="cat-stat"><strong>${avg.toFixed(1)}%</strong></div>
+                        <div class="cat-stat"><strong>${act.length}/${c.items.length}</strong></div>
+                        <div><input class="weight-input" type="number" value="${c.weight}" oninput="updateCategory(${c.id}, 'weight', this.value)">%</div>
                         <button class="btn-icon delete" onclick="removeCategory(${c.id})">✕</button>
                     </div>
                     <div class="items-list">
-                        <div class="col-header-row">
-                            <div class="col-hdr">ชื่องาน</div><div class="col-hdr">คะแนนที่ได้</div><div class="col-hdr">คะแนนเต็ม</div>
-                            <div class="col-hdr">🔒</div><div class="col-hdr">%</div><div></div>
-                        </div>
-                        ${c.items.map(i => {
-                            const pct = (i.score!==''&&!isNaN(i.score)) ? ((parseFloat(i.score)/(parseFloat(i.maxScore)||100))*100).toFixed(1) : '—';
-                            return `
-                            <div class="item-row" style="opacity:${i.locked?'1':'0.5'}">
-                                <input placeholder="ชื่องาน" value="${i.name}" oninput="updateItem(${c.id},${i.id},'name',this.value)">
-                                <input type="number" placeholder="0" value="${i.score}" oninput="updateItem(${c.id},${i.id},'score',this.value)">
-                                <input type="number" placeholder="100" value="${i.maxScore}" oninput="updateItem(${c.id},${i.id},'maxScore',this.value)">
-                                <button class="btn-icon btn-lock ${i.locked?'locked':''}" onclick="toggleLock(${c.id},${i.id})">${i.locked?'🔒':'🔓'}</button>
-                                <div class="item-pct" style="color:var(--accent)">${pct!== '—' ? pct+'%' : pct}</div>
-                                <button class="btn-icon delete" onclick="removeItem(${c.id},${i.id})">✕</button>
-                            </div>`
-                        }).join('')}
-                        <button class="btn-add-item" onclick="addItem(${c.id})">+ เพิ่มคะแนนในหมวดนี้</button>
+                        ${c.items.map(i => `<div class="item-row" style="opacity:${i.locked?'1':'0.5'}">
+                            <input value="${i.name}" oninput="updateItem(${c.id},${i.id},'name',this.value)">
+                            <input type="number" placeholder="คะแนน" value="${i.score}" oninput="updateItem(${c.id},${i.id},'score',this.value)">
+                            <input type="number" placeholder="เต็ม" value="${i.maxScore}" oninput="updateItem(${c.id},${i.id},'maxScore',this.value)">
+                            <button class="btn-icon ${i.locked?'locked':''}" onclick="toggleLock(${c.id},${i.id})">${i.locked?'🔒':'🔓'}</button>
+                            <button class="btn-icon delete" onclick="removeItem(${c.id},${i.id})">✕</button>
+                        </div>`).join('')}
+                        <button class="btn-add-item" onclick="addItem(${c.id})">+ เพิ่มคะแนน</button>
                     </div>
                 </div>`
             }).join('');
         };
 
         window.renderDashboardView = function() {
-            const subjects = getSubjects();
-            const dv = document.getElementById('dashboard-view');
-            
-            if(subjects.length === 0) {
-                dv.innerHTML = `<div style="text-align:center; padding:80px 20px; color:var(--ink3);"><h2>ยังไม่มีวิชาเรียน</h2><p>กดเพิ่มวิชาเพื่อเริ่มต้นใช้งาน Dashboard</p></div>`;
-                return;
-            }
-
+            const subjects = getSubjects(); const dv = document.getElementById('dashboard-view');
+            if(!subjects.length) { dv.innerHTML = `<div style="text-align:center; padding:80px 20px; color:var(--ink3);"><h2>ยังไม่มีวิชาเรียน</h2><p>กดเพิ่มวิชาเพื่อเริ่มต้นใช้งาน</p></div>`; return; }
             let totalCr = 0, totalGp = 0;
             const rows = subjects.map(s => {
-                const res = window.calcSubject(s);
-                const g = window.scoreToGrade(res.score);
-                const cr = parseFloat(s.credits)||0;
+                const r = window.calcSubject(s); const g = window.scoreToGrade(r.score); const cr = parseFloat(s.credits)||0;
                 totalCr += cr; totalGp += (g.gp * cr);
-                return `<tr><td>${s.name}</td><td>${res.score.toFixed(1)}</td><td><span class="subject-item-grade">${g.letter}</span></td></tr>`;
+                return `<tr><td>${s.name}</td><td>${r.score.toFixed(1)}</td><td><span class="subject-item-grade">${g.letter}</span></td></tr>`;
             }).join('');
-            
-            const gpa = totalCr > 0 ? (totalGp/totalCr).toFixed(2) : '0.00';
-
             dv.innerHTML = `
                 <div class="dash-hero">
-                    <div>
-                        <div class="dash-hero-label">GPA เทอมนี้</div>
-                        <div class="dash-hero-gpa">${gpa}</div>
-                    </div>
+                    <div><div class="dash-hero-label">GPA เทอมนี้</div><div class="dash-hero-gpa">${totalCr > 0 ? (totalGp/totalCr).toFixed(2) : '0.00'}</div></div>
                     <div style="font-size:48px; opacity:0.8;">🎓</div>
                 </div>
-                <div class="dash-stats">
-                    <div class="section-box" style="margin:0; text-align:center;">
-                        <div class="dash-hero-label">วิชาทั้งหมด</div>
-                        <div class="dash-hero-gpa" style="font-size:32px;">${subjects.length}</div>
-                    </div>
-                    <div class="section-box" style="margin:0; text-align:center;">
-                        <div class="dash-hero-label">หน่วยกิตรวม</div>
-                        <div class="dash-hero-gpa" style="font-size:32px; color:var(--accent);">${totalCr}</div>
-                    </div>
-                </div>
-                <table class="dash-table">
-                    <thead><tr><th>วิชา</th><th>คะแนนสะสม (pts)</th><th>เกรด</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
+                <table class="dash-table"><thead><tr><th>วิชา</th><th>สะสม (pts)</th><th>เกรด</th></tr></thead><tbody>${rows}</tbody></table>
             `;
         };
-
-        // ══════════════════════════════════════════════════════════
-        // AI VISION IMPORT MODULE
-        // ══════════════════════════════════════════════════════════
-        const AI_API_KEY = "AIzaSyCQCOBGq_yQSOivgvSp3j2YrkEOHyIn668";
-
-        window.processAIImage = async function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            document.getElementById('ai-loading').style.display = 'flex';
-
-            try {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async () => {
-                    const base64Clean = reader.result.split(',')[1];
-                    const promptText = `คุณคือผู้ช่วยจัดการการเรียน วิเคราะห์ภาพเอกสาร/ตารางเรียนนี้เพื่อหา "หมวดหมู่คะแนน" และ "คะแนนที่ได้"
-                    ส่งกลับเป็น JSON เท่านั้น รูปแบบ:
-                    { "categories": [ { "name": "ชื่อหมวด", "weight": 20, "items": [ { "name": "งาน1", "score": 8, "maxScore": 10 } ] } ] }`;
-
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${AI_API_KEY}`;
-                    
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ role: "user", parts: [ { text: promptText }, { inlineData: { mimeType: file.type, data: base64Clean } } ] }],
-                            generationConfig: { responseMimeType: "application/json" }
-                        })
-                    });
-                    
-                    if (!response.ok) throw new Error("API Error");
-                    const result = await response.json();
-                    const textContent = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    if(textContent) {
-                        const aiData = JSON.parse(textContent);
-                        applyAIData(aiData);
-                    } else {
-                        window.showToast("อ่านรูปไม่สำเร็จ กรุณาลองใหม่", true);
-                    }
-                    document.getElementById('ai-loading').style.display = 'none';
-                    event.target.value = '';
-                };
-            } catch (e) {
-                console.error(e);
-                window.showToast("เกิดข้อผิดพลาดของระบบ AI", true);
-                document.getElementById('ai-loading').style.display = 'none';
-                event.target.value = '';
-            }
-        };
-
-        function applyAIData(aiData) {
-            const s = getSubject(); if (!s) return;
-            if (!aiData.categories || aiData.categories.length === 0) { window.showToast('ไม่พบข้อมูลคะแนนในภาพ', true); return; }
-
-            aiData.categories.forEach(cat => {
-                const newCat = { id: window.nextId(), name: cat.name || 'AI Category', weight: cat.weight || 0, items: [] };
-                (cat.items||[]).forEach(item => {
-                    newCat.items.push({ id: window.nextId(), name: item.name||'Item', score: item.score!==null?item.score:'', maxScore: item.maxScore||100, locked: item.score!==null });
-                });
-                s.categories.push(newCat);
-            });
-            window.save(); window.renderSubjectView();
-            window.showToast("✨ AI นำเข้าข้อมูลสำเร็จ!");
-        }
-
-        // Initialize App UI
-        window.renderAll();
-        if(getSubjects().length > 0) window.showDashboard();
     </script>
 </body>
 </html>
