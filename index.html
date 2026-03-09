@@ -1009,9 +1009,10 @@ document.getElementById('btn-logout')?.addEventListener('click', doLogout);
 document.getElementById('btn-logout-pin')?.addEventListener('click', doLogout);
 
 const renderProfile = (user) => {
-  const pic = appData.userProfilePic || user?.photoURL || "https://lh3.googleusercontent.com/d/12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC";
+  const pic = appData.userProfilePic || user?.photoURL || "https://lh3.googleusercontent.com/d/1JScnXLmRdBmx7TKJUDdVqTPx_iHXo6b-";
   const name = user?.displayName || 'ผู้ใช้งาน';
   const email = (user && !user.isAnonymous) ? user.email : 'Local Mode';
+
   
   // Update Top Bar
   document.getElementById('profile-img').src = pic;
