@@ -2737,13 +2737,29 @@ document.getElementById('btn-export-pdf')?.addEventListener('click', async () =>
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
+      
+      // รอให้ QR Code สร้างเสร็จ
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // แปลง QR Code canvas เป็น image เพื่อให้ PDF แสดงผลได้
+      const qrCanvas = qrContainer.querySelector('canvas');
+      if (qrCanvas) {
+        const qrImage = document.createElement('img');
+        qrImage.src = qrCanvas.toDataURL('image/png');
+        qrImage.style.width = '80px';
+        qrImage.style.height = '80px';
+        qrImage.style.display = 'block';
+        qrImage.style.margin = '0 auto';
+        qrContainer.innerHTML = '';
+        qrContainer.appendChild(qrImage);
+      }
     } catch (e) {
       console.warn('QR Code generation failed:', e);
     }
   }
   
-  // รอให้ DOM render เสร็จ (รวม QR Code)
-  await new Promise(resolve => setTimeout(resolve, 800));
+  // รอให้ DOM render เสร็จ
+  await new Promise(resolve => setTimeout(resolve, 300));
   
   try {
     const element = pdfWrap.querySelector('div');
