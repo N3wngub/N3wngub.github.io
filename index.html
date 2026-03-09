@@ -258,7 +258,26 @@ button { cursor: pointer; user-select: none; }
   .term-btn span:first-child { max-width: 100px; }
   .profile-avatar { width: 40px; height: 40px; }
   #sync-text { display: none; }
-  .sync-badge { padding: 10px; border-radius: 50%; border: none; background: rgba(0,0,0,0.03); min-width: 40px; min-height: 40px; }
+  .sync-badge { 
+    padding: 0; 
+    border-radius: 50%; 
+    border: none; 
+    background: transparent; 
+    min-width: 40px; 
+    min-height: 40px;
+    justify-content: center;
+  }
+  .sync-dot { 
+    width: 10px; 
+    height: 10px; 
+  }
+  .sync-badge.syncing { background: var(--accent-light); }
+  .sync-badge.synced { background: var(--green-light); }
+  .sync-badge.error { background: var(--red-light); }
+  [data-theme="dark"] .sync-badge { background: rgba(255,255,255,0.05); }
+  [data-theme="dark"] .sync-badge.syncing { background: var(--accent-light); }
+  [data-theme="dark"] .sync-badge.synced { background: var(--green-light); }
+  [data-theme="dark"] .sync-badge.error { background: var(--red-light); }
   .top-bar-left { gap: 10px; }
 }
 
@@ -296,7 +315,7 @@ button { cursor: pointer; user-select: none; }
 }
 
 /* ─── Apple Dock ─── */
-.dock-container { position: fixed; bottom: 24px; left: 0; right: 0; display: flex; justify-content: center; z-index: 900; pointer-events: none; }
+.dock-container { position: fixed; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; z-index: 900; pointer-events: none; }
 .apple-dock { pointer-events: auto; display: flex; gap: 12px; align-items: flex-end; background: var(--glass-bg); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); border-radius: 36px; padding: 10px 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5); transition: all var(--spring); }
 [data-theme="dark"] .apple-dock { box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); }
 
@@ -319,7 +338,7 @@ button { cursor: pointer; user-select: none; }
 .dock-divider { width: 1px; height: 36px; background: var(--glass-border); margin: 0 4px; align-self: center; }
 
 @media (max-width: 768px) {
-  .dock-container { bottom: 12px; padding: 0 12px; }
+  .dock-container { bottom: 24px; padding: 0 12px; }
   .apple-dock { 
     padding: 10px 12px; 
     gap: 6px; 
@@ -800,7 +819,10 @@ input:checked + .slider:before { transform: translateX(18px); }
 .modal-box { 
   max-width: 420px; 
   width: 100%; 
-  transform: scale(0.95); 
+  transform: translate(-50%, -50%) scale(0.95);
+  position: fixed;
+  top: 50%;
+  left: 50%;
   transition: transform var(--spring); 
   background: var(--glass-bg); 
   display: flex; 
@@ -812,7 +834,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow-hover);
 }
-.modal-overlay.open .modal-box { transform: scale(1); }
+.modal-overlay.open .modal-box { transform: translate(-50%, -50%) scale(1); }
 .modal-title { font-size: 22px; font-weight: 800; }
 .modal-input { 
   width: 100%; 
@@ -830,12 +852,14 @@ input:checked + .slider:before { transform: translateX(18px); }
 .modal-input:focus { border-color: var(--accent); background: var(--glass-bg); }
 
 @media (max-width: 768px) {
-  .modal-overlay { padding: 16px; align-items: flex-end; }
+  .modal-overlay { padding: 16px; align-items: center; justify-content: center; }
   .modal-box { 
     max-width: 100%; 
-    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-radius: var(--r-lg);
     max-height: 85vh;
+    transform: translate(-50%, -50%) scale(0.95);
   }
+  .modal-overlay.open .modal-box { transform: translate(-50%, -50%) scale(1); }
   .modal-title { font-size: 20px; }
   .modal-input { font-size: 16px; padding: 16px; min-height: 52px; }
 }
