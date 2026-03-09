@@ -12,9 +12,9 @@
 <meta name="application-name" content="Unigrade">
 <meta name="theme-color" content="#ffffff">
 
-<!-- Generated Unigrade Logo Data URI for Favicon & Apple Touch Icon -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='url(%23grad)'/%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23134e8e' /%3E%3Cstop offset='100%25' stop-color='%232a76c8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,55 Q50,90 70,55' stroke='white' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3Cpolygon points='25,40 50,22 75,40 50,58' fill='white'/%3E%3Crect x='71' y='40' width='4' height='18' fill='%23D4AF37'/%3E%3Ccircle cx='73' cy='60' r='5' fill='%23D4AF37'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='url(%23grad)'/%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23134e8e' /%3E%3Cstop offset='100%25' stop-color='%232a76c8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,55 Q50,90 70,55' stroke='white' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3Cpolygon points='25,40 50,22 75,40 50,58' fill='white'/%3E%3Crect x='71' y='40' width='4' height='18' fill='%23D4AF37'/%3E%3Ccircle cx='73' cy='60' r='5' fill='%23D4AF37'/%3E%3C/svg%3E">
+<!-- Google Drive Logo for Favicon & Apple Touch Icon -->
+<link rel="icon" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
 
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- External Libraries -->
@@ -40,7 +40,7 @@
   --ink2: #555555;
   --ink3: #888888;
   
-  --accent: #134e8e; /* Unigrade Blue */
+  --accent: #134e8e; 
   --accent-light: rgba(19, 78, 142, 0.1);
   --green: #34c759;
   --green-light: rgba(52, 199, 89, 0.1);
@@ -94,6 +94,14 @@ body {
 }
 input, button, textarea, select { font-family: var(--body); }
 
+/* ─── Welcome Screen ─── */
+#welcome-screen {
+  position: fixed; inset: 0; background: #ffffff; z-index: 9999;
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity 0.8s ease;
+}
+#welcome-text { font-size: 40px; font-weight: 800; color: #111111; letter-spacing: -1px; margin: 0; text-align: center; }
+
 /* ─── Education Theme Floating Icons ─── */
 .edu-icon { position: fixed; font-size: 100px; opacity: 0.04; pointer-events: none; z-index: -1; filter: grayscale(100%); animation: float-icon 20s infinite alternate ease-in-out; }
 [data-theme="dark"] .edu-icon { opacity: 0.08; filter: invert(1); }
@@ -142,6 +150,7 @@ input, button, textarea, select { font-family: var(--body); }
 .term-btn { background: rgba(0,0,0,0.03); border: 1px solid var(--glass-border); border-radius: 100px; padding: 8px 20px; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; color: var(--ink); transition: all var(--spring); }
 [data-theme="dark"] .term-btn { background: rgba(255,255,255,0.06); }
 .term-btn:hover { background: rgba(0,0,0,0.06); transform: scale(1.02); }
+
 .term-list { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: var(--r-md); box-shadow: var(--glass-shadow-hover); z-index: 50; width: 200px; max-height: 240px; overflow-y: auto; padding: 8px; }
 .term-list.open { display: block; animation: blurFadeUp 0.2s forwards; transform-origin: top; }
 .term-item { padding: 12px 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; border-radius: var(--r-sm); transition: background 0.2s; }
@@ -157,12 +166,15 @@ input, button, textarea, select { font-family: var(--body); }
 
 @media (max-width: 768px) {
   .top-bar { padding: 8px 12px; border-radius: var(--r-lg); gap: 8px; }
-  .profile-name { max-width: 100px; font-size: 14px; }
-  .profile-email { display: block; max-width: 100px; font-size: 10px; opacity: 0.8; } /* Email is visible on mobile */
-  .term-btn { padding: 6px 12px; font-size: 12px; }
+  .profile-name { max-width: 90px; font-size: 14px; }
+  .profile-email { display: block; max-width: 90px; font-size: 10px; opacity: 0.8; }
+  .term-btn { padding: 6px 12px; font-size: 13px; }
   .profile-avatar { width: 38px; height: 38px; }
   #sync-text { display: none; }
   .sync-badge { padding: 8px; border-radius: 50%; border: none; background: rgba(0,0,0,0.03); }
+  
+  /* Fix Term List overflow on Mobile by fixing it to the center of screen */
+  .term-list { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); width: 85vw; max-width: 300px; }
 }
 
 /* ─── Main Content Area ─── */
@@ -260,7 +272,7 @@ input, button, textarea, select { font-family: var(--body); }
 .cat-stat-val { font-family: var(--mono); font-size: 16px; font-weight: 800; }
 .cat-stat-lbl { font-size: 11px; color: var(--ink3); font-weight: 700; margin-top: 2px; }
 
-/* Flex Item Row (Fix for percent input) */
+/* Flex Item Row */
 .item-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--r-md); margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform 0.2s; }
 .item-row:hover { transform: translateY(-2px); }
 .item-row input { background: transparent; border: none; outline: none; font-size: 14px; font-weight: 600; color: var(--ink); border-bottom: 1px solid transparent; transition: border-color 0.2s; padding: 4px; }
@@ -310,7 +322,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 .modal-box { max-width: 420px; width: 100%; transform: scale(0.95); transition: transform 0.3s; background: var(--glass-bg); display: flex; flex-direction: column; overflow: hidden; padding: 0; }
 .modal-overlay.open .modal-box { transform: scale(1); }
 .modal-title { font-size: 22px; font-weight: 800; }
-.modal-input { width: 100%; padding: 14px 16px; border-radius: var(--r-sm); border: 1px solid var(--glass-border); background: rgba(0,0,0,0.02); color: var(--ink); font-size: 15px; outline: none; margin-bottom: 20px; }
+.modal-input { width: 100%; padding: 14px 16px; border-radius: var(--r-sm); border: 1px solid var(--glass-border); background: rgba(0,0,0,0.02); color: var(--ink); font-size: 15px; outline: none; margin-bottom: 20px; text-align: center; }
 .modal-input:focus { border-color: var(--accent); background: var(--glass-bg); }
 
 .cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
@@ -321,7 +333,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 .toast { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); color: var(--ink); padding: 12px 20px; border-radius: 100px; box-shadow: var(--glass-shadow-hover); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 10px; animation: slideDown 0.4s forwards; pointer-events: auto; }
 @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-#login-view, #lock-screen-view { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-gradient); transition: opacity 0.5s; flex-direction: column; }
+#login-view, #pin-entry-view { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-gradient); transition: opacity 0.5s; flex-direction: column; }
 .login-card { max-width: 400px; width: 100%; text-align: center; padding: 40px 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: var(--r-xl); box-shadow: var(--glass-shadow-hover); border: 1px solid var(--glass-border); }
 
 /* ─── PDF Export Wrapper ─── */
@@ -343,6 +355,11 @@ input:checked + .slider:before { transform: translateX(16px); }
 <div class="edu-icon edu-2">📚</div>
 <div class="edu-icon edu-3">📐</div>
 <div class="edu-icon edu-4">✏️</div>
+
+<!-- Welcome Screen -->
+<div id="welcome-screen">
+    <h1 id="welcome-text">Good Morning</h1>
+</div>
 
 <!-- Toast Container -->
 <div id="toast-container"></div>
@@ -380,13 +397,16 @@ input:checked + .slider:before { transform: translateX(16px); }
         <div class="cc-btn" id="btn-rename-term"><div style="font-size:24px">✏️</div>แก้ไขชื่อเทอม</div>
         <div class="cc-btn" id="btn-delete-term" style="grid-column: span 2; color: var(--red);"><div style="font-size:24px">🗑️</div>ลบเทอมปัจจุบัน</div>
       </div>
-      
-      <div class="label">ความปลอดภัย (Security)</div>
+
+      <div class="label">มหาวิทยาลัย</div>
       <div class="cc-grid">
-        <div class="cc-btn" style="grid-column: span 2; flex-direction: row; justify-content: space-between; padding: 16px 20px;">
-            <div style="display: flex; align-items: center; gap: 12px;"><span style="font-size: 24px;">🪪</span>ล็อกแอปด้วย Face ID</div>
-            <div class="switch"><input type="checkbox" id="bio-toggle"><span class="slider"></span></div>
-        </div>
+           <div class="cc-btn" onclick="window.open('https://reg.buu.ac.th/registrar/grade.asp', '_blank')" style="grid-column: span 2; flex-direction: row; justify-content: center;"><div style="font-size:24px; margin-right: 8px;">🎓</div>ดูเกรดเว็บมหาวิทยาลัย (BUU)</div>
+      </div>
+      
+      <div class="label">ระบบ & ความปลอดภัย</div>
+      <div class="cc-grid">
+        <div class="cc-btn" id="btn-theme-toggle-modal"><div style="font-size:24px">🌓</div>เปลี่ยนธีม (Theme)</div>
+        <div class="cc-btn" id="btn-pin-toggle"><div style="font-size:24px" id="pin-icon">🔒</div><span id="pin-text">ตั้งรหัส PIN</span></div>
       </div>
 
       <div class="label">ข้อมูล & การซิงก์</div>
@@ -457,14 +477,15 @@ input:checked + .slider:before { transform: translateX(16px); }
   </div>
 </div>
 
-<!-- ════ LOCK SCREEN VIEW ════ -->
-<div id="lock-screen-view" style="display: none;">
+<!-- ════ PIN ENTRY VIEW ════ -->
+<div id="pin-entry-view" style="display: none;">
     <div class="login-card ani">
-        <div style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));">🔒</div>
+        <div style="font-size: 64px; margin-bottom: 16px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));">🔒</div>
         <h1 style="font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px;">แอปพลิเคชันถูกล็อก</h1>
-        <p style="color: var(--ink2); margin-bottom: 32px; font-size: 15px; font-weight: 600;">กรุณายืนยันตัวตนเพื่อเข้าใช้งาน</p>
-        <button class="btn btn-accent" id="btn-unlock-bio" style="width: 100%; padding: 16px; font-size: 16px; margin-bottom: 16px;">สแกน Face ID / Touch ID</button>
-        <button class="btn btn-outline" id="btn-logout-lock" style="width: 100%; padding: 14px; font-size: 14px; color: var(--red); border-color: transparent;">ออกจากระบบ</button>
+        <p style="color: var(--ink2); margin-bottom: 24px; font-size: 15px; font-weight: 600;">กรุณากรอกรหัส PIN เพื่อเข้าใช้งาน</p>
+        <input type="password" id="pin-input" class="w-input" style="font-size: 32px; letter-spacing: 12px; text-align: center; margin-bottom: 24px; font-family: var(--mono);" inputmode="numeric" maxlength="6" placeholder="••••">
+        <button class="btn btn-accent" id="btn-submit-pin" style="width: 100%; padding: 16px; font-size: 16px;">ยืนยัน</button>
+        <button class="btn btn-outline" id="btn-logout-pin" style="width: 100%; padding: 14px; font-size: 14px; color: var(--red); border-color: transparent; margin-top: 8px; box-shadow: none;">สลับบัญชีผู้ใช้</button>
     </div>
 </div>
 
@@ -473,7 +494,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   <div class="login-card ani">
     <div style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));">🎓</div>
     <h1 style="font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px;">Unigrade</h1>
-    <p style="color: var(--ink2); margin-bottom: 32px; font-size: 15px; font-weight: 600;">Score Tracker · Smart GPA</p>
+    <p style="color: var(--ink2); margin-bottom: 32px; font-size: 15px; font-weight: 600;">Score Tracker · Smart GPA · Sync</p>
     
     <!-- Loading Indicator -->
     <div id="login-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100px;">
@@ -521,7 +542,6 @@ input:checked + .slider:before { transform: translateX(16px); }
           <div class="sync-dot"></div>
           <span id="sync-text">Local</span>
         </div>
-        <button class="btn-icon" id="btn-theme-toggle" style="width: 36px; height: 36px; box-shadow: none;">🌓</button>
       </div>
     </header>
   </div>
@@ -722,7 +742,7 @@ const GRADES = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
 const GRADE_COLORS = {'A':'var(--green)','B+':'#34c759','B':'var(--accent)','C+':'#5ac8fa','C':'var(--orange)','D+':'#ffcc00','D':'#ff3b30','F':'var(--red)','W':'var(--ink3)'};
 
 let auth, db, userId;
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'score-tracker-dock';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'unigrade-app-dock';
 
 try {
   const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -741,6 +761,7 @@ let currentTermId = 1, currentSubjId = null, currentView = 'dashboard';
 let syncTimer = null, chartInstances = {}, calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
 let selectedFinalTarget = null, unsubSnapshot = null;
 window.prevView = 'dashboard'; 
+let hasAppInitialized = false;
 
 // UI States
 window.customCreditMode = false;
@@ -820,84 +841,12 @@ const loadData = async () => {
         currentTermId = appData.currentTermId || appData.terms[0]?.id || 1;
         setSyncStatus('synced', 'Synced'); 
       } else { saveData(); }
-      checkBiometricLock();
-    }, (e) => { setSyncStatus('error', 'Offline'); checkBiometricLock(); });
-  } else { checkBiometricLock(); }
+      startAppFlow();
+    }, (e) => { setSyncStatus('error', 'Offline'); startAppFlow(); });
+  } else { startAppFlow(); }
 };
 
-// ─── BIOMETRIC WEB-AUTHN (Face ID / Touch ID) ───
-const checkBiometricLock = async () => {
-    if (localStorage.getItem('bio_enabled') === 'true') {
-        document.getElementById('lock-screen-view').style.display = 'flex';
-        document.getElementById('main-app').style.display = 'none';
-        document.getElementById('login-view').style.display = 'none';
-        // Auto prompt immediately on load
-        unlockAppWithBiometrics();
-    } else {
-        document.getElementById('lock-screen-view').style.display = 'none';
-        renderApp();
-    }
-};
-
-const unlockAppWithBiometrics = async () => {
-    try {
-        const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
-        const rawIdStr = localStorage.getItem('bio_credential_id');
-        let allowCredentials = [];
-        if (rawIdStr) {
-            const rawIdBytes = new Uint8Array(rawIdStr.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-            allowCredentials.push({ type: 'public-key', id: rawIdBytes });
-        }
-        const assertion = await navigator.credentials.get({
-            publicKey: { challenge: challenge, allowCredentials: allowCredentials.length > 0 ? allowCredentials : undefined, userVerification: "required" }
-        });
-        if (assertion) {
-            document.getElementById('lock-screen-view').style.display = 'none';
-            renderApp();
-        }
-    } catch (err) {
-        console.error(err);
-        toast('สแกนไม่สำเร็จ หรือถูกยกเลิก', true);
-    }
-};
-
-document.getElementById('btn-unlock-bio')?.addEventListener('click', unlockAppWithBiometrics);
-
-document.getElementById('bio-toggle')?.addEventListener('change', async (e) => {
-    const enabled = e.target.checked;
-    if (enabled) {
-        if (!window.PublicKeyCredential) { toast('เบราว์เซอร์นี้ไม่รองรับการสแกนชีวมาตร', true); e.target.checked = false; return; }
-        try {
-            const challenge = new Uint8Array(32); crypto.getRandomValues(challenge);
-            const userID = new Uint8Array(16); crypto.getRandomValues(userID);
-            const credential = await navigator.credentials.create({
-                publicKey: {
-                    challenge: challenge,
-                    rp: { name: "Unigrade Score Tracker", id: window.location.hostname || undefined },
-                    user: { id: userID, name: "student", displayName: "Student" },
-                    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-                    timeout: 60000
-                }
-            });
-            if (credential) {
-                localStorage.setItem('bio_enabled', 'true');
-                const rawId = Array.from(new Uint8Array(credential.rawId)).map(b => b.toString(16).padStart(2, '0')).join('');
-                localStorage.setItem('bio_credential_id', rawId);
-                toast('เปิดใช้งาน Face ID / Touch ID สำเร็จแล้ว 🪪');
-            }
-        } catch (err) {
-            console.error(err); toast('การตั้งค่าล้มเหลว (อาจต้องใช้ HTTPS)', true); e.target.checked = false;
-        }
-    } else {
-        localStorage.setItem('bio_enabled', 'false');
-        localStorage.removeItem('bio_credential_id');
-        toast('ปิดระบบสแกน Face ID / Touch ID แล้ว');
-    }
-});
-
-
-// ─── AUTHENTICATION ───
+// ─── AUTHENTICATION & APP FLOW (PIN / WELCOME SCREEN) ───
 const initAuth = async () => {
   if (!auth) { loadData(); return; }
   try {
@@ -914,16 +863,15 @@ if (auth) {
     if (user) {
       userId = user.uid;
       if (user.isAnonymous && !isGuest) { showLoginButtons(); return; }
-      hideLoginView(); renderProfile(user); loadData();
+      document.getElementById('login-view').style.opacity = '0';
+      setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 500);
+      renderProfile(user); loadData();
     } else {
       userId = null; if (!isGuest) showLoginButtons();
     }
   });
   initAuth();
-} else { loadData(); hideLoginView(); }
-
-const showLoginView = () => { document.getElementById('login-view').style.display = 'flex'; setTimeout(() => document.getElementById('login-view').style.opacity = '1', 10); document.getElementById('main-app').style.display = 'none'; };
-const hideLoginView = () => { document.getElementById('login-view').style.opacity = '0'; setTimeout(() => { document.getElementById('login-view').style.display = 'none'; document.getElementById('main-app').style.display = 'flex'; }, 500); };
+} else { loadData(); document.getElementById('login-view').style.display = 'none'; }
 
 document.getElementById('btn-login-google')?.addEventListener('click', async () => {
   if (!auth) { toast('Firebase ไม่พร้อมใช้งาน', true); return; }
@@ -931,17 +879,73 @@ document.getElementById('btn-login-google')?.addEventListener('click', async () 
 });
 document.getElementById('btn-login-guest')?.addEventListener('click', () => {
   localStorage.setItem('guest_mode', 'true'); if(!userId && auth) initAuth();
-  hideLoginView(); renderProfile(null); loadData();
+  document.getElementById('login-view').style.display = 'none'; renderProfile(null); loadData();
 });
+
 const doLogout = async () => {
   localStorage.removeItem('guest_mode'); closeModal('settings-modal');
+  hasAppInitialized = false; // reset flag
   if (unsubSnapshot) unsubSnapshot();
   if (auth) { await signOut(auth); initAuth(); }
-  document.getElementById('lock-screen-view').style.display = 'none';
-  showLoginView(); document.getElementById('login-loading').style.display = 'flex'; document.getElementById('login-buttons').style.display = 'none';
+  document.getElementById('pin-entry-view').style.display = 'none';
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+  document.getElementById('login-view').style.opacity = '1';
+  document.getElementById('login-loading').style.display = 'flex'; 
+  document.getElementById('login-buttons').style.display = 'none';
 };
 document.getElementById('btn-logout')?.addEventListener('click', doLogout);
-document.getElementById('btn-logout-lock')?.addEventListener('click', doLogout);
+document.getElementById('btn-logout-pin')?.addEventListener('click', doLogout);
+
+// App Flow logic: DB Load -> PIN Check -> Welcome Screen -> Main App
+const startAppFlow = () => {
+  if(hasAppInitialized) {
+      renderApp(); return;
+  }
+
+  const proceedToWelcome = () => {
+      document.getElementById('pin-entry-view').style.display = 'none';
+      
+      const hr = new Date().getHours();
+      let msg = 'Good Night';
+      if(hr >= 5 && hr < 12) msg = 'Good Morning';
+      else if(hr === 12) msg = 'Good Noon';
+      else if(hr > 12 && hr < 18) msg = 'Good Afternoon';
+      else if(hr >= 18 && hr < 22) msg = 'Good Evening';
+      
+      document.getElementById('welcome-text').textContent = msg;
+      const ws = document.getElementById('welcome-screen');
+      ws.style.display = 'flex';
+      
+      setTimeout(() => {
+          ws.style.opacity = '0';
+          setTimeout(() => {
+              ws.style.display = 'none';
+              hasAppInitialized = true;
+              document.getElementById('main-app').style.display = 'flex';
+              renderApp();
+          }, 800);
+      }, 1500);
+  };
+
+  const storedPin = localStorage.getItem('app_pin');
+  if (storedPin) {
+      document.getElementById('pin-entry-view').style.display = 'flex';
+      const pinInput = document.getElementById('pin-input');
+      pinInput.value = ''; pinInput.focus();
+      
+      document.getElementById('btn-submit-pin').onclick = () => {
+          if(pinInput.value === storedPin) {
+              proceedToWelcome();
+          } else {
+              toast('รหัส PIN ไม่ถูกต้อง', true);
+              pinInput.value = '';
+          }
+      };
+  } else {
+      proceedToWelcome();
+  }
+};
 
 const renderProfile = (user) => {
   const defaultSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='url(%23grad)'/%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23134e8e' /%3E%3Cstop offset='100%25' stop-color='%232a76c8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,55 Q50,90 70,55' stroke='white' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3Cpolygon points='25,40 50,22 75,40 50,58' fill='white'/%3E%3Crect x='71' y='40' width='4' height='18' fill='%23D4AF37'/%3E%3Ccircle cx='73' cy='60' r='5' fill='%23D4AF37'/%3E%3C/svg%3E";
@@ -959,8 +963,35 @@ const renderProfile = (user) => {
   document.getElementById('modal-profile-name').textContent = name;
   document.getElementById('modal-profile-email').textContent = email;
   
-  document.getElementById('bio-toggle').checked = localStorage.getItem('bio_enabled') === 'true';
+  updatePinUI();
 };
+
+const updatePinUI = () => {
+    const hasPin = localStorage.getItem('app_pin');
+    document.getElementById('pin-icon').textContent = hasPin ? '🔓' : '🔒';
+    document.getElementById('pin-text').textContent = hasPin ? 'ยกเลิกรหัส PIN' : 'ตั้งรหัส PIN';
+};
+
+document.getElementById('btn-pin-toggle')?.addEventListener('click', () => {
+    const hasPin = localStorage.getItem('app_pin');
+    if(hasPin) {
+        showConfirm('ยกเลิก PIN', 'คุณต้องการยกเลิกรหัส PIN ใช่หรือไม่?', '🔓', () => {
+            localStorage.removeItem('app_pin');
+            updatePinUI();
+            toast('ยกเลิกรหัส PIN แล้ว');
+        });
+    } else {
+        showPrompt('ตั้งรหัส PIN', 'กรอกรหัส PIN (ตัวเลข 4-6 หลัก)', '🔒', '', (val) => {
+            if(val && val.length >= 4 && val.length <= 6 && /^\d+$/.test(val)) {
+                localStorage.setItem('app_pin', val);
+                updatePinUI();
+                toast('ตั้งรหัส PIN สำเร็จ');
+            } else {
+                toast('กรุณากรอกตัวเลข 4-6 หลักเท่านั้น', true);
+            }
+        });
+    }
+});
 
 // ─── CALCULATIONS ───
 const calcSubject = s => {
@@ -1069,12 +1100,14 @@ window.switchView = switchView;
 
 document.querySelectorAll('.dock-item[data-view]').forEach(btn => { btn.addEventListener('click', () => switchView(btn.dataset.view)); });
 
-document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+document.getElementById('btn-theme-toggle-modal').addEventListener('click', () => {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark'); renderApp(); 
 });
 
 const renderApp = () => {
+  if(!hasAppInitialized) return; // Prevent renders before welcome screen
+  
   const term = getTerm();
   document.getElementById('term-label').textContent = term?.name || 'เลือกเทอม';
   document.getElementById('term-list').innerHTML = appData.terms.map(t => `<div class="term-item" data-id="${t.id}">${t.name}</div>`).join('');
@@ -1404,7 +1437,7 @@ const renderPlanner = () => {
   const days = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   document.getElementById('cal-header-row').innerHTML = days.map(d => `<div class="cal-head">${d}</div>`).join('');
   const allDL = getAllDeadlines(), today = new Date(); today.setHours(0,0,0,0);
-  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรดากฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   document.getElementById('cal-month-label').textContent = `${monthNames[calMonth]} ${calYear + 543}`;
   const first = new Date(calYear, calMonth, 1), startDay = first.getDay(), daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const dlMap = {}; allDL.forEach(d => { (dlMap[d.dl] = dlMap[d.dl] || []).push(d); });
@@ -1468,11 +1501,6 @@ const renderAnalytics = () => {
   document.getElementById('analytics-term-table').innerHTML = `<div class="table-container"><table class="bento-table"><thead><tr><th>เทอม</th><th>GPA</th><th>Cr</th></tr></thead><tbody>${appData.terms.map(t => { const r = calcTermGPA(t); return `<tr><td>${t.name}</td><td style="font-family:var(--mono); font-weight:800; color:${r.gpa>=3?'var(--green)':'var(--ink)'}">${r.gpa!==null?r.gpa.toFixed(2):'-'}</td><td style="font-family:var(--mono);">${r.credits}</td></tr>`; }).join('')}</tbody></table></div>`;
 };
 
-// ─── CONTROL CENTER ACTIONS ───
-document.getElementById('btn-add-term')?.addEventListener('click', () => { closeModal('settings-modal'); showPrompt('เพิ่มเทอมใหม่', 'กรุณาตั้งชื่อเทอมใหม่', '➕', '', (val) => { if (val && val.trim()) { const id = generateId(); appData.terms.push({ id, name: val.trim(), subjects: [] }); currentTermId = id; saveData(); renderApp(); toast('เพิ่มเทอมใหม่เรียบร้อย'); } }); });
-document.getElementById('btn-rename-term')?.addEventListener('click', () => { closeModal('settings-modal'); const t = getTerm(); showPrompt('แก้ไขชื่อเทอม', 'เปลี่ยนชื่อสำหรับเทอมปัจจุบัน', '✏️', t.name, (val) => { if (val && val.trim()) { t.name = val.trim(); saveData(); renderApp(); toast('เปลี่ยนชื่อเรียบร้อย'); } }); });
-document.getElementById('btn-delete-term')?.addEventListener('click', () => { closeModal('settings-modal'); if (appData.terms.length <= 1) { toast('ไม่สามารถลบเทอมสุดท้ายได้', true); return; } showConfirm('ลบเทอม', `ลบเทอม "${getTerm().name}" และรายวิชาทั้งหมดข้างในใช่หรือไม่?`, '🗑️', () => { appData.terms = appData.terms.filter(t => t.id !== currentTermId); currentTermId = appData.terms[0].id; currentSubjId = null; saveData(); switchView('dashboard'); toast('ลบเทอมเรียบร้อย'); }); });
-
 // ─── LOCAL SAVE / RESTORE ───
 document.getElementById('btn-backup')?.addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(appData)], { type: 'application/json' });
@@ -1492,20 +1520,6 @@ document.getElementById('backup-upload')?.addEventListener('change', e => {
     } catch(err) { toast('ไฟล์ข้อมูลไม่ถูกต้อง', true); }
   };
   r.readAsText(f); e.target.value = '';
-});
-
-// ─── CALENDAR SYNC (.ics Export) ───
-document.getElementById('btn-sync-cal')?.addEventListener('click', () => {
-  closeModal('settings-modal'); const deadlines = getAllDeadlines();
-  if (deadlines.length === 0) { toast('ไม่มีกำหนดส่งสำหรับซิงก์', true); return; }
-  let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Unigrade//TH\nCALSCALE:GREGORIAN\n";
-  deadlines.forEach(d => {
-    const dStr = new Date(d.dl).toISOString().replace(/[-:]/g, '').split('T')[0];
-    ics += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${dStr}\nDTEND;VALUE=DATE:${dStr}\nSUMMARY:${d.item} (${d.subj})\nDESCRIPTION:หมวดหมู่: ${d.cat}\\nวิชา: ${d.subj}\nUID:${generateId()}@unigrade\nEND:VEVENT\n`;
-  });
-  ics += "END:VCALENDAR";
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'Unigrade_Deadlines.ics'; a.click(); URL.revokeObjectURL(url); toast('ดาวน์โหลดปฏิทินสำเร็จ 📅');
 });
 
 // ─── PDF EXPORT (html2pdf) ───
@@ -1569,24 +1583,6 @@ const checkShareLink = () => {
   } catch(e) {}
 }; checkShareLink();
 
-// ─── CSV ───
-document.getElementById('csv-upload')?.addEventListener('change', e => {
-  const f = e.target.files[0]; if (!f) return; const r = new FileReader();
-  r.onload = ev => {
-    const lines = ev.target.result.split('\n').filter(l => l.trim()), validGrades = new Set([...GRADES, 'W']);
-    let imp = 0, errs = []; const t = getTerm();
-    lines.forEach((l, idx) => {
-      if (idx === 0 && l.toLowerCase().includes('วิชา')) return;
-      const p = l.split(',').map(x => x.trim().replace(/^"|"$/g, '')); if (p.length < 2) return;
-      const n = p[0], c = parseFloat(p[1]) || 3, g = (p[2] || '').toUpperCase().replace(/\s/g, '');
-      if (!n) return; if (g && !validGrades.has(g)) { errs.push(`แถว ${idx+1}: เกรด "${g}" ไม่รองรับ`); return; }
-      t.subjects.push({ id: generateId(), name: n, credits: c, categories: [{ id: generateId(), type: 'assignment', name: 'คะแนนเก็บ', items: [] }, { id: generateId(), type: 'midterm', name: 'สอบกลางภาค', items: [] }, { id: generateId(), type: 'final', name: 'สอบปลายภาค', items: [] }], note: '', quickMode: !!g, quickGrade: g || null }); imp++;
-    });
-    saveData(); renderApp();
-    document.getElementById('csv-preview').innerHTML = `<div style="color:var(--green)">✅ นำเข้าสำเร็จ ${imp} วิชา</div>${errs.map(e=>`<div style="color:var(--red)">${e}</div>`).join('')}`;
-    toast(`นำเข้า ${imp} วิชาเรียบร้อย`); setTimeout(() => closeModal('csv-modal'), 2000); e.target.value = '';
-  }; r.readAsText(f, 'UTF-8');
-});
 </script>
 </body>
 </html>
