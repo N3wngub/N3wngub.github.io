@@ -2729,27 +2729,32 @@ document.getElementById('btn-export-pdf')?.addEventListener('click', async () =>
   const qrContainer = pdfWrap.querySelector('#qrcode-container');
   if (qrContainer && typeof QRCode !== 'undefined') {
     try {
+      // สร้าง QR Code ขนาดใหญ่ขึ้นเพื่อความชัดเจน
       new QRCode(qrContainer, {
         text: shareUrl,
-        width: 80,
-        height: 80,
+        width: 200,
+        height: 200,
         colorDark: "#000000",
         colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
+        correctLevel: QRCode.CorrectLevel.H  // ใช้ระดับ High เพื่อความแม่นยำสูงสุด
       });
       
       // รอให้ QR Code สร้างเสร็จ
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 600));
       
-      // แปลง QR Code canvas เป็น image เพื่อให้ PDF แสดงผลได้
+      // แปลง QR Code canvas เป็น image ความละเอียดสูง
       const qrCanvas = qrContainer.querySelector('canvas');
       if (qrCanvas) {
         const qrImage = document.createElement('img');
-        qrImage.src = qrCanvas.toDataURL('image/png');
-        qrImage.style.width = '80px';
-        qrImage.style.height = '80px';
+        // ใช้ image/png เพื่อความคมชัด ไม่บีบอัด
+        qrImage.src = qrCanvas.toDataURL('image/png', 1.0);
+        qrImage.style.width = '100px';
+        qrImage.style.height = '100px';
         qrImage.style.display = 'block';
         qrImage.style.margin = '0 auto';
+        qrImage.style.imageRendering = 'pixelated';  // ป้องกันการเบลอ
+        qrImage.style.imageRendering = '-moz-crisp-edges';
+        qrImage.style.imageRendering = 'crisp-edges';
         qrContainer.innerHTML = '';
         qrContainer.appendChild(qrImage);
       }
@@ -2759,7 +2764,7 @@ document.getElementById('btn-export-pdf')?.addEventListener('click', async () =>
   }
   
   // รอให้ DOM render เสร็จ
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise(resolve => setTimeout(resolve, 400));
   
   try {
     const element = pdfWrap.querySelector('div');
