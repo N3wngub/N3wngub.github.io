@@ -13,15 +13,15 @@
 <meta name="theme-color" content="#ffffff">
 
 <!-- App Icon from Google Drive -->
-<link rel="icon" type="image/png" sizes="192x192" href="https://lh3.googleusercontent.com/d/15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
-<link rel="shortcut icon" href="https://lh3.googleusercontent.com/d/15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1" type="image/png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://lh3.googleusercontent.com/d/12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC">
+<link rel="shortcut icon" href="https://lh3.googleusercontent.com/d/12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC" type="image/png">
 
 <!-- iOS Apple Touch Icon (Fixed 180x180 size) -->
-<link rel="apple-touch-icon" sizes="180x180" href="https://lh3.googleusercontent.com/d/15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
-<link rel="apple-touch-icon-precomposed" sizes="180x180" href="https://lh3.googleusercontent.com/d/15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<link rel="apple-touch-icon" sizes="180x180" href="https://lh3.googleusercontent.com/d/12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="https://lh3.googleusercontent.com/d/12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC">
 
 <!-- เพิ่ม Web App Manifest สำหรับ PWA เพื่อบังคับสัดส่วน Icon เมื่อ Add to Home Screen -->
-<link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Unigrade%22%2C%22short_name%22%3A%22Unigrade%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23ffffff%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flh3.googleusercontent.com%2Fd%2F15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1%22%2C%22sizes%22%3A%22180x180%20192x192%20512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D'>
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Unigrade%22%2C%22short_name%22%3A%22Unigrade%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23ffffff%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Flh3.googleusercontent.com%2Fd%2F12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC%22%2C%22sizes%22%3A%22180x180%20192x192%20512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D'>
 
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- External Libraries -->
@@ -507,9 +507,14 @@ input:checked + .slider:before { transform: translateX(16px); }
 <!-- ════ LOGIN VIEW ════ -->
 <div id="login-view">
   <div class="login-card ani">
-    <!-- App Icon from Google Drive on Login Screen -->
+    <!-- Graduation Cap Icon on Login Screen -->
     <div style="margin-bottom: 24px; display: flex; justify-content: center; align-items: center;">
-        <img src="https://lh3.googleusercontent.com/d/15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1" alt="Unigrade Icon" style="width: 140px; height: 140px; object-fit: cover; border-radius: 32px; box-shadow: 0 16px 36px rgba(0,0,0,0.15);" onerror="this.src='https://via.placeholder.com/140x140/134e8e/ffffff?text=U'">
+        <div style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--accent), #2a76c8); border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 24px var(--accent-light);">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+        </div>
     </div>
     <h1 style="font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px;">Unigrade</h1>
     <p style="color: var(--ink2); margin-bottom: 32px; font-size: 15px; font-weight: 600;">Score Tracker · Smart GPA · Sync</p>
@@ -1011,7 +1016,7 @@ document.getElementById('btn-logout')?.addEventListener('click', doLogout);
 document.getElementById('btn-logout-pin')?.addEventListener('click', doLogout);
 
 const renderProfile = (user) => {
-  const pic = appData.userProfilePic || user?.photoURL || "https://lh3.googleusercontent.com/d/15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1";
+  const pic = appData.userProfilePic || user?.photoURL || "https://lh3.googleusercontent.com/d/12qxEyldMpnE0LOwP8DEZzYZy5f9EIDrC";
   const name = user?.displayName || 'ผู้ใช้งาน';
   const email = (user && !user.isAnonymous) ? user.email : 'Local Mode';
   
@@ -1703,3 +1708,14 @@ document.getElementById('csv-upload')?.addEventListener('change', e => {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
