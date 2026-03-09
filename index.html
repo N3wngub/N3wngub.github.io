@@ -252,10 +252,10 @@ button { cursor: pointer; user-select: none; }
 
 @media (max-width: 768px) {
   .top-bar { padding: 8px 12px; border-radius: var(--r-lg); gap: 8px; }
-  .profile-name { max-width: 90px; font-size: 14px; }
-  .profile-email { display: block; max-width: 90px; font-size: 10px; opacity: 0.8; } 
+  .profile-name { max-width: 120px; font-size: 14px; }
+  .profile-email { display: block; max-width: 120px; font-size: 10px; opacity: 0.8; } 
   .term-btn { padding: 8px 14px; font-size: 13px; min-height: 40px; }
-  .term-btn span:first-child { max-width: 100px; }
+  .term-btn span:first-child { max-width: 120px; }
   .profile-avatar { width: 40px; height: 40px; }
   #sync-text { display: none; }
   .sync-badge { 
@@ -279,6 +279,12 @@ button { cursor: pointer; user-select: none; }
   [data-theme="dark"] .sync-badge.synced { background: var(--green-light); }
   [data-theme="dark"] .sync-badge.error { background: var(--red-light); }
   .top-bar-left { gap: 10px; }
+}
+
+@media (min-width: 769px) {
+  .profile-name { max-width: 200px; }
+  .profile-email { max-width: 200px; }
+  .term-btn span:first-child { max-width: 250px; }
 }
 
 /* ─── Main Content Area ─── */
@@ -1016,6 +1022,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- Welcome Screen -->
 <div id="welcome-screen">
     <h1 id="welcome-text">Good Morning</h1>
+    <div id="welcome-username" style="font-size: 28px; font-weight: 600; color: var(--ink2); margin-top: 12px; opacity: 0.8;"></div>
 </div>
 
 <!-- Term Dropdown Overlay (Center Screen) -->
@@ -1252,8 +1259,8 @@ input:checked + .slider:before { transform: translateX(18px); }
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
           <div class="title-md" style="margin:0;"><span style="font-size:28px; margin-right:8px;">📚</span>รายวิชาในเทอมนี้</div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-outline" id="btn-toggle-view-mode" title="สลับโหมดแสดงผล">
-              <span id="view-mode-icon" style="font-size: 18px;">▦</span>
+            <button class="btn btn-outline" id="btn-toggle-privacy" title="ซ่อน/แสดงเกรด">
+              <span id="privacy-icon" style="font-size: 18px;">👁️</span>
             </button>
             <button class="btn btn-outline" id="btn-reorder-subjects" style="display: none;">
               <span style="font-size: 18px;">↕️</span> เรียงลำดับเสร็จสิ้น
@@ -1600,9 +1607,6 @@ const loadData = async () => {
   const local = localStorage.getItem('st_data');
   if (local) { try { appData = JSON.parse(local); currentTermId = appData.currentTermId || appData.terms[0]?.id || 1; } catch(e){} }
   
-  // โหลดการตั้งค่า view mode
-  window.subjectsViewMode = localStorage.getItem('subjectsViewMode') || 'grid';
-  
   // ตรวจสอบโหมด: ถ้าเป็น Guest Mode ห้าม sync เพื่อป้องกันข้อมูลปนกันหรือถูกเขียนทับ
   if (localStorage.getItem('guest_mode') === 'true') {
     setSyncStatus('synced', 'Local Only');
@@ -1630,11 +1634,22 @@ const loadData = async () => {
 
 // ─── AUTHENTICATION & APP FLOW ───
 const initAuth = async () => {
-  if (!auth) { loadData(); return; }
+  if (!auth) { 
+    showLoginButtons();
+    loadData(); 
+    return; 
+  }
   try {
-    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } 
-    else { await signInAnonymously(auth); }
-  } catch (e) { loadData(); }
+    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { 
+      await signInWithCustomToken(auth, __initial_auth_token); 
+    } else { 
+      await signInAnonymously(auth); 
+    }
+  } catch (e) { 
+    console.error('Auth error:', e);
+    showLoginButtons();
+    loadData(); 
+  }
 };
 
 const showLoginButtons = () => { document.getElementById('login-loading').style.display = 'none'; document.getElementById('login-buttons').style.display = 'block'; };
@@ -1659,6 +1674,11 @@ const triggerWelcomeAndStart = () => {
     else if(hr >= 18 && hr < 22) msg = 'Good Evening';
     
     document.getElementById('welcome-text').textContent = msg;
+    
+    // แสดงชื่อผู้ใช้
+    const userName = document.getElementById('profile-name')?.textContent || appData.userName || 'ผู้ใช้งาน';
+    document.getElementById('welcome-username').textContent = userName;
+    
     const ws = document.getElementById('welcome-screen');
     ws.style.display = 'flex';
     
@@ -2118,75 +2138,42 @@ const renderDashboard = () => {
 const renderSubjectsList = () => {
   const subjects = getSubjects();
   const isReorderMode = window.subjectsReorderMode || false;
-  const viewMode = window.subjectsViewMode || 'grid'; // 'grid' or 'list'
+  const isPrivacyMode = window.privacyMode || false;
   
   const grid = document.getElementById('subjects-grid');
+  grid.style.display = 'grid';
+  grid.style.flexDirection = '';
   
-  if (viewMode === 'list') {
-    // โหมด List
-    grid.style.display = 'flex';
-    grid.style.flexDirection = 'column';
-    grid.style.gap = '12px';
+  grid.innerHTML = subjects.map((s, idx) => {
+    const r = calcSubject(s), g = scoreToGrade(r.score, s);
+    const scoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
+    const wBan = g.letter === 'W' ? `<div style="font-size:10px; font-weight:800; background:rgba(0,0,0,0.05); padding:2px 10px; border-radius:100px; margin-bottom:12px; display:inline-block; border: 1px solid var(--glass-border);">Withdraw</div>` : '';
+    const dragHandle = isReorderMode ? `<div style="position: absolute; top: 12px; right: 12px; font-size: 24px; opacity: 0.3; cursor: grab;">⋮⋮</div>` : '';
+    const reorderStyle = isReorderMode ? 'box-shadow: 0 0 0 2px var(--accent-light); cursor: grab;' : 'cursor: pointer;';
+    const clickHandler = isReorderMode ? '' : `onclick="window.switchView('subject', ${s.id})"`;
     
-    grid.innerHTML = subjects.map((s, idx) => {
-      const r = calcSubject(s), g = scoreToGrade(r.score, s);
-      const scoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
-      const dragHandle = isReorderMode ? `<div style="font-size: 20px; opacity: 0.3; cursor: grab; margin-right: 12px;">⋮⋮</div>` : '';
-      const reorderStyle = isReorderMode ? 'box-shadow: 0 0 0 2px var(--accent-light); cursor: grab;' : 'cursor: pointer;';
-      const clickHandler = isReorderMode ? '' : `onclick="window.switchView('subject', ${s.id})"`;
-      
-      return `
-        <div class="bento-card subject-card" data-id="${s.id}" style="animation-delay: ${idx*0.05}s; ${reorderStyle} padding: 20px; display: flex; align-items: center; gap: 16px; ${g.letter==='W'?'opacity:0.6; filter: grayscale(50%);':''}" ${clickHandler}>
-          ${dragHandle}
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 18px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;">${s.name}</div>
-            <div style="font-family: var(--mono); color: var(--ink3); font-size: 12px; font-weight: 500;">คะแนนรวม: ${scoreStr}</div>
-          </div>
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="text-align: center;">
-              <div style="font-size: 11px; color: var(--ink3); font-weight: 700; margin-bottom: 4px;">หน่วยกิต</div>
-              <div style="font-family: var(--mono); font-size: 16px; font-weight: 800; color: var(--ink2);">${s.credits}</div>
-            </div>
-            <span class="tag ${g.letter}" style="font-size: 16px; padding: 6px 16px;">${g.letter}</span>
-          </div>
-        </div>
-      `;
-    }).join('') + (isReorderMode ? '' : `
-      <div class="bento-card ani hoverable" style="animation-delay: ${subjects.length*0.05}s; cursor: pointer; border: 2px dashed var(--glass-border); background: transparent; display: flex; align-items: center; justify-content: center; min-height: 80px; box-shadow: none; padding: 20px;" onclick="document.getElementById('btn-add-subject').click()">
-        <div style="font-size: 16px; font-weight: 700; color: var(--accent);">➕ เพิ่มรายวิชาใหม่</div>
-      </div>
-    `);
-  } else {
-    // โหมด Grid (เดิม)
-    grid.style.display = 'grid';
-    grid.style.flexDirection = '';
+    // ซ่อนเกรดในโหมดความเป็นส่วนตัว
+    const displayScore = isPrivacyMode ? '•••' : scoreStr;
+    const displayGrade = isPrivacyMode ? '•' : g.letter;
+    const blurStyle = isPrivacyMode ? 'filter: blur(4px);' : '';
     
-    grid.innerHTML = subjects.map((s, idx) => {
-      const r = calcSubject(s), g = scoreToGrade(r.score, s);
-      const scoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
-      const wBan = g.letter === 'W' ? `<div style="font-size:10px; font-weight:800; background:rgba(0,0,0,0.05); padding:2px 10px; border-radius:100px; margin-bottom:12px; display:inline-block; border: 1px solid var(--glass-border);">Withdraw</div>` : '';
-      const dragHandle = isReorderMode ? `<div style="position: absolute; top: 12px; right: 12px; font-size: 24px; opacity: 0.3; cursor: grab;">⋮⋮</div>` : '';
-      const reorderStyle = isReorderMode ? 'box-shadow: 0 0 0 2px var(--accent-light); cursor: grab;' : 'cursor: pointer;';
-      const clickHandler = isReorderMode ? '' : `onclick="window.switchView('subject', ${s.id})"`;
-      
-      return `
-        <div class="bento-card col-4 ani hoverable subject-card" data-id="${s.id}" style="animation-delay: ${idx*0.05}s; ${reorderStyle} ${g.letter==='W'?'opacity:0.6; filter: grayscale(50%);':''}" ${clickHandler}>
-          ${dragHandle}
-          ${wBan}
-          <div class="title-md" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size: 20px;">${s.name}</div>
-          <div style="font-family: var(--mono); color: var(--ink3); font-size: 13px; margin-bottom: 24px; font-weight: 500;">คะแนนรวม: ${scoreStr}</div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-            <span style="font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--ink2);">${s.credits} cr</span>
-            <span class="tag ${g.letter}">${g.letter}</span>
-          </div>
+    return `
+      <div class="bento-card col-4 ani hoverable subject-card" data-id="${s.id}" style="animation-delay: ${idx*0.05}s; ${reorderStyle} ${g.letter==='W'?'opacity:0.6; filter: grayscale(50%);':''}" ${clickHandler}>
+        ${dragHandle}
+        ${wBan}
+        <div class="title-md" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size: 20px;">${s.name}</div>
+        <div style="font-family: var(--mono); color: var(--ink3); font-size: 13px; margin-bottom: 24px; font-weight: 500; ${blurStyle}">คะแนนรวม: ${displayScore}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+          <span style="font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--ink2);">${s.credits} cr</span>
+          <span class="tag ${g.letter}" style="${blurStyle}">${displayGrade}</span>
         </div>
-      `;
-    }).join('') + (isReorderMode ? '' : `
-      <div class="bento-card col-4 ani hoverable" style="animation-delay: ${subjects.length*0.05}s; cursor: pointer; border: 2px dashed var(--glass-border); background: transparent; display: flex; align-items: center; justify-content: center; min-height: 160px; box-shadow: none;" onclick="document.getElementById('btn-add-subject').click()">
-        <div style="font-size: 16px; font-weight: 700; color: var(--accent);">➕ เพิ่มรายวิชาใหม่</div>
       </div>
-    `);
-  }
+    `;
+  }).join('') + (isReorderMode ? '' : `
+    <div class="bento-card col-4 ani hoverable" style="animation-delay: ${subjects.length*0.05}s; cursor: pointer; border: 2px dashed var(--glass-border); background: transparent; display: flex; align-items: center; justify-content: center; min-height: 160px; box-shadow: none;" onclick="document.getElementById('btn-add-subject').click()">
+      <div style="font-size: 16px; font-weight: 700; color: var(--accent);">➕ เพิ่มรายวิชาใหม่</div>
+    </div>
+  `);
   
   // จัดการ Sortable
   if (window.sortableInstance) window.sortableInstance.destroy();
@@ -2212,15 +2199,25 @@ const renderSubjectsList = () => {
   // อัพเดทปุ่ม
   const btnToggle = document.getElementById('btn-toggle-reorder');
   const btnReorder = document.getElementById('btn-reorder-subjects');
-  const viewModeIcon = document.getElementById('view-mode-icon');
+  const btnPrivacy = document.getElementById('btn-toggle-privacy');
+  const privacyIcon = document.getElementById('privacy-icon');
   
-  if (viewModeIcon) {
-    viewModeIcon.textContent = viewMode === 'grid' ? '☰' : '▦';
+  if (privacyIcon) {
+    privacyIcon.textContent = isPrivacyMode ? '🙈' : '👁️';
   }
   
   if (btnToggle && btnReorder) {
     if (isReorderMode) {
       btnToggle.style.display = 'none';
+      btnReorder.style.display = 'inline-flex';
+      if (btnPrivacy) btnPrivacy.style.display = 'none';
+    } else {
+      btnToggle.style.display = 'inline-flex';
+      btnReorder.style.display = 'none';
+      if (btnPrivacy) btnPrivacy.style.display = 'inline-flex';
+    }
+  }
+};
       btnReorder.style.display = 'inline-flex';
     } else {
       btnToggle.style.display = 'inline-flex';
@@ -2548,12 +2545,11 @@ document.getElementById('btn-add-subject')?.addEventListener('click', () => {
   saveData(); switchView('subject', id);
 });
 
-// Toggle View Mode (Grid/List)
-document.getElementById('btn-toggle-view-mode')?.addEventListener('click', () => {
-  window.subjectsViewMode = window.subjectsViewMode === 'grid' ? 'list' : 'grid';
-  localStorage.setItem('subjectsViewMode', window.subjectsViewMode);
+// Toggle Privacy Mode
+document.getElementById('btn-toggle-privacy')?.addEventListener('click', () => {
+  window.privacyMode = !window.privacyMode;
   renderSubjectsList();
-  toast(window.subjectsViewMode === 'grid' ? 'โหมด Grid' : 'โหมด List');
+  toast(window.privacyMode ? 'ซ่อนเกรดแล้ว 🙈' : 'แสดงเกรดแล้ว 👁️');
 });
 
 // Toggle Reorder Mode
