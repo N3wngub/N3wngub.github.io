@@ -14,7 +14,11 @@
 
 <!-- App Icon from Google Drive -->
 <link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<link rel="shortcut icon" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1" type="image/png">
 <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<link rel="apple-touch-icon" sizes="152x152" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<link rel="apple-touch-icon" sizes="180x180" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<link rel="apple-touch-icon" sizes="167x167" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
 
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- External Libraries -->
@@ -98,7 +102,7 @@ input, button, textarea, select { font-family: var(--body); }
 #welcome-screen {
   position: fixed; inset: 0; background: #ffffff; z-index: 9999;
   display: none; flex-direction: column; align-items: center; justify-content: center;
-  transition: opacity 0.8s ease;
+  transition: opacity 0.8s ease; opacity: 0;
 }
 [data-theme="dark"] #welcome-screen { background: #000000; }
 #welcome-text { font-size: 40px; font-weight: 800; color: var(--ink); letter-spacing: -1px; margin: 0; text-align: center; }
@@ -152,10 +156,15 @@ input, button, textarea, select { font-family: var(--body); }
 [data-theme="dark"] .term-btn { background: rgba(255,255,255,0.06); }
 .term-btn:hover { background: rgba(0,0,0,0.06); transform: scale(1.02); }
 .term-btn span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
-.term-list { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: var(--r-md); box-shadow: var(--glass-shadow-hover); z-index: 50; min-width: 200px; max-height: 240px; overflow-y: auto; padding: 8px; }
-.term-list.open { display: block; animation: blurFadeUp 0.2s forwards; transform-origin: top; }
-.term-item { padding: 12px 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; border-radius: var(--r-sm); transition: background 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.term-item:hover { background: var(--glass-border); color: var(--accent); }
+
+/* ─── Term Dropdown Modal-Style ─── */
+#dropdown-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+#dropdown-overlay.open { opacity: 1; pointer-events: auto; }
+
+.term-list { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: var(--glass-bg); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); border: 1px solid var(--glass-border); border-radius: var(--r-lg); box-shadow: var(--glass-shadow-hover); z-index: 1001; width: 90%; max-width: 320px; max-height: 70vh; overflow-y: auto; padding: 12px; opacity: 0; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.term-list.open { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.term-item { padding: 16px; text-align: center; cursor: pointer; font-size: 16px; font-weight: 700; border-radius: var(--r-md); transition: background 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; border: 1px solid transparent; }
+.term-item:hover { background: var(--glass-bg-hover); color: var(--accent); border-color: var(--glass-border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
 .top-bar-right { display: flex; align-items: center; gap: 12px; }
 .sync-badge { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 100px; font-family: var(--mono); font-size: 11px; font-weight: 700; background: transparent; color: var(--ink3); border: 1px solid var(--glass-border); transition: all 0.3s; }
@@ -174,7 +183,6 @@ input, button, textarea, select { font-family: var(--body); }
   .profile-avatar { width: 38px; height: 38px; }
   #sync-text { display: none; }
   .sync-badge { padding: 8px; border-radius: 50%; border: none; background: rgba(0,0,0,0.03); }
-  .term-list { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); min-width: 180px; max-width: 80vw; }
 }
 
 /* ─── Main Content Area ─── */
@@ -333,7 +341,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 .toast { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); color: var(--ink); padding: 12px 20px; border-radius: 100px; box-shadow: var(--glass-shadow-hover); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 10px; animation: slideDown 0.4s forwards; pointer-events: auto; }
 @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-#login-view, #pin-entry-view { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-gradient); transition: opacity 0.5s; flex-direction: column; }
+#login-view, #pin-entry-view { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-bottom); transition: opacity 0.5s; flex-direction: column; }
 .login-card { max-width: 400px; width: 100%; text-align: center; padding: 40px 32px; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: var(--r-xl); box-shadow: var(--glass-shadow-hover); border: 1px solid var(--glass-border); }
 
 /* ─── PDF Export Wrapper ─── */
@@ -341,7 +349,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 
 @media print {
   body { background: white !important; }
-  .top-bar-container, .dock-container, .no-print, .modal-overlay, #toast-container, .edu-icon { display: none !important; }
+  .top-bar-container, .dock-container, .no-print, .modal-overlay, #toast-container, .edu-icon, #dropdown-overlay { display: none !important; }
   .app { height: auto; display: block; padding: 0; }
   .main-wrap { padding: 0; overflow: visible; display: block; border-radius: 0; }
   .bento-card { box-shadow: none; border: 1px solid #ccc; background: transparent; backdrop-filter: none; break-inside: avoid; margin-bottom: 20px; }
@@ -360,6 +368,10 @@ input:checked + .slider:before { transform: translateX(16px); }
 <div id="welcome-screen">
     <h1 id="welcome-text">Good Morning</h1>
 </div>
+
+<!-- Term Dropdown Overlay (Center Screen) -->
+<div id="dropdown-overlay" onclick="toggleTermDropdown()"></div>
+<div class="term-list" id="term-list"></div>
 
 <!-- Toast Container -->
 <div id="toast-container"></div>
@@ -492,7 +504,10 @@ input:checked + .slider:before { transform: translateX(16px); }
 <!-- ════ LOGIN VIEW ════ -->
 <div id="login-view">
   <div class="login-card ani">
-    <div style="font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));">🎓</div>
+    <!-- App Icon from Google Drive on Login Screen -->
+    <div style="margin-bottom: 20px;">
+        <img src="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1" alt="Unigrade Icon" style="width: 90px; height: 90px; border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);">
+    </div>
     <h1 style="font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px;">Unigrade</h1>
     <p style="color: var(--ink2); margin-bottom: 32px; font-size: 15px; font-weight: 600;">Score Tracker · Smart GPA · Sync</p>
     
@@ -533,7 +548,6 @@ input:checked + .slider:before { transform: translateX(16px); }
             <span id="term-label">เทอม 1</span>
             <span style="font-size: 10px; opacity: 0.5;">▼</span>
           </div>
-          <div class="term-list" id="term-list"></div>
         </div>
       </div>
       
@@ -762,6 +776,7 @@ let syncTimer = null, chartInstances = {}, calYear = new Date().getFullYear(), c
 let selectedFinalTarget = null, unsubSnapshot = null;
 window.prevView = 'dashboard'; 
 let hasAppInitialized = false;
+let isAppStarted = false; // Flag to prevent multiple welcome screens
 
 // UI States
 window.customCreditMode = false;
@@ -782,9 +797,12 @@ window.toast = (msg, isErr = false) => {
 
 window.openModal = (id) => document.getElementById(id).classList.add('open');
 window.closeModal = (id) => document.getElementById(id).classList.remove('open');
-window.toggleTermDropdown = () => document.getElementById('term-list').classList.toggle('open');
 
-document.addEventListener('click', e => { if (!e.target.closest('.term-selector')) document.getElementById('term-list')?.classList.remove('open'); });
+// Centralized Term Dropdown Toggle
+window.toggleTermDropdown = () => {
+  document.getElementById('term-list').classList.toggle('open');
+  document.getElementById('dropdown-overlay').classList.toggle('open');
+};
 
 window.showConfirm = (title, text, icon, callback) => {
   document.getElementById('cm-title').textContent = title;
@@ -853,12 +871,12 @@ const loadData = async () => {
         currentTermId = appData.currentTermId || appData.terms[0]?.id || 1;
         setSyncStatus('synced', 'Synced'); 
       } else { saveData(); }
-      startAppFlow();
-    }, (e) => { setSyncStatus('error', 'Offline'); startAppFlow(); });
-  } else { startAppFlow(); }
+      if(isAppStarted) renderApp();
+    }, (e) => { setSyncStatus('error', 'Offline'); if(isAppStarted) renderApp(); });
+  } else { if(isAppStarted) renderApp(); }
 };
 
-// ─── AUTHENTICATION & APP FLOW (PIN / WELCOME SCREEN) ───
+// ─── AUTHENTICATION & APP FLOW ───
 const initAuth = async () => {
   if (!auth) { loadData(); return; }
   try {
@@ -874,11 +892,63 @@ const showLoginView = () => {
   document.getElementById('login-view').style.opacity = '1'; 
   document.getElementById('main-app').style.display = 'none'; 
   document.getElementById('pin-entry-view').style.display = 'none';
+  document.getElementById('welcome-screen').style.display = 'none';
 };
 
-const hideLoginView = () => { 
-  document.getElementById('login-view').style.opacity = '0'; 
-  setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 500); 
+const triggerWelcomeAndStart = () => {
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('pin-entry-view').style.display = 'none';
+    
+    const hr = new Date().getHours();
+    let msg = 'Good Night';
+    if(hr >= 5 && hr < 12) msg = 'Good Morning';
+    else if(hr >= 12 && hr < 13) msg = 'Good Noon';
+    else if(hr >= 13 && hr < 18) msg = 'Good Afternoon';
+    else if(hr >= 18 && hr < 22) msg = 'Good Evening';
+    
+    document.getElementById('welcome-text').textContent = msg;
+    const ws = document.getElementById('welcome-screen');
+    ws.style.display = 'flex';
+    
+    // Trigger fade in and out
+    requestAnimationFrame(() => {
+        ws.style.opacity = '1';
+        setTimeout(() => {
+            ws.style.opacity = '0';
+            setTimeout(() => {
+                ws.style.display = 'none';
+                hasAppInitialized = true;
+                document.getElementById('main-app').style.display = 'flex';
+                renderApp();
+            }, 800);
+        }, 1500);
+    });
+};
+
+const checkPinAndStart = () => {
+    const storedPin = localStorage.getItem('app_pin');
+    if (storedPin) {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('pin-entry-view').style.display = 'flex';
+        document.getElementById('main-app').style.display = 'none';
+        const pinInput = document.getElementById('pin-input');
+        pinInput.value = ''; pinInput.focus();
+        
+        const btnSubmit = document.getElementById('btn-submit-pin');
+        const newBtn = btnSubmit.cloneNode(true);
+        btnSubmit.parentNode.replaceChild(newBtn, btnSubmit);
+        
+        newBtn.addEventListener('click', () => {
+            if(pinInput.value === storedPin) {
+                triggerWelcomeAndStart();
+            } else {
+                toast('รหัส PIN ไม่ถูกต้อง', true);
+                pinInput.value = '';
+            }
+        });
+    } else {
+        triggerWelcomeAndStart();
+    }
 };
 
 if (auth) {
@@ -886,18 +956,21 @@ if (auth) {
     const isGuest = localStorage.getItem('guest_mode') === 'true';
     if (user && (!user.isAnonymous || isGuest)) {
       userId = user.uid;
-      hideLoginView(); 
       renderProfile(user); 
       loadData();
+      if (!isAppStarted) {
+          isAppStarted = true;
+          checkPinAndStart();
+      }
     } else {
       userId = null; 
+      isAppStarted = false;
       showLoginView();
       showLoginButtons();
     }
   });
   initAuth();
-} else { loadData(); hideLoginView(); }
-
+} else { loadData(); isAppStarted = true; triggerWelcomeAndStart(); }
 
 document.getElementById('btn-login-google')?.addEventListener('click', async () => {
   if (!auth) { toast('Firebase ไม่พร้อมใช้งาน', true); return; }
@@ -906,13 +979,23 @@ document.getElementById('btn-login-google')?.addEventListener('click', async () 
 
 document.getElementById('btn-login-guest')?.addEventListener('click', () => {
   localStorage.setItem('guest_mode', 'true'); if(!userId && auth) initAuth();
-  hideLoginView(); renderProfile(null); loadData();
+  renderProfile(null); loadData();
+  if (!isAppStarted) {
+      isAppStarted = true;
+      checkPinAndStart();
+  }
 });
 
 const doLogout = async () => {
-  localStorage.removeItem('guest_mode'); closeModal('settings-modal');
+  localStorage.removeItem('guest_mode');
+  // ฟิกซ์บัค PIN: สลับบัญชีต้องล้าง PIN เก่าออก เพื่อให้เข้าสู่ระบบและไม่ถูกล็อกด้วย PIN ของคนก่อนหน้า
+  localStorage.removeItem('app_pin'); 
+  
+  closeModal('settings-modal');
   hasAppInitialized = false; 
+  isAppStarted = false;
   if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+  
   if (auth) { 
     await signOut(auth); 
     initAuth(); 
@@ -923,62 +1006,6 @@ const doLogout = async () => {
 };
 document.getElementById('btn-logout')?.addEventListener('click', doLogout);
 document.getElementById('btn-logout-pin')?.addEventListener('click', doLogout);
-
-// App Flow logic: DB Load -> PIN Check -> Welcome Screen -> Main App
-const startAppFlow = () => {
-  if(hasAppInitialized) {
-      renderApp(); return;
-  }
-
-  const proceedToWelcome = () => {
-      document.getElementById('pin-entry-view').style.display = 'none';
-      
-      const hr = new Date().getHours();
-      let msg = 'Good Night';
-      if(hr >= 5 && hr < 12) msg = 'Good Morning';
-      else if(hr >= 12 && hr < 13) msg = 'Good Noon';
-      else if(hr >= 13 && hr < 18) msg = 'Good Afternoon';
-      else if(hr >= 18 && hr < 22) msg = 'Good Evening';
-      
-      document.getElementById('welcome-text').textContent = msg;
-      const ws = document.getElementById('welcome-screen');
-      ws.style.display = 'flex';
-      ws.style.opacity = '1';
-      
-      setTimeout(() => {
-          ws.style.opacity = '0';
-          setTimeout(() => {
-              ws.style.display = 'none';
-              hasAppInitialized = true;
-              document.getElementById('main-app').style.display = 'flex';
-              renderApp();
-          }, 800);
-      }, 1500);
-  };
-
-  const storedPin = localStorage.getItem('app_pin');
-  if (storedPin) {
-      document.getElementById('pin-entry-view').style.display = 'flex';
-      document.getElementById('main-app').style.display = 'none';
-      const pinInput = document.getElementById('pin-input');
-      pinInput.value = ''; pinInput.focus();
-      
-      const btnSubmit = document.getElementById('btn-submit-pin');
-      const newBtn = btnSubmit.cloneNode(true);
-      btnSubmit.parentNode.replaceChild(newBtn, btnSubmit);
-      
-      newBtn.addEventListener('click', () => {
-          if(pinInput.value === storedPin) {
-              proceedToWelcome();
-          } else {
-              toast('รหัส PIN ไม่ถูกต้อง', true);
-              pinInput.value = '';
-          }
-      });
-  } else {
-      proceedToWelcome();
-  }
-};
 
 const renderProfile = (user) => {
   const pic = appData.userProfilePic || user?.photoURL || "https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1";
@@ -1147,6 +1174,8 @@ const renderApp = () => {
   
   const term = getTerm();
   document.getElementById('term-label').textContent = term?.name || 'เลือกเทอม';
+  
+  // Render Term List for Dropdown modal
   document.getElementById('term-list').innerHTML = appData.terms.map(t => `<div class="term-item" data-id="${t.id}">${t.name}</div>`).join('');
   
   document.querySelectorAll('.term-item').forEach(el => {
@@ -1235,16 +1264,17 @@ const renderSubjectsList = () => {
   `;
   
   const grid = document.getElementById('subjects-grid');
-  sortableInstances.forEach(s => s.destroy()); sortableInstances = [];
+  // clear previous sortables to prevent duplication
+  if (window.sortableInstance) window.sortableInstance.destroy();
   if (grid) {
-    sortableInstances.push(new Sortable(grid, {
+    window.sortableInstance = new Sortable(grid, {
       animation: 250, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)", filter: '.bento-card[style*="dashed"]',
       onEnd: () => {
         const orderIds = [...grid.querySelectorAll('.bento-card[data-id]')].map(el => parseInt(el.dataset.id));
         const term = getTerm(); term.subjects = orderIds.map(id => term.subjects.find(s => s.id === id)).filter(Boolean);
         saveData();
       }
-    }));
+    });
   }
 };
 
