@@ -330,8 +330,17 @@ button { cursor: pointer; user-select: none; }
   .apple-dock .dock-item.active:hover { background: var(--accent); }
 }
 
+/* iPad with mouse support */
+@media (pointer: fine) {
+  .apple-dock:hover .dock-item { filter: brightness(0.9); }
+  [data-theme="dark"] .apple-dock:hover .dock-item { filter: brightness(0.7); }
+  .apple-dock .dock-item:hover { filter: brightness(1); transform: scale(1.2) translateY(-8px); z-index: 10; margin: 0 10px; background: var(--glass-bg-hover); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight); box-shadow: var(--glass-shadow-hover); }
+  .apple-dock .dock-item.active:hover { background: var(--accent); }
+}
+
 .dock-item::after { content: attr(data-tooltip); position: absolute; top: -40px; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 700; color: var(--ink); opacity: 0; pointer-events: none; transition: opacity 0.2s; white-space: nowrap; box-shadow: var(--glass-shadow); }
 @media (hover: hover) and (pointer: fine) { .dock-item:hover::after { opacity: 1; } }
+@media (pointer: fine) { .dock-item:hover::after { opacity: 1; } }
 
 .dock-icon { font-size: 24px; transition: transform 0.2s; }
 .dock-item.active::before { content: ''; position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: var(--ink); opacity: 0.5; }
@@ -1242,8 +1251,23 @@ input:checked + .slider:before { transform: translateX(18px); }
       <div class="bento-card col-12 ani">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
           <div class="title-md" style="margin:0;"><span style="font-size:28px; margin-right:8px;">📚</span>รายวิชาในเทอมนี้</div>
-          <button class="btn btn-accent" id="btn-add-subject">➕ เพิ่มรายวิชา</button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-outline" id="btn-toggle-view-mode" title="สลับโหมดแสดงผล">
+              <span id="view-mode-icon" style="font-size: 18px;">▦</span>
+            </button>
+            <button class="btn btn-outline" id="btn-reorder-subjects" style="display: none;">
+              <span style="font-size: 18px;">↕️</span> เรียงลำดับเสร็จสิ้น
+            </button>
+            <button class="btn btn-outline" id="btn-toggle-reorder">
+              <span style="font-size: 18px;">↕️</span> จัดเรียงวิชา
+            </button>
+            <button class="btn btn-accent" id="btn-add-subject">➕ เพิ่มรายวิชา</button>
+          </div>
         </div>
+        
+        <!-- Grade Distribution Bar -->
+        <div id="grade-distribution-bar" style="margin-bottom: 24px;"></div>
+        
         <div class="bento-grid" id="subjects-grid" style="gap: 16px;"></div>
       </div>
     </div>
@@ -1400,17 +1424,32 @@ input:checked + .slider:before { transform: translateX(18px); }
         <div class="label">🏆 ที่สุดของการเรียน</div>
         <div id="analytics-best-worst" style="display: flex; flex-direction: column; justify-content: space-around; flex: 1; padding-top: 8px;"></div>
       </div>
-      <div class="bento-card col-12 ani" style="animation-delay: 0.15s;">
-        <div class="label">📊 เปรียบเทียบผลการเรียนระหว่างเทอม</div>
+      
+      <!-- Radar Chart: Performance Analysis -->
+      <div class="bento-card col-6 ani" style="animation-delay: 0.15s;">
+        <div class="label">🎯 วิเคราะห์ Performance</div>
+        <div style="height: 300px; width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center;"><canvas id="analytics-radar-performance"></canvas></div>
+      </div>
+      
+      <!-- Bar Chart: Grade Distribution -->
+      <div class="bento-card col-6 ani" style="animation-delay: 0.2s;">
+        <div class="label">📊 สัดส่วนเกรดที่ได้รับ</div>
+        <div style="height: 300px; width: 100%; margin-top: 16px;"><canvas id="analytics-bar-grades"></canvas></div>
+      </div>
+      
+      <div class="bento-card col-12 ani" style="animation-delay: 0.25s;">
+        <div class="label">📈 เปรียบเทียบผลการเรียนระหว่างเทอม</div>
         <div style="height: 260px; width: 100%; margin-top: 16px;"><canvas id="analytics-chart-compare"></canvas></div>
       </div>
-      <div class="bento-card col-6 ani" style="animation-delay: 0.2s;">
-        <div class="label">สัดส่วนเกรดที่ได้รับ (ทุกเทอม)</div>
-        <div id="analytics-grade-dist" style="margin-top: 16px;"></div>
-      </div>
-      <div class="bento-card col-6 ani" style="animation-delay: 0.25s;">
+      
+      <div class="bento-card col-6 ani" style="animation-delay: 0.3s;">
         <div class="label">สรุปรายเทอม</div>
         <div id="analytics-term-table" style="margin-top: 12px;"></div>
+      </div>
+      
+      <div class="bento-card col-6 ani" style="animation-delay: 0.35s;">
+        <div class="label">สถิติเพิ่มเติม</div>
+        <div id="analytics-grade-dist" style="margin-top: 16px;"></div>
       </div>
     </div>
 
@@ -1560,6 +1599,9 @@ const saveData = () => {
 const loadData = async () => {
   const local = localStorage.getItem('st_data');
   if (local) { try { appData = JSON.parse(local); currentTermId = appData.currentTermId || appData.terms[0]?.id || 1; } catch(e){} }
+  
+  // โหลดการตั้งค่า view mode
+  window.subjectsViewMode = localStorage.getItem('subjectsViewMode') || 'grid';
   
   // ตรวจสอบโหมด: ถ้าเป็น Guest Mode ห้าม sync เพื่อป้องกันข้อมูลปนกันหรือถูกเขียนทับ
   if (localStorage.getItem('guest_mode') === 'true') {
@@ -2075,39 +2117,115 @@ const renderDashboard = () => {
 
 const renderSubjectsList = () => {
   const subjects = getSubjects();
-  document.getElementById('subjects-grid').innerHTML = subjects.map((s, idx) => {
-    const r = calcSubject(s), g = scoreToGrade(r.score, s);
-    const scoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
-    const wBan = g.letter === 'W' ? `<div style="font-size:10px; font-weight:800; background:rgba(0,0,0,0.05); padding:2px 10px; border-radius:100px; margin-bottom:12px; display:inline-block; border: 1px solid var(--glass-border);">Withdraw</div>` : '';
-    return `
-      <div class="bento-card col-4 ani hoverable" data-id="${s.id}" style="animation-delay: ${idx*0.05}s; cursor: pointer; ${g.letter==='W'?'opacity:0.6; filter: grayscale(50%);':''}" onclick="window.switchView('subject', ${s.id})">
-        ${wBan}
-        <div class="title-md" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size: 20px;">${s.name}</div>
-        <div style="font-family: var(--mono); color: var(--ink3); font-size: 13px; margin-bottom: 24px; font-weight: 500;">คะแนนรวม: ${scoreStr}</div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
-          <span style="font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--ink2);">${s.credits} cr</span>
-          <span class="tag ${g.letter}">${g.letter}</span>
-        </div>
-      </div>
-    `;
-  }).join('') + `
-    <div class="bento-card col-4 ani hoverable" style="animation-delay: ${subjects.length*0.05}s; cursor: pointer; border: 2px dashed var(--glass-border); background: transparent; display: flex; align-items: center; justify-content: center; min-height: 160px; box-shadow: none;" onclick="document.getElementById('btn-add-subject').click()">
-      <div style="font-size: 16px; font-weight: 700; color: var(--accent);">➕ เพิ่มรายวิชาใหม่</div>
-    </div>
-  `;
+  const isReorderMode = window.subjectsReorderMode || false;
+  const viewMode = window.subjectsViewMode || 'grid'; // 'grid' or 'list'
   
   const grid = document.getElementById('subjects-grid');
-  // clear previous sortables to prevent duplication
+  
+  if (viewMode === 'list') {
+    // โหมด List
+    grid.style.display = 'flex';
+    grid.style.flexDirection = 'column';
+    grid.style.gap = '12px';
+    
+    grid.innerHTML = subjects.map((s, idx) => {
+      const r = calcSubject(s), g = scoreToGrade(r.score, s);
+      const scoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
+      const dragHandle = isReorderMode ? `<div style="font-size: 20px; opacity: 0.3; cursor: grab; margin-right: 12px;">⋮⋮</div>` : '';
+      const reorderStyle = isReorderMode ? 'box-shadow: 0 0 0 2px var(--accent-light); cursor: grab;' : 'cursor: pointer;';
+      const clickHandler = isReorderMode ? '' : `onclick="window.switchView('subject', ${s.id})"`;
+      
+      return `
+        <div class="bento-card subject-card" data-id="${s.id}" style="animation-delay: ${idx*0.05}s; ${reorderStyle} padding: 20px; display: flex; align-items: center; gap: 16px; ${g.letter==='W'?'opacity:0.6; filter: grayscale(50%);':''}" ${clickHandler}>
+          ${dragHandle}
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 18px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;">${s.name}</div>
+            <div style="font-family: var(--mono); color: var(--ink3); font-size: 12px; font-weight: 500;">คะแนนรวม: ${scoreStr}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="text-align: center;">
+              <div style="font-size: 11px; color: var(--ink3); font-weight: 700; margin-bottom: 4px;">หน่วยกิต</div>
+              <div style="font-family: var(--mono); font-size: 16px; font-weight: 800; color: var(--ink2);">${s.credits}</div>
+            </div>
+            <span class="tag ${g.letter}" style="font-size: 16px; padding: 6px 16px;">${g.letter}</span>
+          </div>
+        </div>
+      `;
+    }).join('') + (isReorderMode ? '' : `
+      <div class="bento-card ani hoverable" style="animation-delay: ${subjects.length*0.05}s; cursor: pointer; border: 2px dashed var(--glass-border); background: transparent; display: flex; align-items: center; justify-content: center; min-height: 80px; box-shadow: none; padding: 20px;" onclick="document.getElementById('btn-add-subject').click()">
+        <div style="font-size: 16px; font-weight: 700; color: var(--accent);">➕ เพิ่มรายวิชาใหม่</div>
+      </div>
+    `);
+  } else {
+    // โหมด Grid (เดิม)
+    grid.style.display = 'grid';
+    grid.style.flexDirection = '';
+    
+    grid.innerHTML = subjects.map((s, idx) => {
+      const r = calcSubject(s), g = scoreToGrade(r.score, s);
+      const scoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
+      const wBan = g.letter === 'W' ? `<div style="font-size:10px; font-weight:800; background:rgba(0,0,0,0.05); padding:2px 10px; border-radius:100px; margin-bottom:12px; display:inline-block; border: 1px solid var(--glass-border);">Withdraw</div>` : '';
+      const dragHandle = isReorderMode ? `<div style="position: absolute; top: 12px; right: 12px; font-size: 24px; opacity: 0.3; cursor: grab;">⋮⋮</div>` : '';
+      const reorderStyle = isReorderMode ? 'box-shadow: 0 0 0 2px var(--accent-light); cursor: grab;' : 'cursor: pointer;';
+      const clickHandler = isReorderMode ? '' : `onclick="window.switchView('subject', ${s.id})"`;
+      
+      return `
+        <div class="bento-card col-4 ani hoverable subject-card" data-id="${s.id}" style="animation-delay: ${idx*0.05}s; ${reorderStyle} ${g.letter==='W'?'opacity:0.6; filter: grayscale(50%);':''}" ${clickHandler}>
+          ${dragHandle}
+          ${wBan}
+          <div class="title-md" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size: 20px;">${s.name}</div>
+          <div style="font-family: var(--mono); color: var(--ink3); font-size: 13px; margin-bottom: 24px; font-weight: 500;">คะแนนรวม: ${scoreStr}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+            <span style="font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--ink2);">${s.credits} cr</span>
+            <span class="tag ${g.letter}">${g.letter}</span>
+          </div>
+        </div>
+      `;
+    }).join('') + (isReorderMode ? '' : `
+      <div class="bento-card col-4 ani hoverable" style="animation-delay: ${subjects.length*0.05}s; cursor: pointer; border: 2px dashed var(--glass-border); background: transparent; display: flex; align-items: center; justify-content: center; min-height: 160px; box-shadow: none;" onclick="document.getElementById('btn-add-subject').click()">
+        <div style="font-size: 16px; font-weight: 700; color: var(--accent);">➕ เพิ่มรายวิชาใหม่</div>
+      </div>
+    `);
+  }
+  
+  // จัดการ Sortable
   if (window.sortableInstance) window.sortableInstance.destroy();
-  if (grid) {
+  
+  if (grid && isReorderMode) {
     window.sortableInstance = new Sortable(grid, {
-      animation: 250, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)", filter: '.bento-card[style*="dashed"]',
+      animation: 250, 
+      easing: "cubic-bezier(0.2, 0.8, 0.2, 1)", 
+      handle: '.subject-card',
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      dragClass: 'sortable-drag',
       onEnd: () => {
         const orderIds = [...grid.querySelectorAll('.bento-card[data-id]')].map(el => parseInt(el.dataset.id));
-        const term = getTerm(); term.subjects = orderIds.map(id => term.subjects.find(s => s.id === id)).filter(Boolean);
+        const term = getTerm(); 
+        term.subjects = orderIds.map(id => term.subjects.find(s => s.id === id)).filter(Boolean);
         saveData();
+        toast('บันทึกลำดับแล้ว');
       }
     });
+  }
+  
+  // อัพเดทปุ่ม
+  const btnToggle = document.getElementById('btn-toggle-reorder');
+  const btnReorder = document.getElementById('btn-reorder-subjects');
+  const viewModeIcon = document.getElementById('view-mode-icon');
+  
+  if (viewModeIcon) {
+    viewModeIcon.textContent = viewMode === 'grid' ? '☰' : '▦';
+  }
+  
+  if (btnToggle && btnReorder) {
+    if (isReorderMode) {
+      btnToggle.style.display = 'none';
+      btnReorder.style.display = 'inline-flex';
+    } else {
+      btnToggle.style.display = 'inline-flex';
+      btnReorder.style.display = 'none';
+    }
   }
 };
 
@@ -2430,6 +2548,28 @@ document.getElementById('btn-add-subject')?.addEventListener('click', () => {
   saveData(); switchView('subject', id);
 });
 
+// Toggle View Mode (Grid/List)
+document.getElementById('btn-toggle-view-mode')?.addEventListener('click', () => {
+  window.subjectsViewMode = window.subjectsViewMode === 'grid' ? 'list' : 'grid';
+  localStorage.setItem('subjectsViewMode', window.subjectsViewMode);
+  renderSubjectsList();
+  toast(window.subjectsViewMode === 'grid' ? 'โหมด Grid' : 'โหมด List');
+});
+
+// Toggle Reorder Mode
+document.getElementById('btn-toggle-reorder')?.addEventListener('click', () => {
+  window.subjectsReorderMode = true;
+  renderSubjectsList();
+  toast('ลากเพื่อเรียงลำดับวิชา');
+});
+
+// Finish Reorder Mode
+document.getElementById('btn-reorder-subjects')?.addEventListener('click', () => {
+  window.subjectsReorderMode = false;
+  renderSubjectsList();
+  toast('บันทึกลำดับเรียบร้อย');
+});
+
 const renderTargetView = () => {
   const targetGPAs = [{l:'4.00', v:4.0}, {l:'3.50', v:3.5}, {l:'3.00', v:3.0}, {l:'2.50', v:2.5}, {l:'2.00', v:2.0}];
   const currentTarget = appData.gpaTarget || 3.0;
@@ -2554,16 +2694,210 @@ const renderAnalytics = () => {
     ${(worst && worst.name !== best.name) ? `<div style="width: 100%; height: 1px; background: var(--glass-border); margin: 16px 0;"></div><div><div style="font-size: 11px; color: var(--orange); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">ควรพัฒนา</div><div style="display: flex; justify-content: space-between; align-items: flex-end;"><div><div style="font-size: 18px; font-weight: 800;">${worst.name}</div><div style="font-size: 12px; color: var(--ink3); font-family: var(--mono);">${worst.tn}</div></div><div style="font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--orange);">${worst.let}</div></div></div>` : ''}
   `;
   
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark', textColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
+  
+  // Radar Chart: Performance Analysis
+  const radarCtx = document.getElementById('analytics-radar-performance');
+  if (radarCtx) {
+    if (chartInstances.radar) chartInstances.radar.destroy();
+    
+    // คำนวณ performance metrics
+    const currentTerm = getTerm();
+    const currentTermGPA = calcTermGPA(currentTerm).gpa || 0;
+    const avgScore = all.length > 0 ? all.reduce((sum, s) => sum + (s.gp * 25), 0) / all.length : 0;
+    const consistency = all.length > 1 ? Math.max(0, 100 - (Math.sqrt(all.reduce((sum, s) => sum + Math.pow((s.gp * 25) - avgScore, 2), 0) / all.length) * 2)) : 0;
+    const improvement = appData.terms.length > 1 ? Math.max(0, Math.min(100, ((calcTermGPA(appData.terms[appData.terms.length-1]).gpa || 0) - (calcTermGPA(appData.terms[0]).gpa || 0)) * 25 + 50)) : 50;
+    const completion = cum.credits > 0 ? Math.min(100, (cum.credits / 120) * 100) : 0;
+    const excellence = all.filter(s => s.gp >= 3.5).length / (all.length || 1) * 100;
+    
+    chartInstances.radar = new Chart(radarCtx, {
+      type: 'radar',
+      data: {
+        labels: ['GPA ปัจจุบัน', 'ความสม่ำเสมอ', 'การพัฒนา', 'ความก้าวหน้า', 'ความเป็นเลิศ'],
+        datasets: [{
+          label: 'Performance',
+          data: [currentTermGPA * 25, consistency, improvement, completion, excellence],
+          backgroundColor: isDark ? 'rgba(41, 151, 255, 0.2)' : 'rgba(19, 78, 142, 0.2)',
+          borderColor: isDark ? '#2997ff' : '#134e8e',
+          borderWidth: 2,
+          pointBackgroundColor: isDark ? '#2997ff' : '#134e8e',
+          pointBorderColor: '#fff',
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { 
+              stepSize: 20, 
+              color: textColor,
+              backdropColor: 'transparent'
+            },
+            grid: { color: 'rgba(128,128,128,0.1)' },
+            pointLabels: { 
+              color: textColor, 
+              font: { size: 11, weight: '600' }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: isDark?'rgba(30,30,32,0.9)':'rgba(255,255,255,0.9)',
+            titleColor: isDark?'#fff':'#000',
+            bodyColor: isDark?'#fff':'#000',
+            borderColor: isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.1)',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 12,
+            callbacks: {
+              label: (context) => `${context.label}: ${context.parsed.r.toFixed(1)}%`
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Bar Chart: Grade Distribution (Vertical with meaningful colors)
+  const barCtx = document.getElementById('analytics-bar-grades');
+  if (barCtx) {
+    if (chartInstances.gradeBar) chartInstances.gradeBar.destroy();
+    
+    const counts = {}; 
+    GRADES.concat(['W']).forEach(g => counts[g] = 0); 
+    all.forEach(s => counts[s.let]++);
+    
+    // กรองเฉพาะเกรดที่มีจำนวน > 0 และเรียงตามลำดับ (ดีไปแย่)
+    const gradeOrder = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F', 'W'];
+    const filteredGrades = gradeOrder.filter(g => counts[g] > 0);
+    const gradeData = filteredGrades.map(g => counts[g]);
+    
+    // สีที่สื่อความหมาย: เขียว (ดีมาก) -> น้ำเงิน (ดี) -> ส้ม (พอใช้) -> แดง (แย่)
+    const meaningfulColors = {
+      'A': '#34c759',      // เขียวสด - ดีเยี่ยม
+      'B+': '#30d158',     // เขียวอ่อน - ดีมาก
+      'B': '#0071e3',      // น้ำเงิน - ดี
+      'C+': '#5ac8fa',     // ฟ้า - ปานกลางดี
+      'C': '#ff9f0a',      // ส้ม - ปานกลาง
+      'D+': '#ff9500',     // ส้มเข้ม - พอใช้
+      'D': '#ff3b30',      // แดง - แย่
+      'F': '#ff453a',      // แดงสด - แย่มาก
+      'W': '#8e8e93'       // เทา - ถอน
+    };
+    const gradeColors = filteredGrades.map(g => meaningfulColors[g] || 'var(--ink3)');
+    
+    chartInstances.gradeBar = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: filteredGrades,
+        datasets: [{
+          label: 'จำนวนวิชา',
+          data: gradeData,
+          backgroundColor: gradeColors,
+          borderRadius: 12,
+          borderWidth: 0,
+          barThickness: 'flex',
+          maxBarThickness: 60
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            border: { display: false },
+            grid: { color: 'rgba(128,128,128,0.1)' },
+            ticks: { 
+              color: textColor,
+              stepSize: 1,
+              precision: 0,
+              font: { size: 12, weight: '600' }
+            }
+          },
+          x: {
+            border: { display: false },
+            grid: { display: false },
+            ticks: { 
+              color: textColor,
+              font: { family: 'var(--mono)', weight: '800', size: 16 }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: isDark?'rgba(30,30,32,0.9)':'rgba(255,255,255,0.9)',
+            titleColor: isDark?'#fff':'#000',
+            bodyColor: isDark?'#fff':'#000',
+            borderColor: isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.1)',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 12,
+            callbacks: {
+              label: (context) => {
+                const count = context.parsed.y;
+                const percent = ((count / all.length) * 100).toFixed(1);
+                return `${count} วิชา (${percent}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Comparison Chart
   const ctx = document.getElementById('analytics-chart-compare');
   if (ctx) {
     if (chartInstances.compare) chartInstances.compare.destroy();
     const labels = appData.terms.map(t => t.name), dataGpa = appData.terms.map(t => { const r = calcTermGPA(t); return r.gpa !== null ? parseFloat(r.gpa.toFixed(2)) : 0; }), dataCr = appData.terms.map(t => calcTermGPA(t).credits);
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark', textColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)';
     chartInstances.compare = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'GPA', data: dataGpa, backgroundColor: dataGpa.map(v=>v>=3.5?'#34c759':v>=3.0?'#0071e3':v>=2.0?'#ff9f0a':'#ff3b30'), borderRadius: 8 }, { label: 'Credits', data: dataCr, backgroundColor: 'rgba(175, 82, 222, 0.2)', borderColor: '#af52de', borderWidth: 2, borderRadius: 8, yAxisID: 'y2' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 4, border: {display: false}, grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: textColor } }, y2: { position: 'right', border: {display: false}, grid: { display: false }, ticks: { color: textColor } }, x: { border: {display: false}, grid: { display: false }, ticks: { color: textColor, font: {family: "-apple-system, sans-serif", weight: 600} } } }, plugins: { tooltip: { backgroundColor: isDark?'rgba(30,30,32,0.9)':'rgba(255,255,255,0.9)', titleColor: isDark?'#fff':'#000', bodyColor: isDark?'#fff':'#000', borderColor: isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.1)', borderWidth: 1, padding: 12, cornerRadius: 12 } } } });
   }
   
-  const counts = {}; GRADES.concat(['W']).forEach(g => counts[g] = 0); all.forEach(s => counts[s.let]++); const total = all.length || 1;
-  document.getElementById('analytics-grade-dist').innerHTML = GRADES.concat(['W']).filter(g => counts[g] > 0).map(g => `<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;"><div style="font-family: var(--mono); font-weight: 800; font-size: 16px; width: 28px; color: ${GRADE_COLORS[g]};">${g}</div><div class="progress-bar" style="margin: 0; background: rgba(0,0,0,0.05); height: 12px;"><div class="progress-fill" style="width: ${(counts[g]/total)*100}%; background: ${GRADE_COLORS[g]};"></div></div><div style="font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--ink3); width: 28px; text-align: right;">${counts[g]}</div></div>`).join('');
+  // สถิติเพิ่มเติม - ข้อมูลที่เป็นประโยชน์
+  const totalSubjects = all.length;
+  const avgGPA = totalSubjects > 0 ? all.reduce((sum, s) => sum + s.gp, 0) / totalSubjects : 0;
+  const passRate = totalSubjects > 0 ? (all.filter(s => s.gp >= 2.0).length / totalSubjects * 100) : 0;
+  const excellenceRate = totalSubjects > 0 ? (all.filter(s => s.gp >= 3.5).length / totalSubjects * 100) : 0;
+  const withdrawRate = totalSubjects > 0 ? (all.filter(s => s.let === 'W').length / totalSubjects * 100) : 0;
+  const highestGPA = appData.terms.length > 0 ? Math.max(...appData.terms.map(t => calcTermGPA(t).gpa || 0)) : 0;
+  const lowestGPA = appData.terms.length > 0 ? Math.min(...appData.terms.map(t => calcTermGPA(t).gpa || 0).filter(g => g > 0)) : 0;
+  
+  document.getElementById('analytics-grade-dist').innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="background: var(--accent-light); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--glass-border);">
+        <div style="font-size: 11px; color: var(--accent); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">เกรดเฉลี่ย</div>
+        <div style="font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--accent);">${avgGPA.toFixed(2)}</div>
+        <div style="font-size: 12px; color: var(--ink3); margin-top: 4px;">จาก ${totalSubjects} วิชา</div>
+      </div>
+      <div style="background: var(--green-light); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--glass-border);">
+        <div style="font-size: 11px; color: var(--green); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">อัตราผ่าน</div>
+        <div style="font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--green);">${passRate.toFixed(0)}%</div>
+        <div style="font-size: 12px; color: var(--ink3); margin-top: 4px;">เกรด C ขึ้นไป</div>
+      </div>
+      <div style="background: var(--purple-light); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--glass-border);">
+        <div style="font-size: 11px; color: var(--purple); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">ความเป็นเลิศ</div>
+        <div style="font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--purple);">${excellenceRate.toFixed(0)}%</div>
+        <div style="font-size: 12px; color: var(--ink3); margin-top: 4px;">เกรด A/B+</div>
+      </div>
+      <div style="background: rgba(0,0,0,0.03); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--glass-border);">
+        <div style="font-size: 11px; color: var(--ink3); font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">GPA สูงสุด/ต่ำสุด</div>
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <div style="font-family: var(--mono); font-size: 24px; font-weight: 800; color: var(--green);">${highestGPA.toFixed(2)}</div>
+          <div style="font-size: 16px; color: var(--ink3);">/</div>
+          <div style="font-family: var(--mono); font-size: 24px; font-weight: 800; color: var(--orange);">${lowestGPA > 0 ? lowestGPA.toFixed(2) : '-'}</div>
+        </div>
+        <div style="font-size: 12px; color: var(--ink3); margin-top: 4px;">ระหว่างเทอม</div>
+      </div>
+    </div>
+  `;
   
   document.getElementById('analytics-term-table').innerHTML = `<div class="table-container"><table class="bento-table"><thead><tr><th>เทอม</th><th>GPA</th><th>Cr</th></tr></thead><tbody>${appData.terms.map(t => { const r = calcTermGPA(t); return `<tr><td>${t.name}</td><td style="font-family:var(--mono); font-weight:800; color:${r.gpa>=3?'var(--green)':'var(--ink)'}">${r.gpa!==null?r.gpa.toFixed(2):'-'}</td><td style="font-family:var(--mono);">${r.credits}</td></tr>`; }).join('')}</tbody></table></div>`;
 };
