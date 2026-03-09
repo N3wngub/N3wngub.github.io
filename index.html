@@ -252,6 +252,8 @@ input, button, textarea, select { font-family: var(--body); }
 .input-ghost { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--ink); outline: none; transition: border-color var(--spring); width: 100%; }
 .input-ghost:focus { border-bottom-color: var(--accent); }
 
+.no-shadow { box-shadow: none !important; }
+
 /* Table */
 .table-container { width: 100%; overflow-x: auto; }
 .bento-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -307,7 +309,7 @@ input:checked + .slider:before { transform: translateX(16px); }
 /* Quick Grade Grid Wrap Fix */
 .qg-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
 .qg-btn { flex: 1 1 calc(25% - 8px); min-width: 60px; padding: 14px 0; border-radius: var(--r-md); border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--ink); font-weight: 800; font-family: var(--mono); font-size: 18px; cursor: pointer; text-align: center; transition: all 0.2s; }
-.qg-btn.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.05); box-shadow: 0 8px 16px rgba(0,113,227,0.3); }
+.qg-btn.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.05); }
 @media (max-width: 600px) { .qg-btn { font-size: 16px; padding: 10px 0; flex: 1 1 calc(33% - 8px); } }
 
 /* ─── Planner / Calendar ─── */
@@ -396,12 +398,21 @@ input:checked + .slider:before { transform: translateX(16px); }
     <!-- Scrollable Content -->
     <div class="no-scroll-bar" style="padding: 20px 24px; overflow-y: auto; max-height: calc(85vh - 75px);">
       <!-- Profile Section Display -->
-      <div style="display: flex; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 16px;">
         <img id="modal-profile-img" src="" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); box-shadow: var(--glass-shadow);">
         <div style="overflow: hidden;">
             <div id="modal-profile-name" style="font-size: 18px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">ผู้ใช้งาน</div>
             <div id="modal-profile-email" style="font-size: 13px; color: var(--ink3); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Local Mode</div>
         </div>
+      </div>
+
+      <!-- NEW: Sync Section for Local Mode -->
+      <div id="local-sync-section" style="display: none; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px;">
+          <div style="font-size: 13px; color: var(--ink2); margin-bottom: 12px; font-weight: 600;">เชื่อมต่อบัญชีเพื่อสำรองข้อมูลขึ้นระบบ Cloud</div>
+          <button class="btn btn-outline" id="btn-sync-google" style="width: 100%; background: var(--glass-bg);">
+              <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 4px;"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              เข้าสู่ระบบ & ซิงก์ข้อมูลด้วย Google
+          </button>
       </div>
 
       <div class="label">จัดการเทอมการศึกษา</div>
@@ -486,6 +497,26 @@ input:checked + .slider:before { transform: translateX(16px); }
     <div style="display: flex; gap: 12px;">
       <button class="btn btn-outline" onclick="closeModal('csv-modal')" style="flex:1;">ยกเลิก</button>
       <button class="btn btn-accent" onclick="document.getElementById('csv-upload').click()" style="flex:1;">📂 เลือกไฟล์ CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grade Scale Settings Modal -->
+<div id="grade-scale-modal" class="modal-overlay">
+  <div class="bento-card modal-box" style="padding: 24px; max-width: 380px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="modal-title" style="margin: 0; display: flex; align-items: center; gap: 8px;"><span style="font-size:24px;">⚙️</span> เกณฑ์ตัดเกรด</div>
+        <button class="btn-icon" onclick="closeModal('grade-scale-modal')" style="width: 32px; height: 32px; box-shadow: none;">✕</button>
+    </div>
+    <div style="font-size: 13px; color: var(--ink2); margin-bottom: 20px; font-weight: 500; line-height: 1.5;">กำหนดคะแนนขั้นต่ำสำหรับแต่ละระดับเกรดของวิชานี้ (หากไม่ตั้งจะใช้เกณฑ์มาตรฐาน)</div>
+
+    <div id="grade-scale-inputs" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; max-height: 40vh; overflow-y: auto;" class="no-scroll-bar">
+        <!-- Inputs injected by JS -->
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+      <button class="btn btn-outline" id="btn-reset-scale" style="flex:1; color: var(--red); border-color: rgba(255,59,48,0.2);">กลับไปใช้ค่าเริ่มต้น</button>
+      <button class="btn btn-accent" id="btn-save-scale" style="flex:1;">บันทึกเกณฑ์</button>
     </div>
   </div>
 </div>
@@ -592,46 +623,64 @@ input:checked + .slider:before { transform: translateX(16px); }
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
           <div style="flex: 1; min-width: 200px;">
             <input type="text" class="input-ghost subj-title-input" id="subj-name-input" placeholder="ชื่อวิชา">
+            
+            <div id="custom-scale-indicator" style="display: none; font-size: 11px; font-weight: 700; color: var(--purple); margin-bottom: 12px; align-items: center; gap: 4px; background: var(--purple-light); padding: 4px 10px; border-radius: 100px; border: 1px solid rgba(175, 82, 222, 0.2); width: fit-content;">
+              <span style="font-size:12px;">⚙️</span> ใช้เกณฑ์ตัดเกรดกำหนดเอง
+            </div>
+
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
               <div class="score-pill" id="subj-grade-pill">-</div>
               <div style="font-family: var(--mono); color: var(--ink2); font-size: 14px; font-weight: 700;" id="subj-score-detail"></div>
             </div>
           </div>
           <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline" id="btn-edit-scale" title="ตั้งค่าเกณฑ์ตัดเกรด">⚙️ เกณฑ์</button>
             <button class="btn btn-outline" id="btn-dup-subject">⧉ คัดลอก</button>
             <button class="btn btn-outline" id="btn-del-subject" style="color: var(--red); border-color: rgba(255, 59, 48, 0.2);">🗑 ลบ</button>
           </div>
         </div>
       </div>
 
-      <div class="bento-card col-4 ani" style="animation-delay: 0.1s; display: flex; align-items: center; justify-content: center; text-align: center;">
+      <div class="bento-card col-3 ani" style="animation-delay: 0.1s; display: flex; align-items: center; justify-content: center; text-align: center;">
         <div style="width: 100%;">
           <div style="font-size: 12px; color: var(--ink3); font-weight: 800; margin-bottom: 12px; text-transform: uppercase;">หน่วยกิต</div>
           <div id="subj-credits-container"></div>
         </div>
       </div>
 
-      <div class="bento-card col-4 ani" style="animation-delay: 0.15s; background: var(--accent-light);">
+      <div class="bento-card col-3 ani" style="animation-delay: 0.15s; background: var(--accent-light);">
         <div class="label">คะแนนรวมสุทธิ</div>
         <div style="display: flex; justify-content: space-between; align-items: flex-end; flex: 1;">
           <div>
             <div style="font-size: 13px; color: var(--ink2); font-weight: 800; margin-bottom: 4px;">คะแนนสะสม</div>
-            <div class="stat-value" id="subj-stat-raw" style="color: var(--accent);">0.0</div>
+            <div class="stat-value" id="subj-stat-raw" style="color: var(--accent); font-size: 36px;">0.0</div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 13px; color: var(--ink2); font-weight: 800; margin-bottom: 4px;">เกรดที่ได้</div>
-            <div class="stat-value" id="subj-stat-grade">-</div>
+            <div class="stat-value" id="subj-stat-grade" style="font-size: 36px;">-</div>
           </div>
         </div>
       </div>
 
-      <div class="bento-card col-4 ani" style="animation-delay: 0.2s; background: var(--purple-light);">
-        <div class="label">คำนวณเป้าหมายเกรด</div>
-        <div style="font-size: 12px; color: var(--ink2); margin-bottom: 8px; font-weight: 700;">เป้าหมายเกรดวิชานี้:</div>
+      <div class="bento-card col-3 ani" style="animation-delay: 0.2s; background: var(--purple-light);">
+        <div class="label">เป้าหมายเกรด</div>
+        <div style="font-size: 12px; color: var(--ink2); margin-bottom: 8px; font-weight: 700;">เลือกเป้าหมาย:</div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px;" id="final-target-btns"></div>
-        <div style="display: flex; align-items: baseline; gap: 8px;">
-          <div style="font-size: 13px; color: var(--ink2); font-weight: 700;">คะแนนที่ต้องการเพิ่ม:</div>
-          <div class="stat-value" id="final-result" style="color: var(--purple); font-size: 32px;">-</div>
+        <div style="display: flex; align-items: baseline; gap: 8px; margin-top: auto;">
+          <div style="font-size: 13px; color: var(--ink2); font-weight: 700;">ต้องการอีก:</div>
+          <div class="stat-value" id="final-result" style="color: var(--purple); font-size: 36px;">-</div>
+        </div>
+      </div>
+
+      <div class="bento-card col-3 ani" style="animation-delay: 0.25s; background: var(--orange-light);">
+        <div class="label">เป้าหมายสอบ Final</div>
+        <div style="font-size: 12px; color: var(--ink2); margin-bottom: 8px; font-weight: 700;" id="final-exam-info">คะแนนที่ต้องทำใน Final:</div>
+        <div style="display: flex; flex-direction: column; justify-content: flex-end; flex: 1; gap: 4px; margin-top: auto;">
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div class="stat-value" id="final-exam-score" style="color: var(--orange); font-size: 36px;">-</div>
+              <div style="font-size: 14px; color: var(--ink3); font-weight: 700; font-family: var(--mono);" id="final-exam-max"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--ink2); font-weight: 700;" id="final-exam-percent"></div>
         </div>
       </div>
 
@@ -752,9 +801,12 @@ import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, 
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const GP = { 'A':4.0, 'B+':3.5, 'B':3.0, 'C+':2.5, 'C':2.0, 'D+':1.5, 'D':1.0, 'F':0.0, 'W':null };
-const BOUNDARY = { 'A':80, 'B+':75, 'B':70, 'C+':65, 'C':60, 'D+':55, 'D':50, 'F':0 };
+const DEFAULT_BOUNDARY = { 'A':80, 'B+':75, 'B':70, 'C+':65, 'C':60, 'D+':55, 'D':50, 'F':0 };
 const GRADES = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
 const GRADE_COLORS = {'A':'var(--green)','B+':'#34c759','B':'var(--accent)','C+':'#5ac8fa','C':'var(--orange)','D+':'#ffcc00','D':'#ff3b30','F':'var(--red)','W':'var(--ink3)'};
+
+// Helper for dynamic boundaries
+const getBoundaries = (s) => (s && s.customBoundaries) ? s.customBoundaries : DEFAULT_BOUNDARY;
 
 let auth, db, userId;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'unigrade-app-dock';
@@ -987,6 +1039,32 @@ document.getElementById('btn-login-guest')?.addEventListener('click', () => {
   }
 });
 
+document.getElementById('btn-sync-google')?.addEventListener('click', async () => {
+  if (!auth) { toast('Firebase ไม่พร้อมใช้งาน', true); return; }
+  try {
+    closeModal('settings-modal');
+    toast('กำลังเชื่อมต่อ Google...');
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(auth, provider);
+    
+    localStorage.setItem('guest_mode', 'false');
+    userId = result.user.uid;
+    
+    // Force save local data to the newly connected cloud account
+    const ref = getDocRef();
+    if(ref) {
+      await setDoc(ref, { payload: JSON.stringify(appData), updatedAt: Date.now() });
+      toast('ซิงก์ข้อมูลไปที่บัญชี Google สำเร็จ! ✨');
+    }
+    
+    renderProfile(result.user);
+    loadData(); // Re-establish listener
+  } catch (e) {
+    toast('การเชื่อมต่อล้มเหลว', true);
+  }
+});
+
 const doLogout = async () => {
   localStorage.removeItem('guest_mode');
   // ฟิกซ์บัค PIN: สลับบัญชีต้องล้าง PIN เก่าออก เพื่อให้เข้าสู่ระบบและไม่ถูกล็อกด้วย PIN ของคนก่อนหน้า
@@ -1024,6 +1102,10 @@ const renderProfile = (user) => {
   document.getElementById('modal-profile-name').textContent = name;
   document.getElementById('modal-profile-email').textContent = email;
   
+  const isGuest = localStorage.getItem('guest_mode') === 'true';
+  const syncSection = document.getElementById('local-sync-section');
+  if (syncSection) syncSection.style.display = isGuest ? 'block' : 'none';
+  
   updatePinUI();
 };
 
@@ -1059,11 +1141,69 @@ document.getElementById('btn-pin-toggle')?.addEventListener('click', () => {
     }
 });
 
+// ─── CUSTOM GRADE SCALE LOGIC ───
+document.getElementById('btn-edit-scale')?.addEventListener('click', () => {
+    const s = getSubject();
+    if(!s) return;
+    const b = getBoundaries(s);
+    let inputsHtml = '';
+    ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D'].forEach(g => {
+        inputsHtml += `
+            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.02); padding: 8px 16px; border-radius: var(--r-sm); border: 1px solid var(--glass-border);">
+                <div style="font-family: var(--mono); font-weight: 800; font-size: 16px; color: ${GRADE_COLORS[g]}; min-width: 40px;">${g}</div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 12px; color: var(--ink3); font-weight: 700;">ตั้งแต่</span>
+                    <input type="number" id="scale-input-${g.replace('+','plus')}" value="${b[g]}" class="w-input" style="width: 80px; padding: 6px; text-align: center; font-size: 14px;" step="0.5">
+                    <span style="font-size: 12px; color: var(--ink3); font-weight: 700;">ขึ้นไป</span>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('grade-scale-inputs').innerHTML = inputsHtml;
+    openModal('grade-scale-modal');
+});
+
+document.getElementById('btn-save-scale')?.addEventListener('click', () => {
+    const s = getSubject();
+    if(!s) return;
+    const newB = {};
+    let valid = true;
+    ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D'].forEach(g => {
+        const val = parseFloat(document.getElementById(`scale-input-${g.replace('+','plus')}`).value);
+        if(isNaN(val)) valid = false;
+        newB[g] = val;
+    });
+    newB['F'] = 0;
+
+    if(!valid) { toast('กรุณากรอกคะแนนให้ครบถ้วนและถูกต้อง', true); return; }
+
+    if(newB['A'] <= newB['B+'] || newB['B+'] <= newB['B'] || newB['B'] <= newB['C+'] || newB['C+'] <= newB['C'] || newB['C'] <= newB['D+'] || newB['D+'] <= newB['D']) {
+        toast('เกณฑ์คะแนนไม่สมเหตุสมผล (ต้องเรียงลำดับคะแนนจากมากไปน้อย)', true);
+        return;
+    }
+
+    s.customBoundaries = newB;
+    saveData();
+    renderSubjectDetail();
+    closeModal('grade-scale-modal');
+    toast('อัปเดตเกณฑ์ตัดเกรดเฉพาะวิชานี้เรียบร้อยแล้ว');
+});
+
+document.getElementById('btn-reset-scale')?.addEventListener('click', () => {
+    const s = getSubject();
+    if(!s) return;
+    delete s.customBoundaries;
+    saveData();
+    renderSubjectDetail();
+    closeModal('grade-scale-modal');
+    toast('รีเซ็ตกลับไปใช้เกณฑ์มาตรฐานแล้ว');
+});
+
 // ─── CALCULATIONS ───
 const calcSubject = s => {
   if (!s) return { score: 0, raw: 0 };
   if (s.quickMode && s.quickGrade === 'W') return { score: 0, raw: 0, isW: true };
-  if (s.quickMode && s.quickGrade) { const m = BOUNDARY[s.quickGrade] || 0; return { score: m, raw: m }; }
+  if (s.quickMode && s.quickGrade) { const m = getBoundaries(s)[s.quickGrade] || 0; return { score: m, raw: m }; }
   
   let earned = 0, totalW = 0;
   (s.categories || []).forEach(c => {
@@ -1084,7 +1224,9 @@ const scoreToGrade = (score, s) => {
   if (s?.quickMode && s.quickGrade === 'W') return { letter: 'W', gp: null };
   if (s?.quickMode && s.quickGrade) return { letter: s.quickGrade, gp: GP[s.quickGrade] };
   if (s?.quickMode) return { letter: '-', gp: null };
-  for (const k of GRADES) if (score >= BOUNDARY[k]) return { letter: k, gp: GP[k] };
+  
+  const b = getBoundaries(s);
+  for (const k of GRADES) if (score >= b[k]) return { letter: k, gp: GP[k] };
   return { letter: 'F', gp: 0 };
 };
 
@@ -1309,12 +1451,15 @@ const renderSubjectDetail = () => {
   document.getElementById('subj-note').value = s.note || '';
   document.getElementById('quick-toggle').checked = !!s.quickMode;
   
+  // Show/Hide custom scale indicator
+  document.getElementById('custom-scale-indicator').style.display = s.customBoundaries ? 'inline-flex' : 'none';
+
   // Set back button correctly
   document.getElementById('btn-back-subject').onclick = () => window.switchView(window.prevView || 'subjects');
 
   // Render Credit Buttons
-  let creditBtnsHtml = [1, 2, 3, 4].map(c => `<button class="btn btn-outline ${s.credits === c && !window.customCreditMode ? 'btn-accent' : ''}" style="padding: 6px 14px; min-width: 40px; font-weight: 800;" onclick="window.customCreditMode=false; window.updateCredit(${c})">${c}</button>`).join('');
-  creditBtnsHtml += `<button class="btn btn-outline ${window.customCreditMode || ![1,2,3,4].includes(s.credits) ? 'btn-accent' : ''}" style="padding: 6px 14px; font-weight: 800;" onclick="window.customCreditMode=true; window.renderSubjectDetail()">กำหนดเอง</button>`;
+  let creditBtnsHtml = [1, 2, 3, 4].map(c => `<button class="btn btn-outline ${s.credits === c && !window.customCreditMode ? 'btn-accent no-shadow' : ''}" style="padding: 6px 14px; min-width: 40px; font-weight: 800;" onclick="window.customCreditMode=false; window.updateCredit(${c})">${c}</button>`).join('');
+  creditBtnsHtml += `<button class="btn btn-outline ${window.customCreditMode || ![1,2,3,4].includes(s.credits) ? 'btn-accent no-shadow' : ''}" style="padding: 6px 14px; font-weight: 800;" onclick="window.customCreditMode=true; window.renderSubjectDetail()">กำหนดเอง</button>`;
   let customCreditInput = (window.customCreditMode || ![1,2,3,4].includes(s.credits)) ? `<input type="number" class="w-input" min="0" step="0.5" value="${s.credits}" onchange="window.updateCredit(this.value)" style="margin-top: 12px; width: 100%;" placeholder="ระบุหน่วยกิต">` : '';
   
   document.getElementById('subj-credits-container').innerHTML = `<div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;">${creditBtnsHtml}</div>${customCreditInput}`;
@@ -1342,7 +1487,7 @@ const renderSubjectDetail = () => {
   }
   
   const fBtns = document.getElementById('final-target-btns');
-  fBtns.innerHTML = GRADES.map(gr => `<button class="btn btn-outline ${selectedFinalTarget===gr?'btn-accent':''}" style="padding: 8px 12px; font-family: var(--mono); min-width: 44px; font-size:12px;" data-tg="${gr}">${gr}</button>`).join('');
+  fBtns.innerHTML = GRADES.map(gr => `<button class="btn btn-outline ${selectedFinalTarget===gr?'btn-accent no-shadow':''}" style="padding: 6px 10px; font-family: var(--mono); min-width: 32px; font-size:12px; flex: 1;" data-tg="${gr}">${gr}</button>`).join('');
   fBtns.querySelectorAll('button').forEach(b => { b.addEventListener('click', () => { selectedFinalTarget = b.dataset.tg; updateFinalCalc(); renderSubjectDetail(); }); });
   updateFinalCalc();
 };
@@ -1350,16 +1495,95 @@ const renderSubjectDetail = () => {
 window.renderSubjectDetail = renderSubjectDetail;
 
 const updateFinalCalc = () => {
-  const s = getSubject(); const res = document.getElementById('final-result');
+  const s = getSubject(); 
+  const res = document.getElementById('final-result');
+  const fScore = document.getElementById('final-exam-score');
+  const fMax = document.getElementById('final-exam-max');
+  const fPercent = document.getElementById('final-exam-percent');
+  const fInfo = document.getElementById('final-exam-info');
+
   if (!s || !res) return;
-  if (!selectedFinalTarget) { res.textContent = '-'; res.style.color = 'var(--ink)'; return; }
+
+  if (s.quickMode) {
+    res.textContent = '-'; res.style.color = 'var(--ink)';
+    fScore.textContent = '-'; fMax.textContent = ''; fPercent.textContent = '';
+    fInfo.textContent = 'ปิดโหมดรวบยอดเพื่อคำนวณ';
+    fInfo.style.color = 'var(--ink2)';
+    fScore.style.fontSize = '36px'; fScore.style.color = 'var(--ink3)';
+    return;
+  }
+
+  if (!selectedFinalTarget) { 
+    res.textContent = '-'; res.style.color = 'var(--ink)'; 
+    fScore.textContent = '-'; fMax.textContent = ''; fPercent.textContent = '';
+    fInfo.textContent = 'เลือกเป้าหมายเกรดก่อน';
+    fInfo.style.color = 'var(--ink2)';
+    fScore.style.fontSize = '36px'; fScore.style.color = 'var(--ink3)';
+    return; 
+  }
   
-  const targetScore = BOUNDARY[selectedFinalTarget];
+  const targetScore = getBoundaries(s)[selectedFinalTarget];
   const r = calcSubject(s);
   const needed = targetScore - r.score;
   
-  if (needed <= 0) { res.textContent = '0%'; res.style.color = 'var(--green)'; }
-  else { res.textContent = needed.toFixed(1) + '%'; res.style.color = 'var(--purple)'; }
+  if (needed <= 0) { 
+    res.textContent = '0%'; res.style.color = 'var(--green)'; 
+    fScore.textContent = 'ผ่านแล้ว! 🎉'; 
+    fScore.style.fontSize = '24px';
+    fScore.style.color = 'var(--green)';
+    fMax.textContent = ''; fPercent.textContent = '';
+    fInfo.textContent = 'ยินดีด้วย คุณถึงเป้าหมายแล้ว';
+    fInfo.style.color = 'var(--green)';
+  } else { 
+    res.textContent = needed.toFixed(1) + '%'; res.style.color = 'var(--purple)'; 
+    fScore.style.fontSize = '36px';
+    fScore.style.color = 'var(--orange)';
+    
+    let finalWeight = 0;
+    let finalMax = 0;
+    const finalCat = s.categories?.find(c => c.type === 'final');
+    
+    if (finalCat && finalCat.items) {
+      finalCat.items.forEach(i => {
+        if (i.locked && i.score === '') { 
+          finalWeight += parseFloat(i.weight) || 0;
+          finalMax += parseFloat(i.maxScore) || 100;
+        }
+      });
+    }
+
+    if (finalWeight === 0) {
+      fScore.textContent = '-'; fMax.textContent = ''; fPercent.textContent = '';
+      fInfo.innerHTML = '<span style="color:var(--red);">เพิ่มช่องคะแนนปลายภาค<br>ที่ยังไม่กรอกคะแนนเพื่อคำนวณ</span>';
+      fScore.style.color = 'var(--ink3)';
+    } else {
+      const percentOfFinalNeeded = (needed / finalWeight) * 100;
+      const rawNeeded = (percentOfFinalNeeded / 100) * finalMax;
+      
+      fInfo.style.color = 'var(--ink2)';
+      if (percentOfFinalNeeded > 100) {
+        fInfo.innerHTML = '<span style="color:var(--red);">เป็นไปไม่ได้ (เกิน 100% ของไฟนอล)</span>';
+        fScore.textContent = percentOfFinalNeeded.toFixed(1) + '%';
+        fMax.textContent = '';
+        fPercent.innerHTML = `ขาดอีก <span style="font-family: var(--mono); font-weight:700;">${needed.toFixed(1)}</span> คะแนนสุทธิ`;
+        fScore.style.color = 'var(--red)';
+        fPercent.style.color = 'var(--red)';
+      } else {
+        fInfo.textContent = 'ต้องทำข้อสอบให้ได้:';
+        fScore.textContent = percentOfFinalNeeded.toFixed(1) + '%';
+        fMax.textContent = '';
+        fPercent.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size: 11px; padding-top: 8px; border-top: 1px solid var(--glass-border);">
+            <span>📝 คะแนนดิบสอบ:</span> <span style="font-family: var(--mono); font-weight:800; color:var(--ink);">${rawNeeded.toFixed(1)}<span style="font-weight:600; color:var(--ink3)">/${finalMax}</span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size: 11px;">
+            <span>⚖️ สัดส่วนสุทธิ:</span> <span style="font-family: var(--mono); font-weight:800; color:var(--ink);">${needed.toFixed(1)}<span style="font-weight:600; color:var(--ink3)">/${finalWeight}</span></span>
+          </div>
+        `;
+        fPercent.style.color = 'var(--ink2)';
+      }
+    }
+  }
 };
 
 const renderCategories = () => {
@@ -1448,8 +1672,8 @@ const renderTargetView = () => {
   const isPreset = targetGPAs.some(t => t.v === currentTarget);
   if(!isPreset) window.customTargetMode = true;
 
-  let targetBtnsHtml = targetGPAs.map(t => `<button class="btn btn-outline ${currentTarget === t.v && !window.customTargetMode ? 'btn-accent' : ''}" style="padding: 8px 12px; min-width: 44px; font-weight: 800; font-family: var(--mono);" onclick="window.customTargetMode=false; window.updateTargetGPA(${t.v})">${t.l}</button>`).join('');
-  targetBtnsHtml += `<button class="btn btn-outline ${window.customTargetMode ? 'btn-accent' : ''}" style="padding: 8px 16px; font-weight: 800;" onclick="window.customTargetMode=true; window.renderTargetView()">กำหนดเอง</button>`;
+  let targetBtnsHtml = targetGPAs.map(t => `<button class="btn btn-outline ${currentTarget === t.v && !window.customTargetMode ? 'btn-accent no-shadow' : ''}" style="padding: 8px 12px; min-width: 44px; font-weight: 800; font-family: var(--mono);" onclick="window.customTargetMode=false; window.updateTargetGPA(${t.v})">${t.l}</button>`).join('');
+  targetBtnsHtml += `<button class="btn btn-outline ${window.customTargetMode ? 'btn-accent no-shadow' : ''}" style="padding: 8px 16px; font-weight: 800;" onclick="window.customTargetMode=true; window.renderTargetView()">กำหนดเอง</button>`;
 
   let customTargetInput = window.customTargetMode ? `<input type="number" class="w-input" style="width: 100%; font-size: 20px; padding: 12px; margin-top: 12px;" min="0" max="4" step="0.1" value="${currentTarget}" onchange="window.updateTargetGPA(this.value)" placeholder="ระบุเป้าหมาย (0.0 - 4.0)">` : '';
 
@@ -1488,7 +1712,7 @@ const renderTargetView = () => {
       ${rem.map(s => {
         const r = calcSubject(s), curScoreStr = s.quickMode ? (s.quickGrade || '-') : r.score.toFixed(1);
         const reqGrade = (reqGp !== null && feasible) ? mapGPtoLetter(reqGp) : '-';
-        const reqScore = (reqGp !== null && feasible) ? BOUNDARY[reqGrade] : null;
+        const reqScore = (reqGp !== null && feasible) ? getBoundaries(s)[reqGrade] : null;
         const prog = reqScore ? Math.min(100, (r.score / reqScore) * 100) : 0;
         const c = GRADE_COLORS[reqGrade] || 'var(--ink)';
         return `
@@ -1702,14 +1926,3 @@ document.getElementById('csv-upload')?.addEventListener('change', e => {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
