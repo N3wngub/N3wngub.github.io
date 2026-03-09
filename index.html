@@ -12,8 +12,8 @@
 <meta name="application-name" content="Unigrade">
 <meta name="theme-color" content="#ffffff">
 
-<!-- Google Drive Logo for Favicon & Apple Touch Icon -->
-<link rel="icon" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
+<!-- App Icon from Google Drive -->
+<link rel="icon" type="image/png" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
 <link rel="apple-touch-icon" href="https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1">
 
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -100,7 +100,8 @@ input, button, textarea, select { font-family: var(--body); }
   display: none; flex-direction: column; align-items: center; justify-content: center;
   transition: opacity 0.8s ease;
 }
-#welcome-text { font-size: 40px; font-weight: 800; color: #111111; letter-spacing: -1px; margin: 0; text-align: center; }
+[data-theme="dark"] #welcome-screen { background: #000000; }
+#welcome-text { font-size: 40px; font-weight: 800; color: var(--ink); letter-spacing: -1px; margin: 0; text-align: center; }
 
 /* ─── Education Theme Floating Icons ─── */
 .edu-icon { position: fixed; font-size: 100px; opacity: 0.04; pointer-events: none; z-index: -1; filter: grayscale(100%); animation: float-icon 20s infinite alternate ease-in-out; }
@@ -150,7 +151,6 @@ input, button, textarea, select { font-family: var(--body); }
 .term-btn { background: rgba(0,0,0,0.03); border: 1px solid var(--glass-border); border-radius: 100px; padding: 8px 20px; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; color: var(--ink); transition: all var(--spring); }
 [data-theme="dark"] .term-btn { background: rgba(255,255,255,0.06); }
 .term-btn:hover { background: rgba(0,0,0,0.06); transform: scale(1.02); }
-
 .term-list { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: var(--r-md); box-shadow: var(--glass-shadow-hover); z-index: 50; width: 200px; max-height: 240px; overflow-y: auto; padding: 8px; }
 .term-list.open { display: block; animation: blurFadeUp 0.2s forwards; transform-origin: top; }
 .term-item { padding: 12px 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; border-radius: var(--r-sm); transition: background 0.2s; }
@@ -167,13 +167,11 @@ input, button, textarea, select { font-family: var(--body); }
 @media (max-width: 768px) {
   .top-bar { padding: 8px 12px; border-radius: var(--r-lg); gap: 8px; }
   .profile-name { max-width: 90px; font-size: 14px; }
-  .profile-email { display: block; max-width: 90px; font-size: 10px; opacity: 0.8; }
+  .profile-email { display: block; max-width: 90px; font-size: 10px; opacity: 0.8; } 
   .term-btn { padding: 6px 12px; font-size: 13px; }
   .profile-avatar { width: 38px; height: 38px; }
   #sync-text { display: none; }
   .sync-badge { padding: 8px; border-radius: 50%; border: none; background: rgba(0,0,0,0.03); }
-  
-  /* Fix Term List overflow on Mobile by fixing it to the center of screen */
   .term-list { position: fixed; top: 75px; left: 50%; transform: translateX(-50%); width: 85vw; max-width: 300px; }
 }
 
@@ -792,18 +790,30 @@ window.showConfirm = (title, text, icon, callback) => {
   document.getElementById('cm-icon').textContent = icon || '⚠️';
   document.getElementById('cm-input').style.display = 'none';
   openModal('custom-modal');
-  document.getElementById('cm-confirm').onclick = () => { closeModal('custom-modal'); callback(); };
+  
+  const btnConfirm = document.getElementById('cm-confirm');
+  const newConfirm = btnConfirm.cloneNode(true);
+  btnConfirm.parentNode.replaceChild(newConfirm, btnConfirm);
+  
+  newConfirm.onclick = () => { closeModal('custom-modal'); callback(); };
   document.getElementById('cm-cancel').onclick = () => closeModal('custom-modal');
 };
 
-window.showPrompt = (title, text, icon, defaultValue, callback) => {
+window.showPrompt = (title, text, icon, defaultValue, callback, inputType = 'text') => {
   document.getElementById('cm-title').textContent = title;
   document.getElementById('cm-text').textContent = text;
   document.getElementById('cm-icon').textContent = icon || '✏️';
   const inp = document.getElementById('cm-input');
-  inp.style.display = 'block'; inp.value = defaultValue || '';
+  inp.style.display = 'block'; 
+  inp.type = inputType;
+  inp.value = defaultValue || '';
   openModal('custom-modal');
-  document.getElementById('cm-confirm').onclick = () => { closeModal('custom-modal'); callback(inp.value); };
+  
+  const btnConfirm = document.getElementById('cm-confirm');
+  const newConfirm = btnConfirm.cloneNode(true);
+  btnConfirm.parentNode.replaceChild(newConfirm, btnConfirm);
+  
+  newConfirm.onclick = () => { closeModal('custom-modal'); callback(document.getElementById('cm-input').value); };
   document.getElementById('cm-cancel').onclick = () => closeModal('custom-modal');
 };
 
@@ -857,42 +867,57 @@ const initAuth = async () => {
 
 const showLoginButtons = () => { document.getElementById('login-loading').style.display = 'none'; document.getElementById('login-buttons').style.display = 'block'; };
 
+const showLoginView = () => { 
+  document.getElementById('login-view').style.display = 'flex'; 
+  document.getElementById('login-view').style.opacity = '1'; 
+  document.getElementById('main-app').style.display = 'none'; 
+  document.getElementById('pin-entry-view').style.display = 'none';
+};
+
+const hideLoginView = () => { 
+  document.getElementById('login-view').style.opacity = '0'; 
+  setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 500); 
+};
+
 if (auth) {
   onAuthStateChanged(auth, user => {
     const isGuest = localStorage.getItem('guest_mode') === 'true';
-    if (user) {
+    if (user && (!user.isAnonymous || isGuest)) {
       userId = user.uid;
-      if (user.isAnonymous && !isGuest) { showLoginButtons(); return; }
-      document.getElementById('login-view').style.opacity = '0';
-      setTimeout(() => { document.getElementById('login-view').style.display = 'none'; }, 500);
-      renderProfile(user); loadData();
+      hideLoginView(); 
+      renderProfile(user); 
+      loadData();
     } else {
-      userId = null; if (!isGuest) showLoginButtons();
+      userId = null; 
+      showLoginView();
+      showLoginButtons();
     }
   });
   initAuth();
-} else { loadData(); document.getElementById('login-view').style.display = 'none'; }
+} else { loadData(); hideLoginView(); }
+
 
 document.getElementById('btn-login-google')?.addEventListener('click', async () => {
   if (!auth) { toast('Firebase ไม่พร้อมใช้งาน', true); return; }
   try { await signInWithPopup(auth, new GoogleAuthProvider()); localStorage.setItem('guest_mode', 'false'); } catch (e) { toast('เข้าสู่ระบบล้มเหลว', true); }
 });
+
 document.getElementById('btn-login-guest')?.addEventListener('click', () => {
   localStorage.setItem('guest_mode', 'true'); if(!userId && auth) initAuth();
-  document.getElementById('login-view').style.display = 'none'; renderProfile(null); loadData();
+  hideLoginView(); renderProfile(null); loadData();
 });
 
 const doLogout = async () => {
   localStorage.removeItem('guest_mode'); closeModal('settings-modal');
-  hasAppInitialized = false; // reset flag
-  if (unsubSnapshot) unsubSnapshot();
-  if (auth) { await signOut(auth); initAuth(); }
-  document.getElementById('pin-entry-view').style.display = 'none';
-  document.getElementById('main-app').style.display = 'none';
-  document.getElementById('login-view').style.display = 'flex';
-  document.getElementById('login-view').style.opacity = '1';
-  document.getElementById('login-loading').style.display = 'flex'; 
-  document.getElementById('login-buttons').style.display = 'none';
+  hasAppInitialized = false; 
+  if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+  if (auth) { 
+    await signOut(auth); 
+    initAuth(); 
+  } else {
+    showLoginView();
+    showLoginButtons();
+  }
 };
 document.getElementById('btn-logout')?.addEventListener('click', doLogout);
 document.getElementById('btn-logout-pin')?.addEventListener('click', doLogout);
@@ -909,13 +934,14 @@ const startAppFlow = () => {
       const hr = new Date().getHours();
       let msg = 'Good Night';
       if(hr >= 5 && hr < 12) msg = 'Good Morning';
-      else if(hr === 12) msg = 'Good Noon';
-      else if(hr > 12 && hr < 18) msg = 'Good Afternoon';
+      else if(hr >= 12 && hr < 13) msg = 'Good Noon';
+      else if(hr >= 13 && hr < 18) msg = 'Good Afternoon';
       else if(hr >= 18 && hr < 22) msg = 'Good Evening';
       
       document.getElementById('welcome-text').textContent = msg;
       const ws = document.getElementById('welcome-screen');
       ws.style.display = 'flex';
+      ws.style.opacity = '1';
       
       setTimeout(() => {
           ws.style.opacity = '0';
@@ -931,25 +957,29 @@ const startAppFlow = () => {
   const storedPin = localStorage.getItem('app_pin');
   if (storedPin) {
       document.getElementById('pin-entry-view').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
       const pinInput = document.getElementById('pin-input');
       pinInput.value = ''; pinInput.focus();
       
-      document.getElementById('btn-submit-pin').onclick = () => {
+      const btnSubmit = document.getElementById('btn-submit-pin');
+      const newBtn = btnSubmit.cloneNode(true);
+      btnSubmit.parentNode.replaceChild(newBtn, btnSubmit);
+      
+      newBtn.addEventListener('click', () => {
           if(pinInput.value === storedPin) {
               proceedToWelcome();
           } else {
               toast('รหัส PIN ไม่ถูกต้อง', true);
               pinInput.value = '';
           }
-      };
+      });
   } else {
       proceedToWelcome();
   }
 };
 
 const renderProfile = (user) => {
-  const defaultSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='url(%23grad)'/%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23134e8e' /%3E%3Cstop offset='100%25' stop-color='%232a76c8' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M30,55 Q50,90 70,55' stroke='white' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3Cpolygon points='25,40 50,22 75,40 50,58' fill='white'/%3E%3Crect x='71' y='40' width='4' height='18' fill='%23D4AF37'/%3E%3Ccircle cx='73' cy='60' r='5' fill='%23D4AF37'/%3E%3C/svg%3E";
-  const pic = appData.userProfilePic || user?.photoURL || defaultSvg;
+  const pic = appData.userProfilePic || user?.photoURL || "https://drive.google.com/uc?export=view&id=15EMiHkwuvp1adIB3KTko9nDKy3Vj1iF1";
   const name = user?.displayName || 'ผู้ใช้งาน';
   const email = (user && !user.isAnonymous) ? user.email : 'Local Mode';
   
@@ -973,13 +1003,18 @@ const updatePinUI = () => {
 };
 
 document.getElementById('btn-pin-toggle')?.addEventListener('click', () => {
+    closeModal('settings-modal');
     const hasPin = localStorage.getItem('app_pin');
     if(hasPin) {
-        showConfirm('ยกเลิก PIN', 'คุณต้องการยกเลิกรหัส PIN ใช่หรือไม่?', '🔓', () => {
-            localStorage.removeItem('app_pin');
-            updatePinUI();
-            toast('ยกเลิกรหัส PIN แล้ว');
-        });
+        showPrompt('ยกเลิกรหัส PIN', 'กรุณากรอกรหัส PIN เดิมเพื่อยกเลิก', '🔓', '', (val) => {
+            if(val === hasPin) {
+                localStorage.removeItem('app_pin');
+                updatePinUI();
+                toast('ยกเลิกรหัส PIN แล้ว');
+            } else {
+                toast('รหัส PIN ไม่ถูกต้อง', true);
+            }
+        }, 'password');
     } else {
         showPrompt('ตั้งรหัส PIN', 'กรอกรหัส PIN (ตัวเลข 4-6 หลัก)', '🔒', '', (val) => {
             if(val && val.length >= 4 && val.length <= 6 && /^\d+$/.test(val)) {
@@ -989,7 +1024,7 @@ document.getElementById('btn-pin-toggle')?.addEventListener('click', () => {
             } else {
                 toast('กรุณากรอกตัวเลข 4-6 หลักเท่านั้น', true);
             }
-        });
+        }, 'password');
     }
 });
 
@@ -1054,7 +1089,7 @@ document.addEventListener('touchend', e => {
     const deltaX = touchendX - touchstartX;
     const deltaY = Math.abs(touchendY - touchstartY);
     
-    // Swipe right detected (start near left edge to avoid accidental swipes)
+    // Swipe right detected
     if (touchstartX < 60 && deltaX > 70 && deltaY < 60) {
         if (currentView === 'subject') {
             switchView(window.prevView || 'subjects');
@@ -1106,7 +1141,7 @@ document.getElementById('btn-theme-toggle-modal').addEventListener('click', () =
 });
 
 const renderApp = () => {
-  if(!hasAppInitialized) return; // Prevent renders before welcome screen
+  if(!hasAppInitialized) return; 
   
   const term = getTerm();
   document.getElementById('term-label').textContent = term?.name || 'เลือกเทอม';
@@ -1501,6 +1536,11 @@ const renderAnalytics = () => {
   document.getElementById('analytics-term-table').innerHTML = `<div class="table-container"><table class="bento-table"><thead><tr><th>เทอม</th><th>GPA</th><th>Cr</th></tr></thead><tbody>${appData.terms.map(t => { const r = calcTermGPA(t); return `<tr><td>${t.name}</td><td style="font-family:var(--mono); font-weight:800; color:${r.gpa>=3?'var(--green)':'var(--ink)'}">${r.gpa!==null?r.gpa.toFixed(2):'-'}</td><td style="font-family:var(--mono);">${r.credits}</td></tr>`; }).join('')}</tbody></table></div>`;
 };
 
+// ─── CONTROL CENTER ACTIONS ───
+document.getElementById('btn-add-term')?.addEventListener('click', () => { closeModal('settings-modal'); showPrompt('เพิ่มเทอมใหม่', 'กรุณาตั้งชื่อเทอมใหม่', '➕', '', (val) => { if (val && val.trim()) { const id = generateId(); appData.terms.push({ id, name: val.trim(), subjects: [] }); currentTermId = id; saveData(); renderApp(); toast('เพิ่มเทอมใหม่เรียบร้อย'); } }); });
+document.getElementById('btn-rename-term')?.addEventListener('click', () => { closeModal('settings-modal'); const t = getTerm(); showPrompt('แก้ไขชื่อเทอม', 'เปลี่ยนชื่อสำหรับเทอมปัจจุบัน', '✏️', t.name, (val) => { if (val && val.trim()) { t.name = val.trim(); saveData(); renderApp(); toast('เปลี่ยนชื่อเรียบร้อย'); } }); });
+document.getElementById('btn-delete-term')?.addEventListener('click', () => { closeModal('settings-modal'); if (appData.terms.length <= 1) { toast('ไม่สามารถลบเทอมสุดท้ายได้', true); return; } showConfirm('ลบเทอม', `ลบเทอม "${getTerm().name}" และรายวิชาทั้งหมดข้างในใช่หรือไม่?`, '🗑️', () => { appData.terms = appData.terms.filter(t => t.id !== currentTermId); currentTermId = appData.terms[0].id; currentSubjId = null; saveData(); switchView('dashboard'); toast('ลบเทอมเรียบร้อย'); }); });
+
 // ─── LOCAL SAVE / RESTORE ───
 document.getElementById('btn-backup')?.addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(appData)], { type: 'application/json' });
@@ -1520,6 +1560,20 @@ document.getElementById('backup-upload')?.addEventListener('change', e => {
     } catch(err) { toast('ไฟล์ข้อมูลไม่ถูกต้อง', true); }
   };
   r.readAsText(f); e.target.value = '';
+});
+
+// ─── CALENDAR SYNC (.ics Export) ───
+document.getElementById('btn-sync-cal')?.addEventListener('click', () => {
+  closeModal('settings-modal'); const deadlines = getAllDeadlines();
+  if (deadlines.length === 0) { toast('ไม่มีกำหนดส่งสำหรับซิงก์', true); return; }
+  let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Unigrade//TH\nCALSCALE:GREGORIAN\n";
+  deadlines.forEach(d => {
+    const dStr = new Date(d.dl).toISOString().replace(/[-:]/g, '').split('T')[0];
+    ics += `BEGIN:VEVENT\nDTSTART;VALUE=DATE:${dStr}\nDTEND;VALUE=DATE:${dStr}\nSUMMARY:${d.item} (${d.subj})\nDESCRIPTION:หมวดหมู่: ${d.cat}\\nวิชา: ${d.subj}\nUID:${generateId()}@unigrade\nEND:VEVENT\n`;
+  });
+  ics += "END:VCALENDAR";
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'Unigrade_Deadlines.ics'; a.click(); URL.revokeObjectURL(url); toast('ดาวน์โหลดปฏิทินสำเร็จ 📅');
 });
 
 // ─── PDF EXPORT (html2pdf) ───
@@ -1583,6 +1637,24 @@ const checkShareLink = () => {
   } catch(e) {}
 }; checkShareLink();
 
+// ─── CSV ───
+document.getElementById('csv-upload')?.addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return; const r = new FileReader();
+  r.onload = ev => {
+    const lines = ev.target.result.split('\n').filter(l => l.trim()), validGrades = new Set([...GRADES, 'W']);
+    let imp = 0, errs = []; const t = getTerm();
+    lines.forEach((l, idx) => {
+      if (idx === 0 && l.toLowerCase().includes('วิชา')) return;
+      const p = l.split(',').map(x => x.trim().replace(/^"|"$/g, '')); if (p.length < 2) return;
+      const n = p[0], c = parseFloat(p[1]) || 3, g = (p[2] || '').toUpperCase().replace(/\s/g, '');
+      if (!n) return; if (g && !validGrades.has(g)) { errs.push(`แถว ${idx+1}: เกรด "${g}" ไม่รองรับ`); return; }
+      t.subjects.push({ id: generateId(), name: n, credits: c, categories: [{ id: generateId(), type: 'assignment', name: 'คะแนนเก็บ', items: [] }, { id: generateId(), type: 'midterm', name: 'สอบกลางภาค', items: [] }, { id: generateId(), type: 'final', name: 'สอบปลายภาค', items: [] }], note: '', quickMode: !!g, quickGrade: g || null }); imp++;
+    });
+    saveData(); renderApp();
+    document.getElementById('csv-preview').innerHTML = `<div style="color:var(--green)">✅ นำเข้าสำเร็จ ${imp} วิชา</div>${errs.map(e=>`<div style="color:var(--red)">${e}</div>`).join('')}`;
+    toast(`นำเข้า ${imp} วิชาเรียบร้อย`); setTimeout(() => closeModal('csv-modal'), 2000); e.target.value = '';
+  }; r.readAsText(f, 'UTF-8');
+});
 </script>
 </body>
 </html>
